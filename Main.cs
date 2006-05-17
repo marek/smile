@@ -4,12 +4,12 @@ using System.Collections;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Data;
+using System.Threading;
+
+
 namespace smiletray
 {
-	/// <summary>
-	/// Summary description for Form1.
-	/// </summary>
-	
+	// Main Options Form
 	public class frmMain : System.Windows.Forms.Form
 	{
 		private System.Windows.Forms.NotifyIcon notifyIcon;
@@ -20,32 +20,53 @@ namespace smiletray
 		private System.Windows.Forms.Timer TimerCheckKills;
 		private System.ComponentModel.IContainer components;
 		private System.Windows.Forms.MenuItem menuItem4;
-		private System.Windows.Forms.GroupBox groupBox1;
-		private System.Windows.Forms.CheckBox checkBox1;
-		private System.Windows.Forms.NumericUpDown numericUpDown1;
-		private System.Windows.Forms.ListBox listBox1;
+		private System.Windows.Forms.CheckBox chkSnapEnabled;
+		private System.Windows.Forms.CheckBox chkStatsEnabled;
+		private System.Windows.Forms.CheckBox chkAutoDetectUser;
+		private System.Windows.Forms.Label lblAccount;
+		private System.Windows.Forms.GroupBox grpGlobalSettings;
+		private System.Windows.Forms.GroupBox grpSnapSettings;
+		private System.Windows.Forms.GroupBox grpStatsSettings;
+		private System.Windows.Forms.Button cmdResetStats;
+		private System.Windows.Forms.Button cmdViewStats;
+		private System.Windows.Forms.NumericUpDown upDelay;
+		private System.Windows.Forms.Label lblSnapDelay;
+		private System.Windows.Forms.TextBox txtAccount;
+		private System.Windows.Forms.MenuItem menuItem5;
+		private System.Windows.Forms.MenuItem menuItem6;
+		private System.Windows.Forms.MenuItem menuItem7;
+		private System.Windows.Forms.MenuItem menuItem8;
+		private System.Windows.Forms.Label lblSnapDir;
+		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+		private System.Windows.Forms.TextBox txtSnapDir;
+		private System.Windows.Forms.Button cmdBrowseSnapDir;
 
-		// Public stuff for this form
-		private comlogParser comParser;
+		// private stuff for this form
+		private CConsoleParser ConsoleParser;
+		private Settings_t Settings;
+		private bool EnableStats;	// Volitile State
+		private bool EnableSnaps;	// Volitile State
 
 		public frmMain()
 		{
-			//
 			// Required for Windows Form Designer support
-			//
 			InitializeComponent();
 
-			//
-			// TODO: Add any constructor code after InitializeComponent call
-			//
-			this.comParser = new comlogParser();
-			this.comParser.Open();
+			// Read Settings
+			this.Settings = new Settings_t();
+
+
+			// Init Console Parser
+			this.ConsoleParser = new CConsoleParser();
+			this.ConsoleParser.Open();
+			
+			// Init TimerCheckKills Counter  (rename to TimerCheckConsoleLog?)
 			TimerCheckKills.Start();
+
+			Hide();
 		}
 
-		/// <summary>
 		/// Clean up any resources being used.
-		/// </summary>
 		protected override void Dispose( bool disposing )
 		{
 			if( disposing )
@@ -70,16 +91,34 @@ namespace smiletray
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.contextMenu = new System.Windows.Forms.ContextMenu();
 			this.menuItem1 = new System.Windows.Forms.MenuItem();
+			this.menuItem5 = new System.Windows.Forms.MenuItem();
+			this.menuItem6 = new System.Windows.Forms.MenuItem();
+			this.menuItem7 = new System.Windows.Forms.MenuItem();
+			this.menuItem8 = new System.Windows.Forms.MenuItem();
+			this.menuItem4 = new System.Windows.Forms.MenuItem();
 			this.menuItem2 = new System.Windows.Forms.MenuItem();
 			this.menuItem3 = new System.Windows.Forms.MenuItem();
 			this.TimerCheckKills = new System.Windows.Forms.Timer(this.components);
-			this.menuItem4 = new System.Windows.Forms.MenuItem();
-			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.checkBox1 = new System.Windows.Forms.CheckBox();
-			this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
-			this.listBox1 = new System.Windows.Forms.ListBox();
-			this.groupBox1.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+			this.grpSnapSettings = new System.Windows.Forms.GroupBox();
+			this.txtSnapDir = new System.Windows.Forms.TextBox();
+			this.lblSnapDir = new System.Windows.Forms.Label();
+			this.lblSnapDelay = new System.Windows.Forms.Label();
+			this.upDelay = new System.Windows.Forms.NumericUpDown();
+			this.chkSnapEnabled = new System.Windows.Forms.CheckBox();
+			this.cmdBrowseSnapDir = new System.Windows.Forms.Button();
+			this.grpStatsSettings = new System.Windows.Forms.GroupBox();
+			this.cmdViewStats = new System.Windows.Forms.Button();
+			this.cmdResetStats = new System.Windows.Forms.Button();
+			this.chkStatsEnabled = new System.Windows.Forms.CheckBox();
+			this.grpGlobalSettings = new System.Windows.Forms.GroupBox();
+			this.lblAccount = new System.Windows.Forms.Label();
+			this.txtAccount = new System.Windows.Forms.TextBox();
+			this.chkAutoDetectUser = new System.Windows.Forms.CheckBox();
+			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+			this.grpSnapSettings.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.upDelay)).BeginInit();
+			this.grpStatsSettings.SuspendLayout();
+			this.grpGlobalSettings.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// notifyIcon
@@ -93,24 +132,56 @@ namespace smiletray
 			// 
 			this.contextMenu.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
 																						this.menuItem1,
+																						this.menuItem5,
+																						this.menuItem6,
+																						this.menuItem7,
+																						this.menuItem8,
 																						this.menuItem4,
 																						this.menuItem2,
 																						this.menuItem3});
 			// 
 			// menuItem1
 			// 
+			this.menuItem1.Checked = true;
 			this.menuItem1.Index = 0;
-			this.menuItem1.Text = "Enabled";
+			this.menuItem1.Text = "Enable Snap";
+			this.menuItem1.Click += new System.EventHandler(this.menuItem1_Click);
+			// 
+			// menuItem5
+			// 
+			this.menuItem5.Checked = true;
+			this.menuItem5.Index = 1;
+			this.menuItem5.Text = "Enable Stats";
+			// 
+			// menuItem6
+			// 
+			this.menuItem6.Index = 2;
+			this.menuItem6.Text = "-";
+			// 
+			// menuItem7
+			// 
+			this.menuItem7.Index = 3;
+			this.menuItem7.Text = "View Stats";
+			// 
+			// menuItem8
+			// 
+			this.menuItem8.Index = 4;
+			this.menuItem8.Text = "Open Snap Folder";
+			// 
+			// menuItem4
+			// 
+			this.menuItem4.Index = 5;
+			this.menuItem4.Text = "-";
 			// 
 			// menuItem2
 			// 
-			this.menuItem2.Index = 2;
+			this.menuItem2.Index = 6;
 			this.menuItem2.Text = "Open";
 			this.menuItem2.Click += new System.EventHandler(this.menuItem2_Click);
 			// 
 			// menuItem3
 			// 
-			this.menuItem3.Index = 3;
+			this.menuItem3.Index = 7;
 			this.menuItem3.Text = "Exit";
 			this.menuItem3.Click += new System.EventHandler(this.menuItem3_Click);
 			// 
@@ -118,81 +189,186 @@ namespace smiletray
 			// 
 			this.TimerCheckKills.Tick += new System.EventHandler(this.TimerCheckKills_Tick);
 			// 
-			// menuItem4
+			// grpSnapSettings
 			// 
-			this.menuItem4.Index = 1;
-			this.menuItem4.Text = "-";
+			this.grpSnapSettings.Controls.Add(this.txtSnapDir);
+			this.grpSnapSettings.Controls.Add(this.lblSnapDir);
+			this.grpSnapSettings.Controls.Add(this.lblSnapDelay);
+			this.grpSnapSettings.Controls.Add(this.upDelay);
+			this.grpSnapSettings.Controls.Add(this.chkSnapEnabled);
+			this.grpSnapSettings.Controls.Add(this.cmdBrowseSnapDir);
+			this.grpSnapSettings.Location = new System.Drawing.Point(8, 8);
+			this.grpSnapSettings.Name = "grpSnapSettings";
+			this.grpSnapSettings.Size = new System.Drawing.Size(280, 88);
+			this.grpSnapSettings.TabIndex = 1;
+			this.grpSnapSettings.TabStop = false;
+			this.grpSnapSettings.Text = "Snap Settings";
 			// 
-			// groupBox1
+			// txtSnapDir
 			// 
-			this.groupBox1.Controls.Add(this.numericUpDown1);
-			this.groupBox1.Controls.Add(this.checkBox1);
-			this.groupBox1.Location = new System.Drawing.Point(8, 8);
-			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(280, 80);
-			this.groupBox1.TabIndex = 1;
-			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Snap Settings";
+			this.txtSnapDir.Location = new System.Drawing.Point(72, 56);
+			this.txtSnapDir.Name = "txtSnapDir";
+			this.txtSnapDir.Size = new System.Drawing.Size(136, 20);
+			this.txtSnapDir.TabIndex = 5;
+			this.txtSnapDir.Text = "";
 			// 
-			// checkBox1
+			// lblSnapDir
 			// 
-			this.checkBox1.Location = new System.Drawing.Point(16, 48);
-			this.checkBox1.Name = "checkBox1";
-			this.checkBox1.TabIndex = 1;
-			this.checkBox1.Text = "Enabled";
+			this.lblSnapDir.AutoSize = true;
+			this.lblSnapDir.Location = new System.Drawing.Point(16, 56);
+			this.lblSnapDir.Name = "lblSnapDir";
+			this.lblSnapDir.Size = new System.Drawing.Size(51, 16);
+			this.lblSnapDir.TabIndex = 4;
+			this.lblSnapDir.Text = "Snap Dir:";
 			// 
-			// numericUpDown1
+			// lblSnapDelay
 			// 
-			this.numericUpDown1.Location = new System.Drawing.Point(16, 24);
-			this.numericUpDown1.Maximum = new System.Decimal(new int[] {
-																		   10000,
-																		   0,
-																		   0,
-																		   0});
-			this.numericUpDown1.Minimum = new System.Decimal(new int[] {
-																		   100,
-																		   0,
-																		   0,
-																		   0});
-			this.numericUpDown1.Name = "numericUpDown1";
-			this.numericUpDown1.TabIndex = 2;
-			this.numericUpDown1.Value = new System.Decimal(new int[] {
-																		 100,
-																		 0,
-																		 0,
-																		 0});
+			this.lblSnapDelay.AutoSize = true;
+			this.lblSnapDelay.Location = new System.Drawing.Point(104, 24);
+			this.lblSnapDelay.Name = "lblSnapDelay";
+			this.lblSnapDelay.Size = new System.Drawing.Size(66, 16);
+			this.lblSnapDelay.TabIndex = 3;
+			this.lblSnapDelay.Text = "Snap Delay:";
 			// 
-			// listBox1
+			// upDelay
 			// 
-			this.listBox1.AllowDrop = true;
-			this.listBox1.Location = new System.Drawing.Point(56, 112);
-			this.listBox1.Name = "listBox1";
-			this.listBox1.Size = new System.Drawing.Size(120, 30);
-			this.listBox1.TabIndex = 2;
+			this.upDelay.Location = new System.Drawing.Point(176, 24);
+			this.upDelay.Maximum = new System.Decimal(new int[] {
+																	10000,
+																	0,
+																	0,
+																	0});
+			this.upDelay.Name = "upDelay";
+			this.upDelay.Size = new System.Drawing.Size(96, 20);
+			this.upDelay.TabIndex = 2;
+			this.upDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			this.upDelay.Value = new System.Decimal(new int[] {
+																  100,
+																  0,
+																  0,
+																  0});
+			// 
+			// chkSnapEnabled
+			// 
+			this.chkSnapEnabled.Location = new System.Drawing.Point(16, 24);
+			this.chkSnapEnabled.Name = "chkSnapEnabled";
+			this.chkSnapEnabled.Size = new System.Drawing.Size(80, 24);
+			this.chkSnapEnabled.TabIndex = 1;
+			this.chkSnapEnabled.Text = "Enabled";
+			this.chkSnapEnabled.CheckedChanged += new System.EventHandler(this.chkSnapEnabled_CheckedChanged);
+			// 
+			// cmdBrowseSnapDir
+			// 
+			this.cmdBrowseSnapDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.cmdBrowseSnapDir.Location = new System.Drawing.Point(216, 56);
+			this.cmdBrowseSnapDir.Name = "cmdBrowseSnapDir";
+			this.cmdBrowseSnapDir.Size = new System.Drawing.Size(56, 24);
+			this.cmdBrowseSnapDir.TabIndex = 6;
+			this.cmdBrowseSnapDir.Text = "Browse";
+			// 
+			// grpStatsSettings
+			// 
+			this.grpStatsSettings.Controls.Add(this.cmdViewStats);
+			this.grpStatsSettings.Controls.Add(this.cmdResetStats);
+			this.grpStatsSettings.Controls.Add(this.chkStatsEnabled);
+			this.grpStatsSettings.Location = new System.Drawing.Point(8, 112);
+			this.grpStatsSettings.Name = "grpStatsSettings";
+			this.grpStatsSettings.Size = new System.Drawing.Size(280, 64);
+			this.grpStatsSettings.TabIndex = 3;
+			this.grpStatsSettings.TabStop = false;
+			this.grpStatsSettings.Text = "Stats Settings";
+			// 
+			// cmdViewStats
+			// 
+			this.cmdViewStats.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.cmdViewStats.Location = new System.Drawing.Point(128, 24);
+			this.cmdViewStats.Name = "cmdViewStats";
+			this.cmdViewStats.Size = new System.Drawing.Size(72, 24);
+			this.cmdViewStats.TabIndex = 5;
+			this.cmdViewStats.Text = "View";
+			// 
+			// cmdResetStats
+			// 
+			this.cmdResetStats.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.cmdResetStats.Location = new System.Drawing.Point(200, 24);
+			this.cmdResetStats.Name = "cmdResetStats";
+			this.cmdResetStats.Size = new System.Drawing.Size(72, 24);
+			this.cmdResetStats.TabIndex = 4;
+			this.cmdResetStats.Text = "Reset";
+			// 
+			// chkStatsEnabled
+			// 
+			this.chkStatsEnabled.Location = new System.Drawing.Point(16, 24);
+			this.chkStatsEnabled.Name = "chkStatsEnabled";
+			this.chkStatsEnabled.Size = new System.Drawing.Size(80, 24);
+			this.chkStatsEnabled.TabIndex = 3;
+			this.chkStatsEnabled.Text = "Enabled";
+			// 
+			// grpGlobalSettings
+			// 
+			this.grpGlobalSettings.Controls.Add(this.lblAccount);
+			this.grpGlobalSettings.Controls.Add(this.txtAccount);
+			this.grpGlobalSettings.Controls.Add(this.chkAutoDetectUser);
+			this.grpGlobalSettings.Location = new System.Drawing.Point(8, 184);
+			this.grpGlobalSettings.Name = "grpGlobalSettings";
+			this.grpGlobalSettings.Size = new System.Drawing.Size(280, 56);
+			this.grpGlobalSettings.TabIndex = 4;
+			this.grpGlobalSettings.TabStop = false;
+			this.grpGlobalSettings.Text = "Global Settings";
+			// 
+			// lblAccount
+			// 
+			this.lblAccount.Location = new System.Drawing.Point(120, 24);
+			this.lblAccount.Name = "lblAccount";
+			this.lblAccount.Size = new System.Drawing.Size(48, 16);
+			this.lblAccount.TabIndex = 2;
+			this.lblAccount.Text = "Account:";
+			this.lblAccount.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+			// 
+			// txtAccount
+			// 
+			this.txtAccount.Location = new System.Drawing.Point(176, 24);
+			this.txtAccount.Name = "txtAccount";
+			this.txtAccount.Size = new System.Drawing.Size(96, 20);
+			this.txtAccount.TabIndex = 1;
+			this.txtAccount.Text = "";
+			// 
+			// chkAutoDetectUser
+			// 
+			this.chkAutoDetectUser.Location = new System.Drawing.Point(16, 24);
+			this.chkAutoDetectUser.Name = "chkAutoDetectUser";
+			this.chkAutoDetectUser.TabIndex = 0;
+			this.chkAutoDetectUser.Text = "Auto Dect User";
 			// 
 			// frmMain
 			// 
+			this.AutoScale = false;
 			this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-			this.ClientSize = new System.Drawing.Size(296, 277);
-			this.Controls.Add(this.listBox1);
-			this.Controls.Add(this.groupBox1);
+			this.ClientSize = new System.Drawing.Size(296, 245);
+			this.Controls.Add(this.grpGlobalSettings);
+			this.Controls.Add(this.grpStatsSettings);
+			this.Controls.Add(this.grpSnapSettings);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+			this.MaximizeBox = false;
 			this.Name = "frmMain";
 			this.Text = "Smile!";
 			this.WindowState = System.Windows.Forms.FormWindowState.Minimized;
 			this.Load += new System.EventHandler(this.frmMain_Load);
-			this.groupBox1.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+			this.grpSnapSettings.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.upDelay)).EndInit();
+			this.grpStatsSettings.ResumeLayout(false);
+			this.grpGlobalSettings.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
 		#endregion
 
-		/// <summary>
 		/// The main entry point for the application.
-		/// </summary>
 		[STAThread]
 		static void Main() 
 		{
+			// Start Main Form
 			Application.Run(new frmMain());
 		}
 
@@ -209,6 +385,7 @@ namespace smiletray
 
 		private void notifyIcon_DoubleClick(object sender, System.EventArgs e)
 		{
+			// TODO: Add toggle
 			Show();
 			WindowState = FormWindowState.Normal;
 		}
@@ -227,10 +404,11 @@ namespace smiletray
 		private void TimerCheckKills_Tick(object sender, System.EventArgs e)
 		{
 			Image img;
-			if(this.comParser.NewKills())
+			if(this.ConsoleParser.NewKills())
 			{
 				img = NativeMethods.GetDesktopBitmap();
-				img.Save(this.comParser.dir + @"\kill-" + 
+				Thread.Sleep(1000);
+				img.Save(this.ConsoleParser.dir + @"\kill-" + 
 					   DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + DateTime.Now.Day.ToString() + "_" + 
 					   DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString() + DateTime.Now.Second.ToString() + DateTime.Now.Millisecond.ToString() 
 					   + ".jpg", 
@@ -238,7 +416,22 @@ namespace smiletray
 			}
 		}
 
+		private void menuItem1_Click(object sender, System.EventArgs e)
+		{
+			menuItem1.Checked = !menuItem1.Checked;
+			if(menuItem1.Checked == true)
+				TimerCheckKills.Enabled = true;
+			else
+				TimerCheckKills.Enabled = false;
+		}
 
+		private void chkSnapEnabled_CheckedChanged(object sender, System.EventArgs e)
+		{
+			if(chkSnapEnabled.Checked)
+				;
+			else
+				;
+		}
 
 
 	}

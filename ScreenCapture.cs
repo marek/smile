@@ -28,26 +28,11 @@ namespace smiletray
 
 		#endregion
 
-		private NativeMethods()
-		{}
-
+		// Get a screenshot of the current desktop
 		public static Image GetDesktopBitmap()
-		{
-			Rectangle virtualScreen = SystemInformation.VirtualScreen;
-			return GetDesktopBitmap(virtualScreen.X, virtualScreen.Y, virtualScreen.Width, virtualScreen.Height);
-		}
-
-		public static Image GetDesktopBitmap(Rectangle rectangle)
-		{
-			return GetDesktopBitmap(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
-		}
-
-		public static Image GetDesktopBitmap(int x, int y, int width, int height)
 		{
 			Graphics desktopGraphics;
 			Image desktopImage;
-			Graphics drawGraphics;
-			Image drawImage;
 			Rectangle virtualScreen = SystemInformation.VirtualScreen;
 
 			using (desktopImage = new Bitmap(virtualScreen.Width, virtualScreen.Height))
@@ -69,20 +54,9 @@ namespace smiletray
 					pDesktopWindow = IntPtr.Zero;
 					pWindowDC = IntPtr.Zero;
 				}
-
-				drawImage = new Bitmap(width, height);
-				using (drawGraphics = Graphics.FromImage(drawImage))
-				{
-					//Draw the area of the desktop we want into the new image.
-					drawGraphics.DrawImage(
-						desktopImage,
-						new Rectangle(new Point(0, 0), new Size(width, height)),
-						new Rectangle((virtualScreen.X - x)*-1, (virtualScreen.Y - y)*-1, width, height),
-						GraphicsUnit.Pixel);
-				}
 			}
 
-			return drawImage;
+			return desktopImage;
 		}
 	}
 }
