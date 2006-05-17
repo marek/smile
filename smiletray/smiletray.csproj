@@ -129,6 +129,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "GlobalHotKey.resx"
+                    DependentUpon = "GlobalHotKey.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
                     RelPath = "Main.cs"
                     SubType = "Form"
                     BuildAction = "Compile"

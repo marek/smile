@@ -6,7 +6,7 @@
 		<version>1.6</version>
 		<intversion>1.6.0</intversion>
 		<date>11/05/2005</date>
-		<time>11:47:26</time>
+		<time>14:55:26</time>
 		<page>http://www.kudlacz.com/?/section/projects</page>
 		<downloadurl>http://www.kudlacz.com/?/download/projects/smiletray%201.6.zip</downloadurl>
 		<fileurl>http://www.kudlacz.com/?/fetch/projects/smiletray%201.6.zip</fileurl>
@@ -24,6 +24,7 @@ Changelog:
 -General Form timers now will not start till all other things are initiated. Should get rid of all init bugs involving them.
 -Fixed bug with blank hotkeys
 -Added version checking. Will contact the site for new version details (Enabled by default to "Every Day")
+-Code cleanup. Started building up some unused things already. Heh
 		</comments>
 	</Smile>
 </Version>

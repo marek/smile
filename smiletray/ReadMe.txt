@@ -198,11 +198,7 @@ options that are specific to certain games.
 
 Source:
 ------------------------
-<<<<<<< HEAD:ReadMe.txt
 Source code is available from http://www.kudlacz.com
-=======
-As of 1.5 the source code will no longer be available. See the blurb about the license in the changelog.
->>>>>>> 5d8efe4... 1.5 Beta 8:smiletray/ReadMe.txt
 
 
 
@@ -225,7 +221,7 @@ Fuzzy from Team Dystopia
 tiki from planetquake (for lots of testing, bug fixing, and JediAcademy Profile help)
 Leo for suggestions
 `star from #counter-strike
-KodeK for .manifest file and bug reports
+KodeK for .manifest file and bug reports/suggestions
 Everyone who has sent me a "thanks"
 
 
@@ -271,6 +267,8 @@ Changelog:
 -General Form timers now will not start till all other things are initiated. Should get rid of all init bugs involving them.
 -Fixed bug with blank hotkeys
 -Added version checking. Will contact the site for new version details (Enabled by default to "Every Day")
+-Code cleanup. Started building up some unused things already. Heh
+-Fixed bugs involving using the wrong time
 
 
 **v1.5**

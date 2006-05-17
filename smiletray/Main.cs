@@ -66,8 +66,8 @@ namespace smiletray
 		private System.Threading.Timer TimerSave;
 		private TimerCallback TimerSaveDelegate;
 		private GlobalHotKey HKCaptureDesktop;
-		private GlobalKotKey HKCaptureWindow;
-		private GlobalKotKey HKCaptureActiveProfile;
+		private GlobalHotKey HKCaptureWindow;
+		private GlobalHotKey HKCaptureActiveProfile;
 		private StreamWriter log;
 		private bool closing = false;
 		private VersionCheck vc;
@@ -286,12 +286,12 @@ namespace smiletray
 			AddLogMessage("SaveQueue starting up.");
 
 			// Start key gooks
-			GlobalKotKey.RegisterHook();
+			GlobalHotKey.RegisterHook();
 			AddLogMessage("Registering system keyboard hook.");
 			DisableHotkeys = false;
-			HKCaptureWindow.Shortcut = GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow);
-			HKCaptureDesktop.Shortcut = GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop);
-			HKCaptureActiveProfile.Shortcut = GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile);
+			HKCaptureWindow.HotKey = GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow);
+			HKCaptureDesktop.HotKey = GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop);
+			HKCaptureActiveProfile.HotKey = GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile);
 
 			// Set up version checker
 			lastVersionCheck = Settings.MiscSettings.LastCheckTime;
@@ -340,9 +340,9 @@ namespace smiletray
 		{
 			this.components = new System.ComponentModel.Container();
 			System.Resources.ResourceManager resources = new System.Resources.ResourceManager(typeof(frmMain));
-			this.HKCaptureDesktop = new smiletray.GlobalKotKey(this.components);
-			this.HKCaptureWindow = new smiletray.GlobalKotKey(this.components);
-			this.HKCaptureActiveProfile = new smiletray.GlobalKotKey(this.components);
+			this.HKCaptureDesktop = new GlobalHotKey(this.components);
+			this.HKCaptureWindow = new GlobalHotKey(this.components);
+			this.HKCaptureActiveProfile = new GlobalHotKey(this.components);
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.contextMenu = new System.Windows.Forms.ContextMenu();
 			this.mnuEnableSnaps = new System.Windows.Forms.MenuItem();
@@ -497,21 +497,21 @@ namespace smiletray
 			// HKCaptureDesktop
 			// 
 			this.HKCaptureDesktop.EnableKeyCapture = false;
-			this.HKCaptureDesktop.Shortcut = null;
+			this.HKCaptureDesktop.HotKey = null;
 			this.HKCaptureDesktop.Pressed += new System.EventHandler(this.HKCaptureDesktop_Pressed);
 			this.HKCaptureDesktop.KeyCapture += new System.EventHandler(this.HKCaptureDesktop_KeyCapture);
 			// 
 			// HKCaptureWindow
 			// 
 			this.HKCaptureWindow.EnableKeyCapture = false;
-			this.HKCaptureWindow.Shortcut = null;
+			this.HKCaptureWindow.HotKey = null;
 			this.HKCaptureWindow.Pressed += new System.EventHandler(this.HKCaptureWindow_Pressed);
 			this.HKCaptureWindow.KeyCapture += new System.EventHandler(this.HKCaptureWindow_KeyCapture);
 			// 
 			// HKCaptureActiveProfile
 			// 
 			this.HKCaptureActiveProfile.EnableKeyCapture = false;
-			this.HKCaptureActiveProfile.Shortcut = null;
+			this.HKCaptureActiveProfile.HotKey = null;
 			this.HKCaptureActiveProfile.Pressed += new System.EventHandler(this.HKCaptureActiveProfile_Pressed);
 			this.HKCaptureActiveProfile.KeyCapture += new System.EventHandler(this.HKCaptureActiveProfile_KeyCapture);
 			// 
@@ -1746,7 +1746,7 @@ namespace smiletray
 			HKCaptureDesktop.Dispose();
 			HKCaptureWindow.Dispose();
 			HKCaptureActiveProfile.Dispose();
-			GlobalKotKey.UnregisterHook();
+			GlobalHotKey.UnregisterHook();
 			AddLogMessage("Unregistering system keyboard hook.");
 			TimerSave.Dispose();
 			TimerSave = null;
@@ -2320,11 +2320,11 @@ namespace smiletray
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
 
 			// Hot Keys
-			if(GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow) != null)
+			if(GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow) != null)
 				txtGeneral_HotKeys_CaptureWindow.Text = Settings.HotKeySettings.HKWindow;
-			if(GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop) != null)
+			if(GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop) != null)
 				txtGeneral_HotKeys_CaptureDesktop.Text = Settings.HotKeySettings.HKDesktop;
-			if(GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile) != null)
+			if(GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile) != null)
 				txtGeneral_HotKeys_CaptureActiveProfile.Text = Settings.HotKeySettings.HKActiveProfile;
 			chkGeneral_HotKeys_Enabled.Checked = Settings.HotKeySettings.Enabled;
 
@@ -2526,45 +2526,6 @@ namespace smiletray
 			}
 			return true;
 		}
-		private void LoadSettings_UnknownNode (object sender, XmlNodeEventArgs e)
-		{
-			XmlNodeType myNodeType = e.NodeType;
-			AddLogMessage(String.Format("LoadSettings->UnknownNode: " + 
-				"Name: {0} " + 
-				"LocalName: {1} " + 
-				"Namespace URI: {2}" + 
-				"Text: {3} " + 
-				"NodeType: {4} ",
-				e.Name, e.LocalName, e.NamespaceURI, e.Text, myNodeType));											
-		}
-
-		private void LoadSettings_UnknownAttribute(object sender, XmlAttributeEventArgs e)
-		{
-			AddLogMessage(String.Format("LoadSettings->UnknownAttribute: " + 
-				"Name: {0} " + 
-				"InnerXML: {1} " + 
-				"Line: {2}" + 
-				"Position: {3} ",
-				e.Attr.Name, e.Attr.InnerXml, e.LineNumber, e.LinePosition));
-		}
-
-		private void LoadSettings_UnknownElement(object sender, XmlElementEventArgs e)
-		{
-			AddLogMessage(String.Format("LoadSettings->UnknownElement: " + 
-				"Name: {0} " + 
-				"InnerXML: {1} " + 
-				"Line: {2}" + 
-				"Position: {3} ",
-				e.Element.Name, e.Element.InnerXml, e.LineNumber, e.LinePosition));
-		}
-
-		private void LoadSettings_UnreferencedObject(object sender, UnreferencedObjectEventArgs e)
-		{
-			AddLogMessage(String.Format("LoadSettings->UnreferencedObject: " + 
-				"ID: {0} " + 
-				"Object: {1} ",
-				e.UnreferencedId, e.UnreferencedObject));
-		}
 
 		// Load settings from xml
 		private bool LoadSettings()
@@ -2583,10 +2544,6 @@ namespace smiletray
 					{
 						CleanSettings(FileName);
 						serializer = new XmlSerializer(Data.GetType());
-						//serializer.UnknownNode += new XmlNodeEventHandler(LoadSettings_UnknownNode);
-						//serializer.UnknownAttribute += new XmlAttributeEventHandler(LoadSettings_UnknownAttribute);
-						//serializer.UnknownElement += new XmlElementEventHandler(LoadSettings_UnknownElement);
-						//serializer.UnreferencedObject += new UnreferencedObjectEventHandler(LoadSettings_UnreferencedObject);
 						reader = new StreamReader(FileName);
 						Data = (Smile_t) serializer.Deserialize(reader);
 						reader.Close();
@@ -3133,20 +3090,20 @@ namespace smiletray
 		private int ApplySettings()
 		{
 			// Hot Keys
-			GlobalKotKey.keycombo hkindexCaptureWindow;
-			GlobalKotKey.keycombo hkindexCaptureDesktop;
-			GlobalKotKey.keycombo hkindexCaptureActiveProfile;
-			if(txtGeneral_HotKeys_CaptureWindow.Text == null || (hkindexCaptureWindow = GlobalKotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureWindow.Text)) == null)
+			GlobalHotKey.keycombo hkindexCaptureWindow;
+			GlobalHotKey.keycombo hkindexCaptureDesktop;
+			GlobalHotKey.keycombo hkindexCaptureActiveProfile;
+			if(txtGeneral_HotKeys_CaptureWindow.Text == null || (hkindexCaptureWindow = GlobalHotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureWindow.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Window.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
 			}
-			if(txtGeneral_HotKeys_CaptureDesktop.Text == null || (hkindexCaptureDesktop = GlobalKotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureDesktop.Text)) == null)
+			if(txtGeneral_HotKeys_CaptureDesktop.Text == null || (hkindexCaptureDesktop = GlobalHotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureDesktop.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Desktop.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
 			}
-			if(txtGeneral_HotKeys_CaptureActiveProfile.Text == null || (hkindexCaptureActiveProfile = GlobalKotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureActiveProfile.Text)) == null)
+			if(txtGeneral_HotKeys_CaptureActiveProfile.Text == null || (hkindexCaptureActiveProfile = GlobalHotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureActiveProfile.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Active Profile");
 				return -1;
@@ -3193,11 +3150,11 @@ namespace smiletray
 			// If this far assign hotkeys
 			Settings.HotKeySettings.Enabled = chkGeneral_HotKeys_Enabled.Checked;
 			Settings.HotKeySettings.HKWindow = txtGeneral_HotKeys_CaptureWindow.Text;
-			HKCaptureWindow.Shortcut = hkindexCaptureWindow;
+			HKCaptureWindow.HotKey = hkindexCaptureWindow;
 			Settings.HotKeySettings.HKDesktop = txtGeneral_HotKeys_CaptureDesktop.Text;
-			HKCaptureDesktop.Shortcut = hkindexCaptureDesktop;
+			HKCaptureDesktop.HotKey = hkindexCaptureDesktop;
 			Settings.HotKeySettings.HKActiveProfile = txtGeneral_HotKeys_CaptureActiveProfile.Text;
-			HKCaptureActiveProfile.Shortcut = hkindexCaptureActiveProfile;
+			HKCaptureActiveProfile.HotKey = hkindexCaptureActiveProfile;
 
 			SaveSettings();
 
