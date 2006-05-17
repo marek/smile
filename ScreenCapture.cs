@@ -1,62 +1,71 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// Smile! -- CounterStrike: Source Screenshot and Statistics Utility
+// v1.2
+// Written by Marek Kudlacz
+// Copyright (c)2005
+//
+/////////////////////////////////////////////////////////////////////////////
+
+
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Drawing.Imaging;
 
 namespace smiletray
 {
 
-	public sealed class NativeMethods
+	public sealed class ScreenCapture
 	{
 		private const int SRCCOPY = 0x00CC0020;
 
-		#region Dll Imports
 
-		[DllImport("user32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
-		private static extern IntPtr GetDesktopWindow();
-
-		[DllImport("user32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
-		private static extern IntPtr GetWindowDC(IntPtr hwnd);
-
-		[DllImport("user32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
-		private static extern int ReleaseDC(IntPtr hwnd, IntPtr dc);
-
-		[DllImport("gdi32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
-		private static extern UInt64 BitBlt
-			(IntPtr hDestDC, int x, int y, int nWidth, int nHeight,
-			IntPtr hSrcDC, int xSrc, int ySrc, Int32 dwRop);
-
-		#endregion
-
+		public static Image GetDesktopImage()
+		{
+			return GetDesktopImage(false);
+		}
 		// Get a screenshot of the current desktop
-		public static Image GetDesktopBitmap()
+		public static Image GetDesktopImage(bool primary)
 		{
 			Graphics desktopGraphics;
 			Image desktopImage;
-			Rectangle virtualScreen = SystemInformation.VirtualScreen;
-
-			using (desktopImage = new Bitmap(virtualScreen.Width, virtualScreen.Height))
+			Rectangle screen;
+			if(primary) screen = Screen.PrimaryScreen.Bounds; 
+			else screen = SystemInformation.VirtualScreen;
+			desktopImage = new Bitmap(screen.Width, screen.Height);
+			using (desktopGraphics = Graphics.FromImage(desktopImage))
 			{
-				using (desktopGraphics = Graphics.FromImage(desktopImage))
-				{
-					IntPtr pDesktop = desktopGraphics.GetHdc();
-					IntPtr pDesktopWindow = GetDesktopWindow();
-					IntPtr pWindowDC = GetWindowDC(pDesktopWindow);
+				IntPtr pDesktop = desktopGraphics.GetHdc();
+				IntPtr pDesktopWindow = NativeMethods.GetDesktopWindow();
+				IntPtr pWindowDC = NativeMethods.GetWindowDC(pDesktopWindow);
 
-					BitBlt(pDesktop, 0, 0, virtualScreen.Width, virtualScreen.Height, pWindowDC, virtualScreen.X, virtualScreen.Y, SRCCOPY);
+				NativeMethods.BitBlt(pDesktop, 0, 0, screen.Width, screen.Height, pWindowDC, screen.X, screen.Y, SRCCOPY);
 
-					//Release device contexts
-					ReleaseDC(pDesktopWindow, pWindowDC);
-					desktopGraphics.ReleaseHdc(pDesktop);
+				//Release device contexts
+				NativeMethods.ReleaseDC(pDesktopWindow, pWindowDC);
+				desktopGraphics.ReleaseHdc(pDesktop);
 
-					//Set pointers to zero.
-					pDesktop = IntPtr.Zero;
-					pDesktopWindow = IntPtr.Zero;
-					pWindowDC = IntPtr.Zero;
-				}
+				//Set pointers to zero.
+				pDesktop = IntPtr.Zero;
+				pDesktopWindow = IntPtr.Zero;
+				pWindowDC = IntPtr.Zero;
 			}
-
 			return desktopImage;
+		}
+
+		public static ImageCodecInfo GetEncoderInfo(String mimeType)
+		{
+			int j;
+			ImageCodecInfo[] encoders;
+			encoders = ImageCodecInfo.GetImageEncoders();
+			for(j = 0; j < encoders.Length; ++j)
+			{
+				if(encoders[j].MimeType == mimeType)
+					return encoders[j];
+			}
+			return null;
 		}
 	}
 }

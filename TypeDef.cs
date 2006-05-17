@@ -1,61 +1,73 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// Smile! -- CounterStrike: Source Screenshot and Statistics Utility
+// v1.2
+// Written by Marek Kudlacz
+// Copyright (c)2005
+//
+/////////////////////////////////////////////////////////////////////////////
+
+
 using System;
 using System.Collections;
+using System.Xml.Serialization;
 
 namespace smiletray
 {
-	// Gun Stat
-	[Serializable]
-	struct gun_t
+	class Info
 	{
-		public uint kills;
-		public uint killed;
+		public static readonly String version = "1.2";
 	}
 
-	// Player Stats
-	[Serializable]
-	struct stats_t
+	public class SnapSettings_t
 	{
-		public uint damage_given;
-		public uint damage_received;
-		public uint hits_received;
-		public uint hits_given;
-		public uint received_counts;
-		public uint given_counts;
-		public uint hits_team;
-		public uint deaths;		// misc deaths, does not include being killed by weapon
-		public uint suicides;
-		public Hashtable gun;
+		public Boolean Enabled;
+		public Boolean SingleDisplay;
+		public Int32 Delay;
+		public String SnapDir;
+		public String Encoder;
+		public Int32 Quality;
+
+		public SnapSettings_t()
+		{
+			Enabled = new Boolean();
+			SingleDisplay = new Boolean();
+			Delay = new Int32();
+			Quality = new Int32();
+		}
 	}
 
-	[Serializable]
-	struct SnapSettings_t
+	public class StatsSettings_t
 	{
-		public bool enabled;
-		public uint delay;
-		public String snapdir;
+		public Boolean Enabled;
+
+		public StatsSettings_t()
+		{
+			Enabled = new Boolean();
+		}
 	}
 
-	[Serializable]
-	struct StatsSettings_t
+	public class Settings_t
 	{
-		public bool enabled;
-		public stats_t stats;
-	}
-
-	[Serializable]
-	struct GlobalSettings_t
-	{
-		public bool enabled;
-		public stats_t stats;
-	}
-
-	[Serializable]
-	struct Settings_t
-	{
-		public GlobalSettings_t GlobalSettings;
 		public SnapSettings_t SnapSettings;
 		public StatsSettings_t StatsSettings;
+
+		public Settings_t()
+		{
+			SnapSettings = new SnapSettings_t();
+			StatsSettings = new StatsSettings_t();
+		}
 	}
+
+	[XmlRootAttribute("Smile")]
+	public class Smile_t
+	{
+		public Settings_t Settings;
+		[XmlElement(ElementName = "Profile")] public CProfile [] Profiles;
+	}
+
+
+
 
 
 }
