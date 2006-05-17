@@ -156,6 +156,9 @@
   <metadata name="TimerMisc.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>806, 17</value>
   </metadata>
+  <data name="lblGeneral_Misc_Note1.Text" xml:space="preserve">
+    <value>* The application's priority class has the greatest effect in a programs performance. Be very careful when setting things to High. Never set it to Real-Time! Adjust the Save, Capture and Application thread priorities before changing this option as they make smaller adjustments.</value>
+  </data>
   <data name="picAboutIcon.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8

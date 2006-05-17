@@ -52,7 +52,6 @@ namespace smiletray
 		private readonly object FileSaveLock = new object();
 		private int CurrentNumSaveThreads;
 		private TSArrayList SaveQueue;
-		private TSArrayList MsgQueue;
 		private long LastSnapTime;
 		private int NextSnapDelay;
 		private int NumFrames = 0;
@@ -67,7 +66,7 @@ namespace smiletray
 		private GlobalHotKey HKCaptureDesktop;
 		private GlobalHotKey HKCaptureWindow;
 		private GlobalHotKey HKCaptureActiveProfile;
-		private StreamWriter log;
+		public static LogFile log;
 		private bool closing = false;
 		private VersionCheck vc;
 		private long lastVersionCheck = 0;
@@ -85,7 +84,9 @@ namespace smiletray
 				typeof(CProfileDayofDefeatSource),
 				typeof(CProfileSourceDystopia),
 				typeof(CProfileJediAcademy),
-                typeof(CProfileTeamFortressClassic)
+                typeof(CProfileTeamFortressClassic),
+                typeof(CProfileConditionZero),
+                typeof(CProfileRicochet)
 			};
 
 		// form elements
@@ -197,40 +198,39 @@ namespace smiletray
 		private System.Windows.Forms.TabPage tabGeneral_Misc;
 		private System.Windows.Forms.GroupBox grpGeneral_Misc_Updates;
 		private System.Windows.Forms.ComboBox cbGeneral_Misc_CheckUpdates;
-		private System.Windows.Forms.Label lblGeneral_Misc_CheckUpdates;
-        private System.Windows.Forms.GroupBox grpGeneral_SnapSettings_ProcessingSettings;
-        private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_SaveBug;
-        private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_SaveThreads;
-        private System.Windows.Forms.Label lblGeneral_SnapSettings_SaveThreads;
-        private System.Windows.Forms.Label lblGeneral_SnapSettings_CapturePriority;
-        private System.Windows.Forms.ComboBox cbGeneral_SnapSettings_CapturePriority;
-        private System.Windows.Forms.Label lblGeneral_SnapSettings_SavePriority;
-        private System.Windows.Forms.ComboBox cbGeneral_SnapSettings_SavePriority;
+        private System.Windows.Forms.Label lblGeneral_Misc_CheckUpdates;
+        private GroupBox grpGeneral_Misc_ProcessingSettings;
+        private Label lblGeneral_Misc_CapturePriority;
+        private ComboBox cbGeneral_Misc_CapturePriority;
+        private Label lblGeneral_Misc_SavePriority;
+        private NumericUpDown udGeneral_Misc_SaveThreads;
+        private ComboBox cbGeneral_Misc_SavePriority;
+        private Label lblGeneral_Misc_SaveThreads;
+        private CheckBox chkGeneral_Misc_SaveBug;
+        private Label lblGeneral_Misc_ApplicationThreadPriority;
+        private ComboBox cbGeneral_Misc_ApplicationThreadPriority;
+        private Label lblGeneral_Misc_ApplicationPriorityClass;
+        private ComboBox cbGeneral_Misc_ApplicationPriorityClass;
+        private Label lblGeneral_Misc_Note1;
+        private Label lblGeneral_Misc_Note2;
+        private Button cmdGeneral_Misc_LowPriority;
+        private Button cmdGeneral_Misc_MediumPriority;
+        private Button cmdGeneral_Misc_DefaultPriority;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		/// Form Methods
 		//////////////////////////////////////////////////////////////////////////////////////////////
-	
+	    public static void AddLogMessage(string s)
+        {
+            if(log != null)
+                log.Add(s);
+        }
+        
 		public frmMain()
 		{
 			// Required for Windows Form Designer support
 			InitializeComponent();
-
-			// Init log file
-			try
-			{
-				log = new StreamWriter(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "\\" + Path.GetFileNameWithoutExtension(System.Windows.Forms.Application.ExecutablePath) + ".log", true);
-				log.WriteLine("\r\n\r\n-----Log Session Started: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
-				log.Flush();
-			}
-			catch
-			{
-				MessageBox.Show("Error: Cannot open smiletray session log for writing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-			}
-
-			// Init MsgQueue
-			this.MsgQueue = new TSArrayList(10);
 
 			// Read Settings
 			this.Settings = new Settings_t();
@@ -267,11 +267,21 @@ namespace smiletray
                 Array levels = Enum.GetValues(typeof(System.Threading.ThreadPriority));
                 for (int i = 0; i < levels.Length; i++)
                 {
-                    cbGeneral_SnapSettings_CapturePriority.Items.Add(levels.GetValue(i));
-                    cbGeneral_SnapSettings_SavePriority.Items.Add(levels.GetValue(i));
+                    cbGeneral_Misc_CapturePriority.Items.Add(levels.GetValue(i));
+                    cbGeneral_Misc_SavePriority.Items.Add(levels.GetValue(i));
+                    cbGeneral_Misc_ApplicationThreadPriority.Items.Add(levels.GetValue(i));
                 }
-
             }
+            {
+                Array levels = Enum.GetValues(typeof(System.Diagnostics.ProcessPriorityClass));
+                for (int i = 0; i < levels.Length; i++)
+                {
+                    cbGeneral_Misc_ApplicationPriorityClass.Items.Add(levels.GetValue(i));
+                }
+            }
+            Process.GetCurrentProcess().PriorityClass = Settings.MiscSettings.ApplicationPriorityClass;
+            Thread.CurrentThread.Priority = Settings.MiscSettings.ApplicationPriority; 
+
 			// Create Save Queue
 			this.SaveQueue = new TSArrayList(10);
 
@@ -382,14 +392,6 @@ namespace smiletray
             this.tabGeneral = new System.Windows.Forms.TabPage();
             this.tabGeneralOptions = new System.Windows.Forms.TabControl();
             this.tabGeneral_GlobalSnapSettings = new System.Windows.Forms.TabPage();
-            this.grpGeneral_SnapSettings_ProcessingSettings = new System.Windows.Forms.GroupBox();
-            this.lblGeneral_SnapSettings_CapturePriority = new System.Windows.Forms.Label();
-            this.cbGeneral_SnapSettings_CapturePriority = new System.Windows.Forms.ComboBox();
-            this.lblGeneral_SnapSettings_SavePriority = new System.Windows.Forms.Label();
-            this.udGeneral_SnapSettings_SaveThreads = new System.Windows.Forms.NumericUpDown();
-            this.cbGeneral_SnapSettings_SavePriority = new System.Windows.Forms.ComboBox();
-            this.lblGeneral_SnapSettings_SaveThreads = new System.Windows.Forms.Label();
-            this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
             this.grpGeneral_SnapSettings_AnimationSettings = new System.Windows.Forms.GroupBox();
             this.chkGeneral_SnapSettings_AnimOptimizePalette = new System.Windows.Forms.CheckBox();
             this.udGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.NumericUpDown();
@@ -429,6 +431,23 @@ namespace smiletray
             this.lblGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.Label();
             this.chkGeneral_HotKeys_Enabled = new System.Windows.Forms.CheckBox();
             this.tabGeneral_Misc = new System.Windows.Forms.TabPage();
+            this.grpGeneral_Misc_ProcessingSettings = new System.Windows.Forms.GroupBox();
+            this.cmdGeneral_Misc_DefaultPriority = new System.Windows.Forms.Button();
+            this.cmdGeneral_Misc_MediumPriority = new System.Windows.Forms.Button();
+            this.cmdGeneral_Misc_LowPriority = new System.Windows.Forms.Button();
+            this.lblGeneral_Misc_Note2 = new System.Windows.Forms.Label();
+            this.lblGeneral_Misc_Note1 = new System.Windows.Forms.Label();
+            this.lblGeneral_Misc_ApplicationThreadPriority = new System.Windows.Forms.Label();
+            this.cbGeneral_Misc_ApplicationThreadPriority = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_Misc_ApplicationPriorityClass = new System.Windows.Forms.Label();
+            this.cbGeneral_Misc_ApplicationPriorityClass = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_Misc_CapturePriority = new System.Windows.Forms.Label();
+            this.cbGeneral_Misc_CapturePriority = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_Misc_SavePriority = new System.Windows.Forms.Label();
+            this.udGeneral_Misc_SaveThreads = new System.Windows.Forms.NumericUpDown();
+            this.cbGeneral_Misc_SavePriority = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_Misc_SaveThreads = new System.Windows.Forms.Label();
+            this.chkGeneral_Misc_SaveBug = new System.Windows.Forms.CheckBox();
             this.grpGeneral_Misc_Updates = new System.Windows.Forms.GroupBox();
             this.lblGeneral_Misc_CheckUpdates = new System.Windows.Forms.Label();
             this.cbGeneral_Misc_CheckUpdates = new System.Windows.Forms.ComboBox();
@@ -482,8 +501,6 @@ namespace smiletray
             this.tabGeneral.SuspendLayout();
             this.tabGeneralOptions.SuspendLayout();
             this.tabGeneral_GlobalSnapSettings.SuspendLayout();
-            this.grpGeneral_SnapSettings_ProcessingSettings.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveThreads)).BeginInit();
             this.grpGeneral_SnapSettings_AnimationSettings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).BeginInit();
@@ -498,6 +515,8 @@ namespace smiletray
             this.tabGeneral_GlobalStatsSettings.SuspendLayout();
             this.tabGeneral_HotKeys.SuspendLayout();
             this.tabGeneral_Misc.SuspendLayout();
+            this.grpGeneral_Misc_ProcessingSettings.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_Misc_SaveThreads)).BeginInit();
             this.grpGeneral_Misc_Updates.SuspendLayout();
             this.tabProfiles.SuspendLayout();
             this.tabProfileOptions.SuspendLayout();
@@ -698,7 +717,6 @@ namespace smiletray
             // tabGeneral_GlobalSnapSettings
             // 
             this.tabGeneral_GlobalSnapSettings.AutoScroll = true;
-            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ProcessingSettings);
             this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_AnimationSettings);
             this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ImageFormat);
             this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_SnapDir);
@@ -709,96 +727,6 @@ namespace smiletray
             this.tabGeneral_GlobalSnapSettings.Size = new System.Drawing.Size(416, 342);
             this.tabGeneral_GlobalSnapSettings.TabIndex = 0;
             this.tabGeneral_GlobalSnapSettings.Text = "Global Snap Settings";
-            // 
-            // grpGeneral_SnapSettings_ProcessingSettings
-            // 
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.lblGeneral_SnapSettings_CapturePriority);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.cbGeneral_SnapSettings_CapturePriority);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.lblGeneral_SnapSettings_SavePriority);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.udGeneral_SnapSettings_SaveThreads);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.cbGeneral_SnapSettings_SavePriority);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.lblGeneral_SnapSettings_SaveThreads);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.chkGeneral_SnapSettings_SaveBug);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Location = new System.Drawing.Point(8, 318);
-            this.grpGeneral_SnapSettings_ProcessingSettings.Name = "grpGeneral_SnapSettings_ProcessingSettings";
-            this.grpGeneral_SnapSettings_ProcessingSettings.Size = new System.Drawing.Size(384, 140);
-            this.grpGeneral_SnapSettings_ProcessingSettings.TabIndex = 26;
-            this.grpGeneral_SnapSettings_ProcessingSettings.TabStop = false;
-            this.grpGeneral_SnapSettings_ProcessingSettings.Text = "Processing Settings";
-            // 
-            // lblGeneral_SnapSettings_CapturePriority
-            // 
-            this.lblGeneral_SnapSettings_CapturePriority.Location = new System.Drawing.Point(14, 108);
-            this.lblGeneral_SnapSettings_CapturePriority.Name = "lblGeneral_SnapSettings_CapturePriority";
-            this.lblGeneral_SnapSettings_CapturePriority.Size = new System.Drawing.Size(104, 16);
-            this.lblGeneral_SnapSettings_CapturePriority.TabIndex = 36;
-            this.lblGeneral_SnapSettings_CapturePriority.Text = "Capture Priority:";
-            this.lblGeneral_SnapSettings_CapturePriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // cbGeneral_SnapSettings_CapturePriority
-            // 
-            this.cbGeneral_SnapSettings_CapturePriority.Location = new System.Drawing.Point(126, 108);
-            this.cbGeneral_SnapSettings_CapturePriority.Name = "cbGeneral_SnapSettings_CapturePriority";
-            this.cbGeneral_SnapSettings_CapturePriority.Size = new System.Drawing.Size(248, 21);
-            this.cbGeneral_SnapSettings_CapturePriority.TabIndex = 35;
-            this.cbGeneral_SnapSettings_CapturePriority.Text = "Priority Levels";
-            // 
-            // lblGeneral_SnapSettings_SavePriority
-            // 
-            this.lblGeneral_SnapSettings_SavePriority.Location = new System.Drawing.Point(14, 81);
-            this.lblGeneral_SnapSettings_SavePriority.Name = "lblGeneral_SnapSettings_SavePriority";
-            this.lblGeneral_SnapSettings_SavePriority.Size = new System.Drawing.Size(104, 16);
-            this.lblGeneral_SnapSettings_SavePriority.TabIndex = 23;
-            this.lblGeneral_SnapSettings_SavePriority.Text = "Save Priority:";
-            this.lblGeneral_SnapSettings_SavePriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // udGeneral_SnapSettings_SaveThreads
-            // 
-            this.udGeneral_SnapSettings_SaveThreads.Location = new System.Drawing.Point(126, 55);
-            this.udGeneral_SnapSettings_SaveThreads.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.udGeneral_SnapSettings_SaveThreads.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.udGeneral_SnapSettings_SaveThreads.Name = "udGeneral_SnapSettings_SaveThreads";
-            this.udGeneral_SnapSettings_SaveThreads.Size = new System.Drawing.Size(248, 20);
-            this.udGeneral_SnapSettings_SaveThreads.TabIndex = 33;
-            this.udGeneral_SnapSettings_SaveThreads.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.udGeneral_SnapSettings_SaveThreads.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            // 
-            // cbGeneral_SnapSettings_SavePriority
-            // 
-            this.cbGeneral_SnapSettings_SavePriority.Location = new System.Drawing.Point(126, 81);
-            this.cbGeneral_SnapSettings_SavePriority.Name = "cbGeneral_SnapSettings_SavePriority";
-            this.cbGeneral_SnapSettings_SavePriority.Size = new System.Drawing.Size(248, 21);
-            this.cbGeneral_SnapSettings_SavePriority.TabIndex = 22;
-            this.cbGeneral_SnapSettings_SavePriority.Text = "Priority Levels";
-            // 
-            // lblGeneral_SnapSettings_SaveThreads
-            // 
-            this.lblGeneral_SnapSettings_SaveThreads.Location = new System.Drawing.Point(14, 55);
-            this.lblGeneral_SnapSettings_SaveThreads.Name = "lblGeneral_SnapSettings_SaveThreads";
-            this.lblGeneral_SnapSettings_SaveThreads.Size = new System.Drawing.Size(93, 16);
-            this.lblGeneral_SnapSettings_SaveThreads.TabIndex = 34;
-            this.lblGeneral_SnapSettings_SaveThreads.Text = "Save Threads:";
-            this.lblGeneral_SnapSettings_SaveThreads.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // chkGeneral_SnapSettings_SaveBug
-            // 
-            this.chkGeneral_SnapSettings_SaveBug.Location = new System.Drawing.Point(17, 25);
-            this.chkGeneral_SnapSettings_SaveBug.Name = "chkGeneral_SnapSettings_SaveBug";
-            this.chkGeneral_SnapSettings_SaveBug.Size = new System.Drawing.Size(348, 24);
-            this.chkGeneral_SnapSettings_SaveBug.TabIndex = 25;
-            this.chkGeneral_SnapSettings_SaveBug.Text = "Save Bug: Images Don\'t Seem to Save (AntiVirus Conflict)";
             // 
             // grpGeneral_SnapSettings_AnimationSettings
             // 
@@ -811,7 +739,7 @@ namespace smiletray
             this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimWidth);
             this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimWidth);
             this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimOriginalDimentions);
-            this.grpGeneral_SnapSettings_AnimationSettings.Location = new System.Drawing.Point(8, 464);
+            this.grpGeneral_SnapSettings_AnimationSettings.Location = new System.Drawing.Point(8, 318);
             this.grpGeneral_SnapSettings_AnimationSettings.Name = "grpGeneral_SnapSettings_AnimationSettings";
             this.grpGeneral_SnapSettings_AnimationSettings.Size = new System.Drawing.Size(384, 184);
             this.grpGeneral_SnapSettings_AnimationSettings.TabIndex = 25;
@@ -1219,6 +1147,8 @@ namespace smiletray
             // 
             // tabGeneral_Misc
             // 
+            this.tabGeneral_Misc.AutoScroll = true;
+            this.tabGeneral_Misc.Controls.Add(this.grpGeneral_Misc_ProcessingSettings);
             this.tabGeneral_Misc.Controls.Add(this.grpGeneral_Misc_Updates);
             this.tabGeneral_Misc.Location = new System.Drawing.Point(4, 22);
             this.tabGeneral_Misc.Name = "tabGeneral_Misc";
@@ -1226,13 +1156,196 @@ namespace smiletray
             this.tabGeneral_Misc.TabIndex = 3;
             this.tabGeneral_Misc.Text = "Misc";
             // 
+            // grpGeneral_Misc_ProcessingSettings
+            // 
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cmdGeneral_Misc_DefaultPriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cmdGeneral_Misc_MediumPriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cmdGeneral_Misc_LowPriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_Note2);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_Note1);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_ApplicationThreadPriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cbGeneral_Misc_ApplicationThreadPriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_ApplicationPriorityClass);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cbGeneral_Misc_ApplicationPriorityClass);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_CapturePriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cbGeneral_Misc_CapturePriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_SavePriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.udGeneral_Misc_SaveThreads);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.cbGeneral_Misc_SavePriority);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.lblGeneral_Misc_SaveThreads);
+            this.grpGeneral_Misc_ProcessingSettings.Controls.Add(this.chkGeneral_Misc_SaveBug);
+            this.grpGeneral_Misc_ProcessingSettings.Location = new System.Drawing.Point(8, 94);
+            this.grpGeneral_Misc_ProcessingSettings.Name = "grpGeneral_Misc_ProcessingSettings";
+            this.grpGeneral_Misc_ProcessingSettings.Size = new System.Drawing.Size(384, 351);
+            this.grpGeneral_Misc_ProcessingSettings.TabIndex = 27;
+            this.grpGeneral_Misc_ProcessingSettings.TabStop = false;
+            this.grpGeneral_Misc_ProcessingSettings.Text = "Processing Settings (Expert Users Only!)";
+            // 
+            // cmdGeneral_Misc_DefaultPriority
+            // 
+            this.cmdGeneral_Misc_DefaultPriority.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdGeneral_Misc_DefaultPriority.Location = new System.Drawing.Point(277, 59);
+            this.cmdGeneral_Misc_DefaultPriority.Name = "cmdGeneral_Misc_DefaultPriority";
+            this.cmdGeneral_Misc_DefaultPriority.Size = new System.Drawing.Size(88, 22);
+            this.cmdGeneral_Misc_DefaultPriority.TabIndex = 45;
+            this.cmdGeneral_Misc_DefaultPriority.Text = "Default Priority";
+            this.cmdGeneral_Misc_DefaultPriority.UseVisualStyleBackColor = true;
+            this.cmdGeneral_Misc_DefaultPriority.Click += new System.EventHandler(this.cmdGeneral_Misc_DefaultPriority_Click);
+            // 
+            // cmdGeneral_Misc_MediumPriority
+            // 
+            this.cmdGeneral_Misc_MediumPriority.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdGeneral_Misc_MediumPriority.Location = new System.Drawing.Point(150, 59);
+            this.cmdGeneral_Misc_MediumPriority.Name = "cmdGeneral_Misc_MediumPriority";
+            this.cmdGeneral_Misc_MediumPriority.Size = new System.Drawing.Size(88, 22);
+            this.cmdGeneral_Misc_MediumPriority.TabIndex = 44;
+            this.cmdGeneral_Misc_MediumPriority.Text = "Medium Priority";
+            this.cmdGeneral_Misc_MediumPriority.UseVisualStyleBackColor = true;
+            this.cmdGeneral_Misc_MediumPriority.Click += new System.EventHandler(this.cmdGeneral_Misc_MediumPriority_Click);
+            // 
+            // cmdGeneral_Misc_LowPriority
+            // 
+            this.cmdGeneral_Misc_LowPriority.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdGeneral_Misc_LowPriority.Location = new System.Drawing.Point(24, 59);
+            this.cmdGeneral_Misc_LowPriority.Name = "cmdGeneral_Misc_LowPriority";
+            this.cmdGeneral_Misc_LowPriority.Size = new System.Drawing.Size(88, 22);
+            this.cmdGeneral_Misc_LowPriority.TabIndex = 43;
+            this.cmdGeneral_Misc_LowPriority.Text = "Low Priority";
+            this.cmdGeneral_Misc_LowPriority.UseVisualStyleBackColor = true;
+            this.cmdGeneral_Misc_LowPriority.Click += new System.EventHandler(this.cmdGeneral_Misc_LowPriority_Click);
+            // 
+            // lblGeneral_Misc_Note2
+            // 
+            this.lblGeneral_Misc_Note2.Location = new System.Drawing.Point(17, 295);
+            this.lblGeneral_Misc_Note2.Name = "lblGeneral_Misc_Note2";
+            this.lblGeneral_Misc_Note2.Size = new System.Drawing.Size(361, 37);
+            this.lblGeneral_Misc_Note2.TabIndex = 42;
+            this.lblGeneral_Misc_Note2.Text = "**This is the default priority for all miscellaneous routines when the program is" +
+                " not saving or capturing.";
+            // 
+            // lblGeneral_Misc_Note1
+            // 
+            this.lblGeneral_Misc_Note1.Location = new System.Drawing.Point(17, 223);
+            this.lblGeneral_Misc_Note1.Name = "lblGeneral_Misc_Note1";
+            this.lblGeneral_Misc_Note1.Size = new System.Drawing.Size(361, 65);
+            this.lblGeneral_Misc_Note1.TabIndex = 41;
+            this.lblGeneral_Misc_Note1.Text = resources.GetString("lblGeneral_Misc_Note1.Text");
+            // 
+            // lblGeneral_Misc_ApplicationThreadPriority
+            // 
+            this.lblGeneral_Misc_ApplicationThreadPriority.Location = new System.Drawing.Point(17, 194);
+            this.lblGeneral_Misc_ApplicationThreadPriority.Name = "lblGeneral_Misc_ApplicationThreadPriority";
+            this.lblGeneral_Misc_ApplicationThreadPriority.Size = new System.Drawing.Size(156, 16);
+            this.lblGeneral_Misc_ApplicationThreadPriority.TabIndex = 40;
+            this.lblGeneral_Misc_ApplicationThreadPriority.Text = "**Application Thread Priority:";
+            this.lblGeneral_Misc_ApplicationThreadPriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbGeneral_Misc_ApplicationThreadPriority
+            // 
+            this.cbGeneral_Misc_ApplicationThreadPriority.Location = new System.Drawing.Point(179, 193);
+            this.cbGeneral_Misc_ApplicationThreadPriority.Name = "cbGeneral_Misc_ApplicationThreadPriority";
+            this.cbGeneral_Misc_ApplicationThreadPriority.Size = new System.Drawing.Size(199, 21);
+            this.cbGeneral_Misc_ApplicationThreadPriority.TabIndex = 39;
+            this.cbGeneral_Misc_ApplicationThreadPriority.Text = "Priority Levels";
+            // 
+            // lblGeneral_Misc_ApplicationPriorityClass
+            // 
+            this.lblGeneral_Misc_ApplicationPriorityClass.Location = new System.Drawing.Point(14, 167);
+            this.lblGeneral_Misc_ApplicationPriorityClass.Name = "lblGeneral_Misc_ApplicationPriorityClass";
+            this.lblGeneral_Misc_ApplicationPriorityClass.Size = new System.Drawing.Size(139, 16);
+            this.lblGeneral_Misc_ApplicationPriorityClass.TabIndex = 38;
+            this.lblGeneral_Misc_ApplicationPriorityClass.Text = "*Application Priority Class:";
+            this.lblGeneral_Misc_ApplicationPriorityClass.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbGeneral_Misc_ApplicationPriorityClass
+            // 
+            this.cbGeneral_Misc_ApplicationPriorityClass.Location = new System.Drawing.Point(179, 167);
+            this.cbGeneral_Misc_ApplicationPriorityClass.Name = "cbGeneral_Misc_ApplicationPriorityClass";
+            this.cbGeneral_Misc_ApplicationPriorityClass.Size = new System.Drawing.Size(199, 21);
+            this.cbGeneral_Misc_ApplicationPriorityClass.TabIndex = 37;
+            this.cbGeneral_Misc_ApplicationPriorityClass.Text = "Priority Levels";
+            // 
+            // lblGeneral_Misc_CapturePriority
+            // 
+            this.lblGeneral_Misc_CapturePriority.Location = new System.Drawing.Point(14, 140);
+            this.lblGeneral_Misc_CapturePriority.Name = "lblGeneral_Misc_CapturePriority";
+            this.lblGeneral_Misc_CapturePriority.Size = new System.Drawing.Size(139, 16);
+            this.lblGeneral_Misc_CapturePriority.TabIndex = 36;
+            this.lblGeneral_Misc_CapturePriority.Text = "Capture Thread Priority:";
+            this.lblGeneral_Misc_CapturePriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbGeneral_Misc_CapturePriority
+            // 
+            this.cbGeneral_Misc_CapturePriority.Location = new System.Drawing.Point(179, 140);
+            this.cbGeneral_Misc_CapturePriority.Name = "cbGeneral_Misc_CapturePriority";
+            this.cbGeneral_Misc_CapturePriority.Size = new System.Drawing.Size(199, 21);
+            this.cbGeneral_Misc_CapturePriority.TabIndex = 35;
+            this.cbGeneral_Misc_CapturePriority.Text = "Priority Levels";
+            // 
+            // lblGeneral_Misc_SavePriority
+            // 
+            this.lblGeneral_Misc_SavePriority.Location = new System.Drawing.Point(14, 113);
+            this.lblGeneral_Misc_SavePriority.Name = "lblGeneral_Misc_SavePriority";
+            this.lblGeneral_Misc_SavePriority.Size = new System.Drawing.Size(139, 16);
+            this.lblGeneral_Misc_SavePriority.TabIndex = 23;
+            this.lblGeneral_Misc_SavePriority.Text = "Save Thread Priority:";
+            this.lblGeneral_Misc_SavePriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udGeneral_Misc_SaveThreads
+            // 
+            this.udGeneral_Misc_SaveThreads.Location = new System.Drawing.Point(179, 87);
+            this.udGeneral_Misc_SaveThreads.Maximum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.udGeneral_Misc_SaveThreads.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udGeneral_Misc_SaveThreads.Name = "udGeneral_Misc_SaveThreads";
+            this.udGeneral_Misc_SaveThreads.Size = new System.Drawing.Size(199, 20);
+            this.udGeneral_Misc_SaveThreads.TabIndex = 33;
+            this.udGeneral_Misc_SaveThreads.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.udGeneral_Misc_SaveThreads.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // cbGeneral_Misc_SavePriority
+            // 
+            this.cbGeneral_Misc_SavePriority.Location = new System.Drawing.Point(179, 113);
+            this.cbGeneral_Misc_SavePriority.Name = "cbGeneral_Misc_SavePriority";
+            this.cbGeneral_Misc_SavePriority.Size = new System.Drawing.Size(199, 21);
+            this.cbGeneral_Misc_SavePriority.TabIndex = 22;
+            this.cbGeneral_Misc_SavePriority.Text = "Priority Levels";
+            // 
+            // lblGeneral_Misc_SaveThreads
+            // 
+            this.lblGeneral_Misc_SaveThreads.Location = new System.Drawing.Point(14, 87);
+            this.lblGeneral_Misc_SaveThreads.Name = "lblGeneral_Misc_SaveThreads";
+            this.lblGeneral_Misc_SaveThreads.Size = new System.Drawing.Size(93, 16);
+            this.lblGeneral_Misc_SaveThreads.TabIndex = 34;
+            this.lblGeneral_Misc_SaveThreads.Text = "Save Threads:";
+            this.lblGeneral_Misc_SaveThreads.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkGeneral_Misc_SaveBug
+            // 
+            this.chkGeneral_Misc_SaveBug.Location = new System.Drawing.Point(17, 25);
+            this.chkGeneral_Misc_SaveBug.Name = "chkGeneral_Misc_SaveBug";
+            this.chkGeneral_Misc_SaveBug.Size = new System.Drawing.Size(348, 24);
+            this.chkGeneral_Misc_SaveBug.TabIndex = 25;
+            this.chkGeneral_Misc_SaveBug.Text = "Save Bug: Images Don\'t Seem to Save (AntiVirus Conflict)";
+            // 
             // grpGeneral_Misc_Updates
             // 
             this.grpGeneral_Misc_Updates.Controls.Add(this.lblGeneral_Misc_CheckUpdates);
             this.grpGeneral_Misc_Updates.Controls.Add(this.cbGeneral_Misc_CheckUpdates);
             this.grpGeneral_Misc_Updates.Location = new System.Drawing.Point(8, 8);
             this.grpGeneral_Misc_Updates.Name = "grpGeneral_Misc_Updates";
-            this.grpGeneral_Misc_Updates.Size = new System.Drawing.Size(400, 80);
+            this.grpGeneral_Misc_Updates.Size = new System.Drawing.Size(384, 80);
             this.grpGeneral_Misc_Updates.TabIndex = 0;
             this.grpGeneral_Misc_Updates.TabStop = false;
             this.grpGeneral_Misc_Updates.Text = "Updates";
@@ -1780,8 +1893,6 @@ namespace smiletray
             this.tabGeneral.ResumeLayout(false);
             this.tabGeneralOptions.ResumeLayout(false);
             this.tabGeneral_GlobalSnapSettings.ResumeLayout(false);
-            this.grpGeneral_SnapSettings_ProcessingSettings.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveThreads)).EndInit();
             this.grpGeneral_SnapSettings_AnimationSettings.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).EndInit();
@@ -1799,6 +1910,8 @@ namespace smiletray
             this.tabGeneral_HotKeys.ResumeLayout(false);
             this.tabGeneral_HotKeys.PerformLayout();
             this.tabGeneral_Misc.ResumeLayout(false);
+            this.grpGeneral_Misc_ProcessingSettings.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_Misc_SaveThreads)).EndInit();
             this.grpGeneral_Misc_Updates.ResumeLayout(false);
             this.tabProfiles.ResumeLayout(false);
             this.tabProfileOptions.ResumeLayout(false);
@@ -1835,8 +1948,7 @@ namespace smiletray
 		{
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Process.GetCurrentProcess().PriorityClass = System.Diagnostics.ProcessPriorityClass.BelowNormal;
-         //   System.Threading.Thread.CurrentThread.Priority = System.Threading.ThreadPriority.BelowNormal;
+            
 			string indentifier = "smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}";
 			MessageId = NativeMethods.RegisterWindowMessage(indentifier);
 			using(SingleProgramInstance spi = new SingleProgramInstance(indentifier))
@@ -1844,7 +1956,19 @@ namespace smiletray
 				if (spi.IsSingleInstance)
 				{
 					// Start Main Form
-					Application.Run(new frmMain());
+                    try
+                    {
+                        frmMain.log = new LogFile(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "\\" + Path.GetFileNameWithoutExtension(System.Windows.Forms.Application.ExecutablePath) + ".log");
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Error: Cannot open smiletray session log for writing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+                    Application.Run(new frmMain());
+                    if (log != null)
+                    {
+                        log.Close();
+                    }
 				} 
 				else 
 				{
@@ -1885,12 +2009,6 @@ namespace smiletray
 			TimerSave = null;
 			AddLogMessage("SaveQueue shutting down.");
 			SaveSettings();
-			if(log != null)
-			{
-				log.WriteLine("\r\n\r\n-----Log Session Ended: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
-				log.Flush();
-				log.Close();
-			}
 		}
 
 		private void frmMain_Resize(object sender, System.EventArgs e)
@@ -2196,7 +2314,7 @@ namespace smiletray
 		private void mnuAbout_Click(object sender, System.EventArgs e)
 		{
 			PopulateOptions();
-			tabOptions.SelectedIndex = 2;
+			tabOptions.SelectedIndex = 3;
 			Show();
 		}
 
@@ -2233,8 +2351,11 @@ namespace smiletray
 		// Main Statistics/Screenshot Routine
 		private void TimerCheckConsoleLog_Tick(object stateInfo)
 		{
+            // run at default application priority for now
+            Thread.CurrentThread.Priority = Settings.MiscSettings.ApplicationPriority;
+
 			if(TimerCheckConsoleLog != null)
-				TimerCheckConsoleLog.Change(System.Threading.Timeout.Infinite, 0);	
+				TimerCheckConsoleLog.Change(System.Threading.Timeout.Infinite, 0);
 
 			ExecCheckConsoleLog();
 
@@ -2257,10 +2378,9 @@ namespace smiletray
 		{
 			lock(MsgLock)
 			{
-				while(MsgQueue.Count() > 0)
+				while(log.HasMessage())
 				{
-					String msg = (String)MsgQueue.ObjectAt(0);
-					MsgQueue.RemoveAt(0);
+                    String msg = log.Pop();
 					rtxtLog.SelectionStart = rtxtLog.Text.Length;
 					rtxtLog.SelectedText = msg + "\n";
 				}
@@ -2367,7 +2487,7 @@ namespace smiletray
 		{
 			lock(SaveThreadCountLock)
 			{
-				if(CurrentNumSaveThreads >= Settings.SnapSettings.NumSaveThreads)
+                if (CurrentNumSaveThreads >= Settings.MiscSettings.NumSaveThreads)
 				{
 					lock(QueueLock)
 					{
@@ -2383,7 +2503,7 @@ namespace smiletray
 
             // Lag fix?
             ThreadPriority PreviousThreadPriority = Thread.CurrentThread.Priority;
-            Thread.CurrentThread.Priority = Settings.SnapSettings.SavePriority;
+            Thread.CurrentThread.Priority = Settings.MiscSettings.SavePriority;
 
             ExecSaveQueue();
 
@@ -2426,20 +2546,6 @@ namespace smiletray
 		/// Helper Methods
 		//////////////////////////////////////////////////////////////////////////////////////////////
 
-		private void AddLogMessage(String msg)
-		{
-			lock(MsgLock)
-			{
-				string s = String.Format("[{0:D2}:{1:D2}:{2:D2}] ", DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second) + msg;
-				MsgQueue.Add(s);
-				if(log != null)
-				{
-					log.WriteLine(s);
-					log.Flush();
-				}
-			}
-		}
-
 		// Populate Options Form
 		private void PopulateOptions()
 		{
@@ -2456,7 +2562,7 @@ namespace smiletray
 			tbGeneral_SnapSettings_Quality.Value = Settings.SnapSettings.Quality;
 			tbGeneral_SnapSettings_Quality_Scroll(this, null);
 			cbGeneral_SnapSettings_ImageFormat.SelectedItem = Settings.SnapSettings.Encoder;
-			chkGeneral_SnapSettings_SaveBug.Checked = Settings.SnapSettings.SaveBug;
+            chkGeneral_Misc_SaveBug.Checked = Settings.MiscSettings.SaveBug;
 			chkGeneral_SnapSettings_AnimOriginalDimentions.Checked = Settings.SnapSettings.AnimOriginalDimentions;
 			chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked = Settings.SnapSettings.AnimUseMultiSnapDelay;
 			udGeneral_SnapSettings_AnimWidth.Value = Settings.SnapSettings.AnimWidth;
@@ -2465,12 +2571,6 @@ namespace smiletray
 			lblGeneral_SnapSettings_AnimFrameDelay.Enabled = udGeneral_SnapSettings_AnimFrameDelay.Enabled = !chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked;
 			lblGeneral_SnapSettings_AnimWidth.Enabled = lblGeneral_SnapSettings_AnimHeight.Enabled = udGeneral_SnapSettings_AnimWidth.Enabled = udGeneral_SnapSettings_AnimHeight.Enabled = !chkGeneral_SnapSettings_AnimOriginalDimentions.Checked;
 			chkGeneral_SnapSettings_AnimOptimizePalette.Checked = Settings.SnapSettings.AnimOptimizePalette;
-            if(Settings.SnapSettings.NumSaveThreads >= 1 && Settings.SnapSettings.NumSaveThreads <= 10)
-                udGeneral_SnapSettings_SaveThreads.Value = Settings.SnapSettings.NumSaveThreads;
-            else
-                udGeneral_SnapSettings_SaveThreads.Value = Settings.SnapSettings.NumSaveThreads = 3;
-            cbGeneral_SnapSettings_SavePriority.SelectedItem = Settings.SnapSettings.SavePriority;
-            cbGeneral_SnapSettings_CapturePriority.SelectedItem = Settings.SnapSettings.CapturePriority;
 			
             // Global Stats Settings
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
@@ -2486,6 +2586,15 @@ namespace smiletray
 
 			// Misc options
 			cbGeneral_Misc_CheckUpdates.SelectedItem  = Settings.MiscSettings.CheckUpdates;
+            if (Settings.MiscSettings.NumSaveThreads >= 1 && Settings.MiscSettings.NumSaveThreads <= 10)
+                udGeneral_Misc_SaveThreads.Value = Settings.MiscSettings.NumSaveThreads;
+            else
+                udGeneral_Misc_SaveThreads.Value = Settings.MiscSettings.NumSaveThreads = 3;
+            cbGeneral_Misc_SavePriority.SelectedItem = Settings.MiscSettings.SavePriority;
+            cbGeneral_Misc_CapturePriority.SelectedItem = Settings.MiscSettings.CapturePriority;
+            cbGeneral_Misc_ApplicationThreadPriority.SelectedItem = Settings.MiscSettings.ApplicationPriority;
+            cbGeneral_Misc_ApplicationPriorityClass.SelectedItem = Settings.MiscSettings.ApplicationPriorityClass;
+
 
 			// Load first profile options
 			PopulateProfile(Profiles[0]);
@@ -2743,7 +2852,6 @@ namespace smiletray
 					Settings.SnapSettings.SnapDir = Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + @"\Snaps";
 					Settings.SnapSettings.Delay = 75;
 					Settings.SnapSettings.Quality = 85;
-					Settings.SnapSettings.SaveBug = false;
 					Settings.SnapSettings.Encoder = "image/jpeg";
 					Settings.SnapSettings.SaveQueueSize = 100;
 					Settings.SnapSettings.NextSnapDelay = 500;
@@ -2758,9 +2866,12 @@ namespace smiletray
 					Settings.HotKeySettings.HKDesktop = "F11";
 					Settings.HotKeySettings.HKActiveProfile = "F12";
 					Settings.MiscSettings.CheckUpdates = "Every Day";
-                    Settings.SnapSettings.NumSaveThreads = 3;
-                    Settings.SnapSettings.SavePriority = System.Threading.ThreadPriority.Lowest;
-                    Settings.SnapSettings.CapturePriority = System.Threading.ThreadPriority.Normal;
+                    Settings.MiscSettings.SaveBug = false;
+                    Settings.MiscSettings.NumSaveThreads = 3;
+                    Settings.MiscSettings.SavePriority = System.Threading.ThreadPriority.BelowNormal;
+                    Settings.MiscSettings.CapturePriority = System.Threading.ThreadPriority.Normal;
+                    Settings.MiscSettings.ApplicationPriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+                    Settings.MiscSettings.ApplicationPriority = System.Threading.ThreadPriority.Normal;
 
 					AddProfiles ( ref Profiles );  // Just in case none where created
 
@@ -2942,7 +3053,7 @@ namespace smiletray
 
                         // Lag fix?
                         ThreadPriority PreviousThreadPriority = Thread.CurrentThread.Priority;
-                        Thread.CurrentThread.Priority = Settings.SnapSettings.CapturePriority;
+                        Thread.CurrentThread.Priority = Settings.MiscSettings.CapturePriority;
 						try
 						{
 							Thread.Sleep(ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.Delay : ActiveProfile.SnapSettings.Delay);
@@ -3135,7 +3246,7 @@ namespace smiletray
 							else
 								file = GetNextSnapName(ref GlobalNextSnapNo, "smile", encoderext, dir);
 							img.Save(file, encoder, encoderParams);
-							if(Settings.SnapSettings.SaveBug)
+                            if (Settings.MiscSettings.SaveBug)
 							{
 								for(int j = 0; !File.Exists(file) && j < 8; j++)
 								{
@@ -3299,7 +3410,6 @@ namespace smiletray
 			Settings.SnapSettings.SnapDir = txtGeneral_SnapSettings_SnapDir.Text;
 			Settings.SnapSettings.Quality = tbGeneral_SnapSettings_Quality.Value;
 			Settings.SnapSettings.Encoder = cbGeneral_SnapSettings_ImageFormat.SelectedItem.ToString();
-			Settings.SnapSettings.SaveBug = chkGeneral_SnapSettings_SaveBug.Checked;
 			Settings.SnapSettings.AnimOriginalDimentions = chkGeneral_SnapSettings_AnimOriginalDimentions.Checked;
 			Settings.SnapSettings.AnimUseMultiSnapDelay = chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked;
 			Settings.SnapSettings.AnimWidth = (int)udGeneral_SnapSettings_AnimWidth.Value;
@@ -3307,16 +3417,19 @@ namespace smiletray
 			Settings.SnapSettings.AnimFrameDelay = (int)udGeneral_SnapSettings_AnimFrameDelay.Value;
 			Settings.SnapSettings.AnimOptimizePalette = chkGeneral_SnapSettings_AnimOptimizePalette.Checked;
 
-            Settings.SnapSettings.NumSaveThreads = (int)udGeneral_SnapSettings_SaveThreads.Value;
-            Settings.SnapSettings.SavePriority = (System.Threading.ThreadPriority)cbGeneral_SnapSettings_SavePriority.SelectedItem;
-            Settings.SnapSettings.CapturePriority = (System.Threading.ThreadPriority)cbGeneral_SnapSettings_CapturePriority.SelectedItem;
-
-
 			// Global Stats Settings
 			Settings.StatsSettings.Enabled = chkGeneral_StatsSettings_Enabled.Checked;
 
 			// Global Misc Settings
+            Settings.MiscSettings.SaveBug = chkGeneral_Misc_SaveBug.Checked;
 			Settings.MiscSettings.CheckUpdates = cbGeneral_Misc_CheckUpdates.SelectedItem.ToString();
+            Settings.MiscSettings.NumSaveThreads = (int)udGeneral_Misc_SaveThreads.Value;
+            Settings.MiscSettings.SavePriority = (System.Threading.ThreadPriority)cbGeneral_Misc_SavePriority.SelectedItem;
+            Settings.MiscSettings.CapturePriority = (System.Threading.ThreadPriority)cbGeneral_Misc_CapturePriority.SelectedItem;
+            Settings.MiscSettings.ApplicationPriority = (System.Threading.ThreadPriority)cbGeneral_Misc_ApplicationThreadPriority.SelectedItem;
+            Settings.MiscSettings.ApplicationPriorityClass = (System.Diagnostics.ProcessPriorityClass)cbGeneral_Misc_ApplicationPriorityClass.SelectedItem;
+            Process.GetCurrentProcess().PriorityClass = Settings.MiscSettings.ApplicationPriorityClass;
+            Thread.CurrentThread.Priority = Settings.MiscSettings.ApplicationPriority;
 
 			// Copy profiles
 			// Copy last active profile
@@ -3346,6 +3459,34 @@ namespace smiletray
 
 			return 0;
 		}
+
+        private void cmdGeneral_Misc_DefaultPriority_Click(object sender, EventArgs e)
+        {
+            udGeneral_Misc_SaveThreads.Value = 3;
+            cbGeneral_Misc_SavePriority.SelectedItem = System.Threading.ThreadPriority.BelowNormal;
+            cbGeneral_Misc_CapturePriority.SelectedItem = System.Threading.ThreadPriority.Normal;
+            cbGeneral_Misc_ApplicationPriorityClass.SelectedItem = System.Diagnostics.ProcessPriorityClass.Normal;
+            cbGeneral_Misc_ApplicationThreadPriority.SelectedItem = System.Threading.ThreadPriority.Normal;
+        }
+
+        private void cmdGeneral_Misc_MediumPriority_Click(object sender, EventArgs e)
+        {
+            udGeneral_Misc_SaveThreads.Value = 1;
+            cbGeneral_Misc_SavePriority.SelectedItem = System.Threading.ThreadPriority.Lowest;
+            cbGeneral_Misc_CapturePriority.SelectedItem = System.Threading.ThreadPriority.Normal;
+            cbGeneral_Misc_ApplicationPriorityClass.SelectedItem = System.Diagnostics.ProcessPriorityClass.Normal;
+            cbGeneral_Misc_ApplicationThreadPriority.SelectedItem = System.Threading.ThreadPriority.BelowNormal;
+        }
+
+        private void cmdGeneral_Misc_LowPriority_Click(object sender, EventArgs e)
+        {
+            udGeneral_Misc_SaveThreads.Value = 1;
+            cbGeneral_Misc_SavePriority.SelectedItem = System.Threading.ThreadPriority.Lowest;
+            cbGeneral_Misc_CapturePriority.SelectedItem = System.Threading.ThreadPriority.Normal;
+            cbGeneral_Misc_ApplicationPriorityClass.SelectedItem = System.Diagnostics.ProcessPriorityClass.BelowNormal;
+            cbGeneral_Misc_ApplicationThreadPriority.SelectedItem = System.Threading.ThreadPriority.BelowNormal;
+        }
+
 
 	}
 }

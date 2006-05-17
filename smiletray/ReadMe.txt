@@ -1,41 +1,42 @@
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 //
 // Smile! -- Screenshot and Statistics Utility
 // Copyright (c) 2005-2006 Marek Kudlacz
 //
 // http://kudlacz.com
 //
-/////////////////////////////////////////////////////////////////////////////
-
-
-
-
+////////////////////////////////////////////////////////////////////////
 
 
 About:
 ------------------------
-Hmm. Well i never could get a good screenshot in CS:S. I was either too busy 
-dying, or too busy sucking.  So here it is, an app that parses console.log (or qconsole.log for Vanilla HL, etc) 
-quickly enough to take a screenshot when you kill someone and also keeps 
-track of various statistics!
+Hmm. Well i never could get a good screenshot in CS:S. I was either too 
+busy dying, or too busy sucking.  So here it is, an app that parses 
+console.log (or qconsole.log for Vanilla HL, etc) quickly enough to 
+take a screenshot when you kill someone and also keeps track of various 
+statistics!
 
 Enjoy!
 
 -Marek
 
 
+
 License:
 ------------------------
-See LICENSE.TXT for more details. As of v1.5, Smile! is no longer under GPL. Please see the 
-little blurb under the changelog for details.
+See LICENSE.TXT for more details. As of v1.5, Smile! is no longer under 
+GPL. Please see the little blurb under the changelog for details.
+
 
 
 Requirements:
 ------------------------
 • Any of the Supported Games listed
 • AMD 2000+ or Intel 2Ghz equivalent
-• 512mb Ram (Animations require a lot more, or you start crapping out after 2)
-• Latest .NET runtime files (www.microsoft.com or windowsupdate.microsoft.com)  ********<-----IMPORTANT*******
+• 512mb Ram (Animations require a lot more, or you start crapping out 
+  after 2)
+• ********IMPORTANT******* Latest .NET runtime files (www.microsoft.com 
+  or windowsupdate.microsoft.com)  
 • food
 • i guess a mouse helps too
 
@@ -44,6 +45,7 @@ Requirements:
 Supported Games:
 ------------------------
 Counter-Strike
+Counter-Strike: Condition Zero
 Counter-Strike Source
 Day of Defeat
 Day of Defeat: Source
@@ -51,36 +53,54 @@ Dystopia (HL2/Source Mod)
 Half-Life 2: Deatchmatch
 Jedi Academy
 Quake III Arena (and some mods)
+Ricochet
 Team Fortress Classic
 Wolfenstein: Enemy Territory
 
 
+
 Installation:
 ------------------------
-Extract Smile! to a folder of your choice. You should just have this readme.txt, and smiletray.exe.
-In order to get Smile! working you need to at least configure your game to enable logs, and to enter paths for the specific games within Smile!'s options. 
-Since paths include different games and their mods it may be confusing, so please refer to the "Game Paths" section of this Readme.txt for further 
-details on what you should enter.
+Extract Smile! to a folder of your choice. You should just have this 
+readme.txt, and smiletray.exe. In order to get Smile! working you need 
+to at least configure your game to enable logs, and to enter paths for 
+the specific games within Smile!'s options. Since paths include 
+different games and their mods it may be confusing, so please refer to 
+the "Game Paths" section of this Readme.txt for further details on what 
+you should enter.
 
 
 
 
 Game Configuration:
 ------------------------
-• Steam Installation (HL, CS, DOD, DOD:S, CS:S, TFC, HL2:DM & Dystopia):
-Open steam. Go to "Play Games". Right-Click on "Counter-Strike: Source" and/or "Half-Life 2: Deathmatch", and/or any other steam game
-and click the “Launch Options" button. Add " -condebug" (without the quotes) as launch parameter.
+• Steam Installation (HL, CS, DOD, DOD:S, CS:S, CZ, TFC, Ricochet, 
+  HL2:DM & Dystopia):
+Open steam. Go to "Play Games". Right-Click on "Counter-Strike: Source" 
+and/or "Half-Life 2: Deathmatch", and/or any other steam game and click 
+the “Launch Options" button. Add " -condebug" (without the quotes) as 
+launch parameter.
 
-• Quake III Arena, Enemy Territory & Jedi Academy (And Mods if supported)
-Add "+set logfile 2" without quotes into the shortcut parameters of your favourite icon you use to start the game
-Note: A gamma value of 2.2 and contrast value of +30 is recommended for this profile in fullscreen.
-Note 2: Any mod that keeps the kill messages intact from Vanilla Quake III Arena is supported, Just make sure to change the Path to include the mod folder
+
+• Quake III Arena, Enemy Territory & Jedi Academy (And Mods if 
+  supported):
+Add "+set logfile 2" without quotes into the shortcut parameters of 
+your favourite icon you use to start the game.
+
+Note: A gamma value of 2.2 and contrast value of +30 is recommended for 
+this profile in fullscreen.
+
+Note 2: Any mod that keeps the kill messages intact from 
+Vanilla Quake III Arena is supported, Just make sure to change the Path 
+to include the mod folder.
+
 
 
 
 Game Paths:
 ------------------------
-These are the game paths Smile! looks for. Autodetect will do it's best to locate the proper folder, but if it fails use the information below. 
+These are the game paths Smile! looks for. Autodetect will do it's best 
+to locate the proper folder, but if it fails use the information below. 
 
 Legend:
 X:\ being the letter of the drive steam is installed to.
@@ -88,6 +108,10 @@ X:\ being the letter of the drive steam is installed to.
 
 • Counter-Strike
 	Game Path:"X:\...\Steam\SteamApps\<account name>\counter-strike"
+	Log File: "qconsole.log"
+
+• Counter-Strike: Condition Zero
+	Game Path:"X:\...\Steam\SteamApps\<account name>\condition zero"
 	Log File: "qconsole.log"
 
 • Counter-Strike: Source
@@ -118,6 +142,10 @@ X:\ being the letter of the drive steam is installed to.
 	Game Path: "X:\...\Quake III Arena\baseq3" (or wherever quake3.exe\mod_name is located)
 	Log File: "\qconsole.log"
 
+• Ricochet
+	Game Path: "X:\...\Steam\SteamApps\<account name>\ricochet"
+	Log File: "qconsole.log"
+
 • Team Fortress Classic
 	Game Path: "X:\...\Steam\SteamApps\<account name>\team fortress classic"
 	Log File: "qconsole.log"
@@ -137,33 +165,36 @@ Right Click on the smile icon, click open. See settings.
 [General]
 Options that are globally used by default.
 	[Global Snap Settings]
-	• Enabled: Enable or disable the snap settings (if you just want to do stats) for all games by default
-	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
-	I have yet to find a good value myself. A delay of 0, is too fast, so the screenshot is 
-	taken to early and the player will just look like it's twitching. Good values are 
-	between 0-100ms.
-	• Next Snap Delay: How long to wait before taking another snap/series of snaps
-	• SaveQueue Size: Maximum number of pictures/frames to store in memory if not all saved yet
+	• Enabled: Enable or disable the snap settings (if you just want 
+	  to do stats) for all games by default.
+	• Snap Delay: How many x milliseconds to wait before you take a 
+	  kill screenshot. I have yet to find a good value myself. A delay 
+	  of 0, is too fast, so the screenshot is taken to early and the 
+	  player will just look like it's twitching. Good values are 
+	  between 0-100ms.
+	• Next Snap Delay: How long to wait before taking another 
+	  snap/series of snaps.
+	• SaveQueue Size: Maximum number of pictures/frames to store in 
+	  memory if not all saved yet.
 	• Snap Directory: Where to save your screenshots
-	• Image Output Type: Let's you select between image formats (such as bitmap, jpeg, etc..)
-	• Quality: If the selected image format supports compression, use this quality setting.
-	• Save Bug: Allow the program to retry saving multiple times if a file does not seem to save the first time (AntiVirus conflict)
-	• Save Threads:How many worker threads the save queue should have. Between 0 and 10. Default 3. The higher 
-	this number is, the higher the cpu usage is, but at the same time more images will be saved to disk at once.
-	• Save Priority: What CPU Level should be assigned to the worker queues for the save queue. The higher, the 
-	slower your game may be, but the faster things will save.
-	• Capture Priority: What CPU Level should be assigned to screen capturing. The higher this level is, the faster the screenshot will be put
-	into the save queue for processing, but it may reduce game performance.
-	• Use Optimized Palette: Use an Optimized Octree algorithm for saving gif animations (slower + bigger file size), 
-	otherwise used a fixed palette.
-	• Use Original Dimentions: Whether to keep or resize the image when saving a sequence to an animation
+	• Image Output Type: Let's you select between image formats 
+	  (such as bitmap, jpeg, etc..).
+	• Quality: If the selected image format supports compression, use 
+	  this quality setting.
+	• Use Optimized Palette: Use an Optimized Octree algorithm for 
+	  saving gif animations (slower + bigger file size), otherwise used 
+	  a fixed palette.
+	• Use Original Dimentions: Whether to keep or resize the image when 
+	  saving a sequence to an animation.
 		• Width: Width of animation
 		• Height: Height of animation
-	• Use MultiSnap Delay: Whether to use a fixed delay for all animations, or use the capture delay between multiple frames
+	• Use MultiSnap Delay: Whether to use a fixed delay for all 
+	  animations, or use the capture delay between multiple frames.
 		• Frame Delay: Custom delay inbetween frames
 	
 	[Global Stats Settings]
-	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for all games by default
+	• Enabled: Enable or disable the stats settings (if you just want 
+	  to do screenshots) for all games by default.
 	• View: View stats.
 	• Reset: Reset statistics for all games
 
@@ -173,6 +204,30 @@ Options that are globally used by default.
 	• Capture Desktop: Hotkey to capture the entire desktop.
 	• Capture Active Profile: Hotkey to invoke a typical profile capture.
 
+	[Misc]
+	• Check for updates: When to check for updates?
+	• Save Bug: Allow the program to retry saving multiple times if a 
+	  file does not seem to save the first time 	(AntiVirus conflict)
+	• Save Threads:How many worker threads the save queue should have. 
+	  Between 0 and 10. Default 3. The higher this number is, the 
+	  higher the cpu usage is, but at the same time more images will be 
+	  saved to disk at once.
+	• Save Priority: What CPU Level should be assigned to the worker 
+	  queues for the save queue. The higher, the slower your game may 
+	  be, but the faster things will save.
+	• Capture Priority: What CPU Level should be assigned to screen 
+	  capturing. The higher this level is, the 	faster the screenshot 
+	  will be put into the save queue for processing, but it may reduce 
+	  game performance.
+	• Application Priority Class: The application's priority class has 
+	  the greatest effect in a programs performance. Be very careful 
+	  when setting things to High. Never set it to Real-Time! Adjust 
+	  the Save, Capture and Application thread priorities before 
+	  changing this option as they make smaller adjustments.
+	• Application Thread Priority: This is the default priority for all 
+	  miscellaneous routines when the program is not saving or 
+	  capturing.
+
 
 [Profiles]
 options that are specific to certain games.
@@ -180,25 +235,32 @@ options that are specific to certain games.
 	• Path:	Path to the game's root directory.
 
 	[Snap Settings]
-	• Use Global Settings: Use global options intead of profile specific ones.
-	• Enabled: Enable or disable the snap settings (if you just want to do stats) for just this game
-	• Save: "Only Snaps" save only single framed images, "Only Animations", Save only animatation sequences (Snap Count must be > 1)
-	or "Snaps & Animations" to save a copy of both
-	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
-	I have yet to find a good value myself. A delay of 0, is to fast, the screenshot is 
-	taken before the hit is even registered on your display. Good values are 
-	between 0-100ms.
-	• Next Snap Delay: How long to wait before taking another snap/series of snaps
+	• Use Global Settings: Use global options intead of profile 
+	  specific ones.
+	• Enabled: Enable or disable the snap settings (if you just want to 
+	  do stats) for just this game.
+	• Save: "Only Snaps" save only single framed images, 
+	  "Only Animations", Save only animatation sequences (Snap Count 
+	  must be > 1) or "Snaps & Animations" to save a copy of both.
+	• Snap Delay: How many x milliseconds to wait before you take a 
+	  kill screenshot I have yet to find a good value myself. A delay 
+	  of 0, is to fast, the screenshot is taken before the hit is even 
+	  registered on your display. Good values are between 0-100ms.
+	• Next Snap Delay: How long to wait before taking another 
+	  snap/series of snaps.
 	• Snap Count: How many frames to capture in a sequence
-	• MultiSnap Delay: How long to wait inbetween each frame captured in a sequence
+	• MultiSnap Delay: How long to wait inbetween each frame captured 
+	  in a sequence.
 	• Snap Directory: Where to save your screenshots
 	• Gamma: Adjust gamma. 1.0 = No change.
 	• Contrast: Adjust contrast. 0 = No change.
 	• Brightness: Adjust brightness. 0 = No change.
 
 	[Stats Settings]
-	• Use Global Settings: Use global options intead of profile specific ones.
-	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for just this game
+	• Use Global Settings: Use global options intead of profile 
+	  specific ones.
+	• Enabled: Enable or disable the stats settings (if you just want 
+	  to do screenshots) for just this game.
 	• View: View stats for this game.
 	• Reset: Reset statistics for this game
 
@@ -228,30 +290,59 @@ Extreme_One for help in implementing DoD:S support
 Iain for reporting bugs
 TSW|Abaddon & Sloan for feature ideas
 Fuzzy from Team Dystopia
-tiki from planetquake (for lots of testing, bug fixing, and JediAcademy Profile help)
+tiki from planetquake (for lots of testing & JediAcademy Profile help)
 Leo for suggestions
 `star from #counter-strike
 KodeK for .manifest file and bug reports/suggestions
-Flank for team fortress classic support
+Flank for team fortress classic support (via logs)
+Jake for counter-strike: condition zero logs
 eram for priority testing.
+T@T-5-MoNk3y for Ricochet logs and testing
 Everyone who has sent me a "thanks"
 
 
 
 Known Bugs:
 ------------------------
--Captures "stray" screenshots. Looks as if the program didn't wait for D3D to finish rendering, and sometimes catches just the environment. 
- Investigating alternative capture methods. Anyone have suggestions? I'm working on a hook dll to try and capture 
- from DirectDraw/Direct3D/OpenGL directly.
+-Captures "stray" screenshots. Looks as if the program didn't wait for 
+ D3D to finish rendering, and sometimes catches just the environment. 
+ Investigating alternative capture methods. I'm working on a hook dll 
+ to try and capture from DirectDraw/Direct3D/OpenGL directly. But at 
+ this point i'm to lazy to finish it.
 
--Not all screenshots save. Problem is probably due to the "realtime" antivirus scanners. Specificaly Norton Antivirus/Norton Internet Security. 
- A similar problem used to exist with Visual Studio itself. Make sure "Save Bug" is checked under the global Snap settings, all this does is 
- force the program to try and save multiple times if it fails the first time)
+-Not all screenshots save. Problem is probably due to the "realtime" 
+ antivirus scanners. Specificaly Norton Antivirus/Norton Internet 
+ Security. A similar problem used to exist with Visual Studio itself. 
+ Make sure "Save Bug" is checked under the global Snap settings, all 
+ this does is force the program to try and save multiple times if it 
+ fails the first time).
+
+
+Troubleshooting:
+------------------------
+Q: I get an error starting the program.
+A: Get the latest .NET framework: ( http://msdn.microsoft.com/netframework/downloads/updates/default.aspx )
+
+Q: I get an error in the log window: Error Starting Session For: <some game>
+A: See points (1) to (4)
+(1) Did you add -condebug into the launch parameters for steam games, 
+    or "+set logfile 2" into the shortcut of quake based games? 
+(2) For a steam game, and if youcreated a shortcut to that game, did 
+    you add -condebug into it also? If So, *REMOVE* it from the 
+    shortcut! Only put it into the launch parameters.
+(3) Did you setup the game's path in smile!? Try autodetect under the 
+    right profile first.
+(4) If using steam, did you make sure the path has the right account 
+    name for the current user you are logged in as (Otherwise it won't 
+    find the log).
+
 
 
 Why Smile? Why not "DEATHCAM! etc":
 ------------------------
-like "say cheese" and you get a bullet in the face.. plus i dont want to change it once i picked it
+like "say cheese" and you get a bullet in the face.. Plus i dont want 
+to change it once i picked it.
+
 
 
 
@@ -271,11 +362,16 @@ Version Compatiblity:
 
 
 
+
 Changelog:
 ------------------------
-**v1.7.1**
+**v1.8**
+-Fixed the tray icon's right click 'about' menu item.
+-Added Counter-Strike: Condition Zero support (thanks Jake)
+-Added Ricochet support (thanks T@T-5-MoNk3y)
 -Added the ability to adjust priority thanks to feedback (Thanks eram)
 -Improved Cross platform compatability.
+-Redid parts of the logging system again. Should provide some better information.
 
 
 **v1.7**

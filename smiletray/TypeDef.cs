@@ -18,8 +18,8 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.7.1";
-		public static readonly String intversion = "1.7.1";
+		public static readonly String version = "1.8";
+		public static readonly String intversion = "1.8.0";
 		public static readonly String copyrightdate = "©2005-2006";
 	}
 
@@ -43,18 +43,28 @@ namespace smiletray
 	{
 		public String CheckUpdates;
 		public Int64 LastCheckTime;
-
+        public Boolean SaveBug;
+        public Int32 NumSaveThreads;
+        public System.Threading.ThreadPriority SavePriority;
+        public System.Threading.ThreadPriority CapturePriority;
+        public System.Diagnostics.ProcessPriorityClass ApplicationPriorityClass;
+        public System.Threading.ThreadPriority ApplicationPriority;
 		public MiscSettings_t()
 		{
 			CheckUpdates = "Every Day";
 			LastCheckTime = new Int64();
+            SaveBug = new Boolean();
+            NumSaveThreads = 3;
+            SavePriority = System.Threading.ThreadPriority.BelowNormal;
+            CapturePriority = System.Threading.ThreadPriority.Normal;
+            ApplicationPriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+            ApplicationPriority = System.Threading.ThreadPriority.Normal;
 		}
 	}
 
 	public class SnapSettings_t
 	{
 		public Boolean Enabled;
-		public Boolean SaveBug;
 		public Boolean AnimOriginalDimentions;
 		public Boolean AnimUseMultiSnapDelay;
 		public Boolean AnimOptimizePalette;
@@ -64,17 +74,14 @@ namespace smiletray
 		public Int32 Delay;
 		public Int32 SaveQueueSize;
 		public Int32 NextSnapDelay;
-        public Int32 NumSaveThreads;
 		public String SnapDir;
 		public String Encoder;
 		public Int32 Quality;
-        public System.Threading.ThreadPriority SavePriority;
-        public System.Threading.ThreadPriority CapturePriority;
+
 
 		public SnapSettings_t()
 		{
 			Enabled = new Boolean();
-			SaveBug = new Boolean();
 			AnimOptimizePalette = new Boolean();
 			AnimOriginalDimentions = new Boolean();
 			AnimUseMultiSnapDelay = new Boolean();
@@ -84,9 +91,6 @@ namespace smiletray
 			Delay = new Int32();
 			SaveQueueSize = new Int32();
 			NextSnapDelay = new Int32();
-            NumSaveThreads = 3;
-            SavePriority = System.Threading.ThreadPriority.Lowest;
-            CapturePriority = System.Threading.ThreadPriority.Normal;
 			Quality = new Int32();
 		}
 	}

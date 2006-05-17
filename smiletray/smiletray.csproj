@@ -111,6 +111,7 @@
     <Compile Include="GlobalHotKey.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="LogFile.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
