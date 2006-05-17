@@ -12,39 +12,129 @@ using System.ComponentModel;
 using System.Collections;
 using System.Diagnostics;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace smiletray
 {
 	public class SystemHotkey : System.ComponentModel.Component,IDisposable
 	{
 		private System.ComponentModel.Container components = null;
-		protected NativeMethods.DummyWindowWithEvent m_Window=new NativeMethods.DummyWindowWithEvent();	//window for WM_Hotkey Messages
-		protected Shortcut m_HotKey=Shortcut.None;
-		protected bool isRegistered=false;
+		protected bool isRegistered = false;
 		public event System.EventHandler Pressed;
-		public event System.EventHandler Error;
+		public event System.EventHandler KeyCapture;
+		private	int hook;
+		private keycombo hotkey;
+		private keycombo keys = new keycombo();
+		private NativeMethods.LowLevelKeyboardDelegate del;
+		public static readonly keycombo EmptyKeyCombo = new keycombo();
+		bool keycapture;
+		
+		static public string KeyComboToString(keycombo kc)
+		{
+			string s = "";
+			bool one = false;
+			for(int i = 0; i < 256; i++)
+			{
+				if(kc[i] == 1) 
+				{
+					if(one)
+						s += " + " + Enum.GetName(typeof(Keys), i);
+					else
+					{
+						one = true;
+						s = Enum.GetName(typeof(Keys), i);
+					}
+				}
+			}
+			return s;
+		}
+
+		static public keycombo StringToKeyCombo(string s)
+		{
+			Array keys = Enum.GetValues(typeof(Keys));
+			string [] split = s.Split(new char [] {' ','+'});
+			keycombo kb = new keycombo();
+			foreach(string key in split)
+			{
+				
+				for(int i = 0; i < keys.Length; i++)
+				{
+					if(key.Length == 0) { break; }
+					if(String.Compare(keys.GetValue(i).ToString(), key, true) == 0) { kb[(int)keys.GetValue(i)] = 1; break; }
+					else if(i == keys.Length - 1) { return null; }
+				}
+
+			}
+			return kb;
+		}
+
+		public class keycombo
+		{
+			private int [] keys = new int [256];	
+			public int this[int index]
+			{
+				get { return keys[index]; }
+				set { keys[index] = value; }
+			}
+			public override string ToString()
+			{
+				return KeyComboToString(this);
+			}
+			public static bool operator ==(keycombo x,keycombo y) 
+			{
+				if((object)x == null && (object)y == null)
+					return true;
+				else if ((object)x == null || (object)y == null)
+					return false;
+				for(int i = 0; i < 256; i ++)
+					if(x.keys[i] != y.keys[i]) { return false; }
+				return true;
+			}
+			public static bool operator !=(keycombo x,keycombo y) 
+			{
+				return !(x == y);
+			}
+
+			public override bool Equals(object obj)
+			{
+				return this == (keycombo)obj;
+			}
+
+			public override int GetHashCode()
+			{
+				return base.GetHashCode ();
+			}
+
+
+		}
 
 		public SystemHotkey(System.ComponentModel.IContainer container)
 		{
 			container.Add(this);
 			InitializeComponent();
-			m_Window.ProcessMessage+=new NativeMethods.MessageEventHandler(MessageEvent);
+		}
+
+		public bool EnableKeyCapture
+		{
+			set { keycapture = value; }
+			get { return keycapture; }
 		}
 
 		public SystemHotkey()
 		{
 			InitializeComponent();
-			if (!DesignMode)
-			{
-				m_Window.ProcessMessage+=new NativeMethods.MessageEventHandler(MessageEvent);
-			}
+		}
+
+		public keycombo GetKeys()
+		{
+			return keys;
 		}
 
 		public new void Dispose()
 		{
 			if (isRegistered)
 			{
-				UnregisterHotkey();
+				UnregisterHook();
 			}
 		}
 		#region Component Designer generated code
@@ -57,31 +147,57 @@ namespace smiletray
 			components = new System.ComponentModel.Container();
 		}
 		#endregion
-
-		protected void MessageEvent(object sender,ref Message m,ref bool Handled)
-		{	//Handle WM_Hotkey event
-			if ((m.Msg==(int)NativeMethods.Msgs.WM_HOTKEY)&&(m.WParam==(IntPtr)this.GetType().GetHashCode()))
+		
+		public class KeyEventArgs : EventArgs
+		{
+			public keycombo kc;
+			public KeyEventArgs(keycombo kc)
 			{
-				Handled=true;
-				if (Pressed!=null) Pressed(this,EventArgs.Empty);
+				this.kc = kc;
 			}
 		}
+
+		private Int32 LowLevelKeyboardHandler(Int32 nCode, Int32 wParam, ref NativeMethods.KBDLLHOOKSTRUCT lParam) 
+		{ 
 	
-		protected bool UnregisterHotkey()
+			if (nCode == NativeMethods.HC_ACTION) 
+			{
+				if (wParam == (int)NativeMethods.Msgs.WM_KEYDOWN)
+				{
+					keys[(int)lParam.vkCode] = 1;
+					if(keycapture && KeyCapture != null)
+						KeyCapture(this, new KeyEventArgs(keys));
+				}
+				else if (wParam == (int)NativeMethods.Msgs.WM_KEYUP)
+					keys[(int)lParam.vkCode] = 0;
+
+				if(keys == hotkey && Pressed != null)
+					Pressed(this, EventArgs.Empty);
+			}
+			return NativeMethods.CallNextHookEx(hook, nCode, wParam, lParam); 
+			
+		} 
+
+	
+		protected bool UnregisterHook()
 		{	//unregister hotkey
-			return NativeMethods.UnregisterHotKey(m_Window.Handle,this.GetType().GetHashCode());
+			return isRegistered = (NativeMethods.UnhookWindowsHookEx(hook) != 0);
 		}
 
-		protected bool RegisterHotkey(Shortcut key)
-		{	//register hotkey
-			int mod=0;
-			Keys k2=Keys.None;
-			if (((int)key & (int)Keys.Alt)==(int)Keys.Alt) {mod+=(int)NativeMethods.Modifiers.MOD_ALT;k2=Keys.Alt;}
-			if (((int)key & (int)Keys.Shift)==(int)Keys.Shift) {mod+=(int)NativeMethods.Modifiers.MOD_SHIFT;k2=Keys.Shift;}
-			if (((int)key & (int)Keys.Control)==(int)Keys.Control) {mod+=(int)NativeMethods.Modifiers.MOD_CONTROL;k2=Keys.Control;}
-			
-
-			return NativeMethods.RegisterHotKey(m_Window.Handle,this.GetType().GetHashCode(),(int)mod,((int)key)-((int)k2));
+		public bool RegisterHook()
+		{	
+			//register hotkey
+			if(isRegistered)
+				return true;
+			del = new NativeMethods.LowLevelKeyboardDelegate(LowLevelKeyboardHandler);
+			hook = NativeMethods.SetWindowsHookEx((int)NativeMethods.HookType.WH_KEYBOARD_LL, del, Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]).ToInt32(),0); 
+			if(hook != 0)
+				return isRegistered = true;
+			else
+			{
+				del = null;
+				return  false;
+			}
 		}
 
 		public bool IsRegistered
@@ -90,34 +206,12 @@ namespace smiletray
 		}
 
 
-		[DefaultValue(Shortcut.None)]
-		public Shortcut Shortcut
+		public keycombo Shortcut
 		{
-			get { return m_HotKey; }
+			get { return hotkey; }
 			set 
 			{ 
-				if (DesignMode) {m_HotKey=value;return;}	//Don't register in Designmode
-				if ((isRegistered)&&(m_HotKey!=value))	//Unregister previous registered Hotkey
-				{
-					if (UnregisterHotkey())
-					{
-						isRegistered=false;
-					}
-					else 
-					{
-						if (Error!=null) Error(this,EventArgs.Empty);
-					}
-				}
-				if (value==Shortcut.None) {m_HotKey=value;return;}
-				if (RegisterHotkey(value))	//Register new Hotkey
-				{
-					isRegistered=true;
-				}
-				else 
-				{
-					if (Error!=null) Error(this,EventArgs.Empty);
-				}
-				m_HotKey=value;
+				hotkey = value;
 			}
 		}
 	}

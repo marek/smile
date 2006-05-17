@@ -50,7 +50,53 @@ namespace smiletray
 		[DllImport("user32.dll")]
 		public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
+		[DllImport("user32")] 
+		public static extern Int32 SetWindowsHookEx(Int32 idHook,  LowLevelKeyboardDelegate lpfn, Int32 hmod, Int32 dwThreadId); 
+         
+		[DllImport("user32")]         
+		public static extern Int32 CallNextHookEx(Int32 hHook, Int32 nCode, Int32 wParam, KBDLLHOOKSTRUCT lParam); 
+
+		[DllImport("user32")] 
+		public static extern Int32 UnhookWindowsHookEx(Int32 hHook); 
+
+		[DllImport("user32")] 
+		public static extern short GetAsyncKeyState(int vkey);
+
 		#endregion
+
+		public delegate Int32 LowLevelKeyboardDelegate(Int32 nCode, Int32 wParam, ref KBDLLHOOKSTRUCT lParam); 
+
+		public const Int32 HC_ACTION = 0; 
+
+		public enum HookType : int
+		{
+			WH_JOURNALRECORD = 0,
+			WH_JOURNALPLAYBACK = 1,
+			WH_KEYBOARD = 2,
+			WH_GETMESSAGE = 3,
+			WH_CALLWNDPROC = 4,
+			WH_CBT = 5,
+			WH_SYSMSGFILTER = 6,
+			WH_MOUSE = 7,
+			WH_HARDWARE = 8,
+			WH_DEBUG = 9,
+			WH_SHELL = 10,
+			WH_FOREGROUNDIDLE = 11,
+			WH_CALLWNDPROCRET = 12,		
+			WH_KEYBOARD_LL = 13,
+			WH_MOUSE_LL = 14
+		}
+         
+		[StructLayout(LayoutKind.Sequential)]
+		public struct KBDLLHOOKSTRUCT 
+		{ 
+			public int vkCode; 
+			public int scanCode; 
+			public int flags; 
+			public int time; 
+			public int dwExtraInfo; 
+		} 
+         
 
 		[StructLayout(LayoutKind.Sequential)]
 			public struct RECT
@@ -277,7 +323,7 @@ namespace smiletray
 			WM_PENWINLAST             = 0x038F,
 			WM_APP                    = 0x8000,
 			WM_USER                   = 0x0400,
-			WM_DDE_INITIATE			= 0x03E0,
+			WM_DDE_INITIATE			  = 0x03E0,
 			WM_DDE_TERMINATE,
 			WM_DDE_ADVISE,
 			WM_DDE_UNADVISE,

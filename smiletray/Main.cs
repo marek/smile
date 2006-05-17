@@ -55,13 +55,12 @@ namespace smiletray
 		private int NumFrames = 0;
 		private int NextSnapNo;
 		private int GlobalNextSnapNo = 0;
+		private bool DisableHotkeys = false;
 		private ArrayList extlist;
 		private System.Threading.Timer TimerCheckConsoleLog;
 		private TimerCallback TimerCheckConsoleLogDelegate;
 		private System.Threading.Timer TimerSave;
 		private TimerCallback TimerSaveDelegate;
-		private string [] HotKeyNames;
-		private System.Array HotKeyValues; 
 		private SystemHotkey HKCaptureDesktop;
 		private SystemHotkey HKCaptureWindow;
 		private SystemHotkey HKCaptureActiveProfile;
@@ -170,10 +169,10 @@ namespace smiletray
 		private System.Windows.Forms.Label lblGeneral_HotKeys_CaptureDesktop;
 		private System.Windows.Forms.Label lblGeneral_HotKeys_CaptureWindow;
 		private System.Windows.Forms.Label lblGeneral_HotKeys_CaptureActiveProfile;
-		private System.Windows.Forms.ComboBox cbGeneral_HotKeys_CaptureDesktop;
-		private System.Windows.Forms.ComboBox cbGeneral_HotKeys_CaptureWindow;
-		private System.Windows.Forms.ComboBox cbGeneral_HotKeys_CaptureActiveProfile;
 		private System.Windows.Forms.CheckBox chkGeneral_HotKeys_Enabled;
+		private System.Windows.Forms.TextBox txtGeneral_HotKeys_CaptureWindow;
+		private System.Windows.Forms.TextBox txtGeneral_HotKeys_CaptureDesktop;
+		private System.Windows.Forms.TextBox txtGeneral_HotKeys_CaptureActiveProfile;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -224,14 +223,13 @@ namespace smiletray
 			extlist.Add(".avi");
 
 			// Populate hotkeys
-			HotKeyNames = Enum.GetNames(typeof(System.Windows.Forms.Shortcut));
-			HotKeyValues = Enum.GetValues(typeof(System.Windows.Forms.Shortcut));
+			/*
 			for(int i = 0; i < HotKeyNames.Length; i++)
 			{
 				cbGeneral_HotKeys_CaptureDesktop.Items.Add(HotKeyNames[i]);
 				cbGeneral_HotKeys_CaptureWindow.Items.Add(HotKeyNames[i]);
 				cbGeneral_HotKeys_CaptureActiveProfile.Items.Add(HotKeyNames[i]);
-			}
+			}*/
 
 			// Create Save Queue
 			this.SaveQueue = new TSArrayList(10);
@@ -264,6 +262,10 @@ namespace smiletray
 			TimerSave = new System.Threading.Timer(TimerSaveDelegate, null, 10, 100);
 			AddLogMessage("SaveQueue starting up.");
 
+			// Start key gooks
+			HKCaptureDesktop.RegisterHook();
+			HKCaptureWindow.RegisterHook();
+			HKCaptureActiveProfile.RegisterHook();
 
 			CheckEnabled();
 
@@ -360,9 +362,9 @@ namespace smiletray
 			this.cmdGeneral_StatsSettings_Reset = new System.Windows.Forms.Button();
 			this.chkGeneral_StatsSettings_Enabled = new System.Windows.Forms.CheckBox();
 			this.tabGeneral_HotKeys = new System.Windows.Forms.TabPage();
-			this.cbGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.ComboBox();
-			this.cbGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.ComboBox();
-			this.cbGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.ComboBox();
+			this.txtGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.TextBox();
+			this.txtGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.TextBox();
+			this.txtGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.TextBox();
 			this.lblGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.Label();
 			this.lblGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.Label();
 			this.lblGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.Label();
@@ -454,15 +456,24 @@ namespace smiletray
 			// 
 			// HKCaptureDesktop
 			// 
+			this.HKCaptureDesktop.EnableKeyCapture = false;
+			this.HKCaptureDesktop.Shortcut = null;
 			this.HKCaptureDesktop.Pressed += new System.EventHandler(this.HKCaptureDesktop_Pressed);
+			this.HKCaptureDesktop.KeyCapture += new System.EventHandler(this.HKCaptureDesktop_KeyCapture);
 			// 
 			// HKCaptureWindow
 			// 
+			this.HKCaptureWindow.EnableKeyCapture = false;
+			this.HKCaptureWindow.Shortcut = null;
 			this.HKCaptureWindow.Pressed += new System.EventHandler(this.HKCaptureWindow_Pressed);
+			this.HKCaptureWindow.KeyCapture += new System.EventHandler(this.HKCaptureWindow_KeyCapture);
 			// 
 			// HKCaptureActiveProfile
 			// 
+			this.HKCaptureActiveProfile.EnableKeyCapture = false;
+			this.HKCaptureActiveProfile.Shortcut = null;
 			this.HKCaptureActiveProfile.Pressed += new System.EventHandler(this.HKCaptureActiveProfile_Pressed);
+			this.HKCaptureActiveProfile.KeyCapture += new System.EventHandler(this.HKCaptureActiveProfile_KeyCapture);
 			// 
 			// notifyIcon
 			// 
@@ -975,9 +986,9 @@ namespace smiletray
 			// 
 			// tabGeneral_HotKeys
 			// 
-			this.tabGeneral_HotKeys.Controls.Add(this.cbGeneral_HotKeys_CaptureActiveProfile);
-			this.tabGeneral_HotKeys.Controls.Add(this.cbGeneral_HotKeys_CaptureWindow);
-			this.tabGeneral_HotKeys.Controls.Add(this.cbGeneral_HotKeys_CaptureDesktop);
+			this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureActiveProfile);
+			this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureDesktop);
+			this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureWindow);
 			this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureActiveProfile);
 			this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureWindow);
 			this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureDesktop);
@@ -988,29 +999,38 @@ namespace smiletray
 			this.tabGeneral_HotKeys.TabIndex = 2;
 			this.tabGeneral_HotKeys.Text = "Hot Keys";
 			// 
-			// cbGeneral_HotKeys_CaptureActiveProfile
+			// txtGeneral_HotKeys_CaptureActiveProfile
 			// 
-			this.cbGeneral_HotKeys_CaptureActiveProfile.Location = new System.Drawing.Point(160, 112);
-			this.cbGeneral_HotKeys_CaptureActiveProfile.Name = "cbGeneral_HotKeys_CaptureActiveProfile";
-			this.cbGeneral_HotKeys_CaptureActiveProfile.Size = new System.Drawing.Size(248, 21);
-			this.cbGeneral_HotKeys_CaptureActiveProfile.TabIndex = 7;
-			this.cbGeneral_HotKeys_CaptureActiveProfile.Text = "Capture Active Profile";
+			this.txtGeneral_HotKeys_CaptureActiveProfile.Location = new System.Drawing.Point(160, 112);
+			this.txtGeneral_HotKeys_CaptureActiveProfile.Name = "txtGeneral_HotKeys_CaptureActiveProfile";
+			this.txtGeneral_HotKeys_CaptureActiveProfile.ReadOnly = true;
+			this.txtGeneral_HotKeys_CaptureActiveProfile.Size = new System.Drawing.Size(248, 20);
+			this.txtGeneral_HotKeys_CaptureActiveProfile.TabIndex = 10;
+			this.txtGeneral_HotKeys_CaptureActiveProfile.Text = "Capture Active Profile";
+			this.txtGeneral_HotKeys_CaptureActiveProfile.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureActiveProfile_Leave);
+			this.txtGeneral_HotKeys_CaptureActiveProfile.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureActiveProfile_Enter);
 			// 
-			// cbGeneral_HotKeys_CaptureWindow
+			// txtGeneral_HotKeys_CaptureDesktop
 			// 
-			this.cbGeneral_HotKeys_CaptureWindow.Location = new System.Drawing.Point(160, 64);
-			this.cbGeneral_HotKeys_CaptureWindow.Name = "cbGeneral_HotKeys_CaptureWindow";
-			this.cbGeneral_HotKeys_CaptureWindow.Size = new System.Drawing.Size(248, 21);
-			this.cbGeneral_HotKeys_CaptureWindow.TabIndex = 6;
-			this.cbGeneral_HotKeys_CaptureWindow.Text = "Capture Window";
+			this.txtGeneral_HotKeys_CaptureDesktop.Location = new System.Drawing.Point(160, 88);
+			this.txtGeneral_HotKeys_CaptureDesktop.Name = "txtGeneral_HotKeys_CaptureDesktop";
+			this.txtGeneral_HotKeys_CaptureDesktop.ReadOnly = true;
+			this.txtGeneral_HotKeys_CaptureDesktop.Size = new System.Drawing.Size(248, 20);
+			this.txtGeneral_HotKeys_CaptureDesktop.TabIndex = 9;
+			this.txtGeneral_HotKeys_CaptureDesktop.Text = "Capture Desktop";
+			this.txtGeneral_HotKeys_CaptureDesktop.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureDesktop_Leave);
+			this.txtGeneral_HotKeys_CaptureDesktop.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureDesktop_Enter);
 			// 
-			// cbGeneral_HotKeys_CaptureDesktop
+			// txtGeneral_HotKeys_CaptureWindow
 			// 
-			this.cbGeneral_HotKeys_CaptureDesktop.Location = new System.Drawing.Point(160, 88);
-			this.cbGeneral_HotKeys_CaptureDesktop.Name = "cbGeneral_HotKeys_CaptureDesktop";
-			this.cbGeneral_HotKeys_CaptureDesktop.Size = new System.Drawing.Size(248, 21);
-			this.cbGeneral_HotKeys_CaptureDesktop.TabIndex = 5;
-			this.cbGeneral_HotKeys_CaptureDesktop.Text = "Capture Desktop";
+			this.txtGeneral_HotKeys_CaptureWindow.Location = new System.Drawing.Point(160, 64);
+			this.txtGeneral_HotKeys_CaptureWindow.Name = "txtGeneral_HotKeys_CaptureWindow";
+			this.txtGeneral_HotKeys_CaptureWindow.ReadOnly = true;
+			this.txtGeneral_HotKeys_CaptureWindow.Size = new System.Drawing.Size(248, 20);
+			this.txtGeneral_HotKeys_CaptureWindow.TabIndex = 8;
+			this.txtGeneral_HotKeys_CaptureWindow.Text = "Capture Window";
+			this.txtGeneral_HotKeys_CaptureWindow.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureWindow_Leave);
+			this.txtGeneral_HotKeys_CaptureWindow.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureWindow_Enter);
 			// 
 			// lblGeneral_HotKeys_CaptureActiveProfile
 			// 
@@ -2052,13 +2072,12 @@ namespace smiletray
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
 
 			// Hot Keys
-			int hkindex;
-			if((hkindex = GetHotKeyIndex(Settings.HotKeySettings.HKWindow)) != -1)
-				cbGeneral_HotKeys_CaptureWindow.SelectedItem = HotKeyNames[hkindex];
-			if((hkindex = GetHotKeyIndex(Settings.HotKeySettings.HKDesktop)) != -1)
-				cbGeneral_HotKeys_CaptureDesktop.SelectedItem = HotKeyNames[hkindex];
-			if((hkindex = GetHotKeyIndex(Settings.HotKeySettings.HKActiveProfile)) != -1)
-				cbGeneral_HotKeys_CaptureActiveProfile.SelectedItem = HotKeyNames[hkindex];
+			if(SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKWindow) != null)
+				txtGeneral_HotKeys_CaptureWindow.Text = Settings.HotKeySettings.HKWindow;
+			if(SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop) != null)
+				txtGeneral_HotKeys_CaptureDesktop.Text = Settings.HotKeySettings.HKDesktop;
+			if(SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile) != null)
+				txtGeneral_HotKeys_CaptureActiveProfile.Text = Settings.HotKeySettings.HKActiveProfile;
 			chkGeneral_HotKeys_Enabled.Checked = Settings.HotKeySettings.Enabled;
 
 			// Load first profile options
@@ -2678,16 +2697,6 @@ namespace smiletray
 			}
 		}
 
-		int GetHotKeyIndex(string key)
-		{
-			for(int i = 0; i < HotKeyNames.Length; i++)
-			{
-				if(String.Compare(HotKeyNames[i], key, true) == 0 )
-					return i;
-			}
-			return -1;
-		}
-
 		private void UpdateActiveProfileDependancies(bool restart)
 		{
 			// Lock profile here because once we read from it, and it becomes null we may lose data
@@ -2754,28 +2763,28 @@ namespace smiletray
 		private int ApplySettings()
 		{
 			// Hot Keys
-			int hkindexCaptureWindow;
-			int hkindexCaptureDesktop;
-			int hkindexCaptureActiveProfile;
-			if(cbGeneral_HotKeys_CaptureWindow.SelectedItem == null || (hkindexCaptureWindow = GetHotKeyIndex(cbGeneral_HotKeys_CaptureWindow.SelectedItem.ToString())) == -1)
+			SystemHotkey.keycombo hkindexCaptureWindow;
+			SystemHotkey.keycombo hkindexCaptureDesktop;
+			SystemHotkey.keycombo hkindexCaptureActiveProfile;
+			if(txtGeneral_HotKeys_CaptureWindow.Text == null || (hkindexCaptureWindow = SystemHotkey.StringToKeyCombo(txtGeneral_HotKeys_CaptureWindow.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Window.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
 			}
-			if(cbGeneral_HotKeys_CaptureDesktop.SelectedItem == null || (hkindexCaptureDesktop = GetHotKeyIndex(cbGeneral_HotKeys_CaptureDesktop.SelectedItem.ToString())) == -1)
+			if(txtGeneral_HotKeys_CaptureDesktop.Text == null || (hkindexCaptureDesktop = SystemHotkey.StringToKeyCombo(txtGeneral_HotKeys_CaptureDesktop.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Desktop.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
 			}
-			if(cbGeneral_HotKeys_CaptureActiveProfile.SelectedItem == null || (hkindexCaptureActiveProfile = GetHotKeyIndex(cbGeneral_HotKeys_CaptureActiveProfile.SelectedItem.ToString())) == -1)
+			if(txtGeneral_HotKeys_CaptureActiveProfile.Text == null || (hkindexCaptureActiveProfile = SystemHotkey.StringToKeyCombo(txtGeneral_HotKeys_CaptureActiveProfile.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Active Profile");
 				return -1;
 			}
 
-			if(	String.Compare(cbGeneral_HotKeys_CaptureWindow.SelectedItem.ToString(), cbGeneral_HotKeys_CaptureDesktop.SelectedItem.ToString(), true) == 0 ||
-				String.Compare(cbGeneral_HotKeys_CaptureWindow.SelectedItem.ToString(), cbGeneral_HotKeys_CaptureActiveProfile.SelectedItem.ToString(), true) == 0 ||
-				String.Compare(cbGeneral_HotKeys_CaptureDesktop.SelectedItem.ToString(), cbGeneral_HotKeys_CaptureActiveProfile.SelectedItem.ToString(), true) == 0)
+			if(	String.Compare(txtGeneral_HotKeys_CaptureWindow.Text, txtGeneral_HotKeys_CaptureDesktop.Text, true) == 0 ||
+				String.Compare(txtGeneral_HotKeys_CaptureWindow.Text, txtGeneral_HotKeys_CaptureActiveProfile.Text, true) == 0 ||
+				String.Compare(txtGeneral_HotKeys_CaptureDesktop.Text, txtGeneral_HotKeys_CaptureActiveProfile.Text, true) == 0)
 			{
 				MessageBox.Show("Error: HotKey conflict, a key combination is assigned to more than one hotkey.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
@@ -2810,12 +2819,12 @@ namespace smiletray
 			}
 			// If this far assign hotkeys
 			Settings.HotKeySettings.Enabled = chkGeneral_HotKeys_Enabled.Checked;
-			Settings.HotKeySettings.HKWindow = HotKeyNames[hkindexCaptureWindow];
-			HKCaptureWindow.Shortcut = (System.Windows.Forms.Shortcut)HotKeyValues.GetValue(hkindexCaptureWindow);
-			Settings.HotKeySettings.HKDesktop = HotKeyNames[hkindexCaptureDesktop];
-			HKCaptureDesktop.Shortcut = (System.Windows.Forms.Shortcut)HotKeyValues.GetValue(hkindexCaptureDesktop);
-			Settings.HotKeySettings.HKActiveProfile = HotKeyNames[hkindexCaptureActiveProfile];
-			HKCaptureActiveProfile.Shortcut = (System.Windows.Forms.Shortcut)HotKeyValues.GetValue(hkindexCaptureActiveProfile);
+			Settings.HotKeySettings.HKWindow = txtGeneral_HotKeys_CaptureWindow.Text;
+			HKCaptureWindow.Shortcut = hkindexCaptureWindow;
+			Settings.HotKeySettings.HKDesktop = txtGeneral_HotKeys_CaptureDesktop.Text;
+			HKCaptureDesktop.Shortcut = hkindexCaptureDesktop;
+			Settings.HotKeySettings.HKActiveProfile = txtGeneral_HotKeys_CaptureActiveProfile.Text;
+			HKCaptureActiveProfile.Shortcut = hkindexCaptureActiveProfile;
 
 			SaveSettings();
 
@@ -2830,7 +2839,7 @@ namespace smiletray
 
 		private void HKCaptureDesktop_Pressed(object sender, System.EventArgs e)
 		{
-			if(Settings.HotKeySettings.Enabled)
+			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
 			{
 				AddLogMessage("HotKey: capturing desktop...");
 				Image img = ScreenCapture.GetDesktopImage(true);
@@ -2842,7 +2851,7 @@ namespace smiletray
 
 		private void HKCaptureWindow_Pressed(object sender, System.EventArgs e)
 		{
-			if(Settings.HotKeySettings.Enabled)
+			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
 			{
 				AddLogMessage("HotKey: capturing window...");
 				Image img = ScreenCapture.GetDesktopImage(false);
@@ -2854,7 +2863,7 @@ namespace smiletray
 
 		private void HKCaptureActiveProfile_Pressed(object sender, System.EventArgs e)
 		{
-			if(Settings.HotKeySettings.Enabled)
+			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
 			{
 				lock(ProfileLock)
 				{
@@ -2869,6 +2878,51 @@ namespace smiletray
 					}
 				}
 			}
+		}
+
+		private void txtGeneral_HotKeys_CaptureWindow_Enter(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureWindow.EnableKeyCapture = true;
+		}
+
+		private void txtGeneral_HotKeys_CaptureWindow_Leave(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureWindow.EnableKeyCapture = false;
+		}
+
+		private void txtGeneral_HotKeys_CaptureDesktop_Enter(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureDesktop.EnableKeyCapture = true;
+		}
+
+		private void txtGeneral_HotKeys_CaptureDesktop_Leave(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureDesktop.EnableKeyCapture = false;
+		}
+
+		private void txtGeneral_HotKeys_CaptureActiveProfile_Enter(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureActiveProfile.EnableKeyCapture = true;
+		}
+
+		private void txtGeneral_HotKeys_CaptureActiveProfile_Leave(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureActiveProfile.EnableKeyCapture = false;
+		}
+
+		private void HKCaptureDesktop_KeyCapture(object sender, System.EventArgs e)
+		{
+			txtGeneral_HotKeys_CaptureDesktop.Text = HKCaptureDesktop.GetKeys().ToString();
+		}
+
+		private void HKCaptureWindow_KeyCapture(object sender, System.EventArgs e)
+		{
+			txtGeneral_HotKeys_CaptureWindow.Text = HKCaptureWindow.GetKeys().ToString();
+		}
+
+		private void HKCaptureActiveProfile_KeyCapture(object sender, System.EventArgs e)
+		{
+			txtGeneral_HotKeys_CaptureActiveProfile.Text = HKCaptureActiveProfile.GetKeys().ToString();
 		}
 	}
 }
