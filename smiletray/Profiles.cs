@@ -7,7 +7,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -98,6 +97,7 @@ namespace smiletray
 	[XmlInclude(typeof(CProfileDayofDefeat))]
 	[XmlInclude(typeof(CProfileQuakeIIIArena))]
 	[XmlInclude(typeof(CProfileEnemyTerritory))]
+    [XmlInclude(typeof(CProfileTeamFortressClassic))]
 	public abstract class CProfile
 	{
 		// Public XML attributes
@@ -382,24 +382,30 @@ namespace smiletray
 		}
 		public override String GetDefaultPath()
 		{
-			try
-			{
-				RegistryKey Key = Registry.CurrentUser;
-				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
-				frmSearch search = new frmSearch();
-				search.Show();
-				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()) + @"\SteamApps", 
-					new Regex(@"\\counter\-strike source\\cstrike$", RegexOptions.IgnoreCase));
-				search.Close();
-				if(result != null)
-					return result;
-				
-			}
-			catch
-			{
-				return null;
-			}
-			return null;
+            frmSearch search = null;
+            string result = null;
+            try
+            {
+                RegistryKey Key = Registry.CurrentUser;
+                Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
+                search = new frmSearch();
+                search.Show();
+                result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()) + @"\SteamApps",
+                    new Regex(@"\\counter\-strike source\\cstrike$", RegexOptions.IgnoreCase));
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+			return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias()
@@ -489,7 +495,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Enagement Information</h3>\r\n";
@@ -786,23 +792,30 @@ namespace smiletray
 		}
 		public override String GetDefaultPath()
 		{
+            string result = null;
+            frmSearch search = null;
 			try
 			{
 				RegistryKey Key = Registry.CurrentUser;
 				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
-				frmSearch search = new frmSearch();
+				search = new frmSearch();
 				search.Show();
-				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()), 
+				result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()), 
 					new Regex(@"\\half\-life 2 deathmatch\\hl2mp$", RegexOptions.IgnoreCase));
-				search.Close();
-				if(result != null)
-					return result;
-			}
-			catch
-			{
-				return null;
-			}
-			return null;
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias()
@@ -892,7 +905,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
@@ -1077,7 +1090,7 @@ namespace smiletray
 
 				if(EnableStats)
 				{
-					// Match suicides by stuff(?)
+					// Match self being killed with headshot
 					match = rKilledHS.Match(strLine);
 					if(match.Success)
 					{
@@ -1184,28 +1197,26 @@ namespace smiletray
 						NewStats = true;
 						continue;
 					}
-					// Match times self has been killed with headshot
+
+					// Match Suicides
 					match = rSuicide.Match(strLine);
 					if(match.Success)
 					{
-						String strGun = match.Groups[1].Value;
-						CProfileCounterStrike_Gun gun;
-						if(stats.gun.Contains(strGun)) 
-						{
-							gun = (CProfileCounterStrike_Gun)stats.gun[strGun];
-							gun.killed++;
-							gun.killedhs++;
-							stats.gun[strGun] = gun;
-						}
-						else  
-						{
-							gun = new CProfileCounterStrike_Gun();
-							gun.killed = 1;
-							gun.killedhs = 1;
-							stats.gun.Add(strGun, gun);
-						}
-						NewStats = true;
-						continue;
+                        String strSuicide = match.Groups[1].Value;
+                        UInt32 count;
+                        if (stats.death.Contains(strSuicide))
+                        {
+                            count = (UInt32)stats.death[strSuicide];
+                            count++;
+                            stats.death[strSuicide] = count;
+                        }
+                        else
+                        {
+                            count = 1;
+                            stats.death.Add(strSuicide, count);
+                        }
+                        NewStats = true;
+                        continue;
 					}
 
 					// Match Misc Death
@@ -1213,16 +1224,16 @@ namespace smiletray
 					if(match.Success)
 					{
 						UInt32 count;
-						if(stats.death.Contains("misc")) 
+						if(stats.death.Contains("died.")) 
 						{
-							count = (UInt32)stats.death["misc"];
+							count = (UInt32)stats.death["died."];
 							count++;
-							stats.death["misc"] = count;
+							stats.death["died."] = count;
 						}
 						else  
 						{
 							count = 1;
-							stats.death.Add("misc", count);
+							stats.death.Add("died.", count);
 						}
 						NewStats = true;
 						continue;
@@ -1276,23 +1287,31 @@ namespace smiletray
 		}
 		public override String GetDefaultPath()
 		{
-			try
-			{
-				RegistryKey Key = Registry.CurrentUser;
-				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
-				frmSearch search = new frmSearch();
-				search.Show();
-				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()), 
-					new Regex(@"\\counter\-strike$", RegexOptions.IgnoreCase));
-				search.Close();
-				if(result != null)
-					return result;
-			}
-			catch
-			{
-				return null;
-			}
-			return null;
+
+            frmSearch search = null;
+            string result = null;
+            try
+            {
+                RegistryKey Key = Registry.CurrentUser;
+                Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
+                search = new frmSearch();
+                search.Show();
+                result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()),
+                    new Regex(@"\\counter\-strike$", RegexOptions.IgnoreCase));
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+			return result;
 		}
 		public String GetGameAlias()
 		{
@@ -1397,21 +1416,21 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
 					strStats += "\t\tFriendly-fire Attacks: " + stats.teamattacks + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 
-					strStats += "\t\t<h3>Death Statistics:</h3>\r\n";
+					strStats += "\t\t<h3>Misc Death Statistics:</h3>\r\n";
 					uint TotalDeaths = 0;
 					foreach(String Key in stats.death.Keys)
 					{
 						TotalDeaths += (UInt32)stats.death[Key];
 						strStats += "\t\t<b>"+ Key + ":</b> " + (UInt32)stats.death[Key] + "<br />\r\n";
 					}
-					strStats += "\t\tTotal Other Deaths: " + TotalDeaths + "<br />\r\n";
+					strStats += "\t\tTotal Misc Deaths: " + TotalDeaths + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
@@ -1457,7 +1476,7 @@ namespace smiletray
 						c.SelectedText = "\n";
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
-						c.SelectedText = "Death Statistics:\n" ;
+						c.SelectedText = "Misc Death Statistics:\n" ;
 						uint TotalDeaths = 0;
 						foreach(String Key in stats.death.Keys)
 						{
@@ -1467,7 +1486,7 @@ namespace smiletray
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
 							c.SelectedText = (UInt32)stats.death[Key] + "\n";
 						}
-						c.SelectedText = "Total Other Deaths: " + TotalDeaths + "\n";
+						c.SelectedText = "Total Misc Deaths: " + TotalDeaths + "\n";
 						c.SelectedText = "\n";
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
@@ -1594,23 +1613,30 @@ namespace smiletray
 		}
 		public override String GetDefaultPath()
 		{
+            string result = null;
+            frmSearch search = null;
 			try
 			{
 				RegistryKey Key = Registry.CurrentUser;
 				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
-				frmSearch search = new frmSearch();
+				search = new frmSearch();
 				search.Show();
-				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()), 
+				result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()), 
 					new Regex(@"\\day of defeat$", RegexOptions.IgnoreCase));
-				search.Close();
-				if(result != null)
-					return result;
-			}
-			catch
-			{
-				return null;
-			}
-			return null;
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		private void PopulateRegEx()
 		{
@@ -1900,7 +1926,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
@@ -2005,6 +2031,525 @@ namespace smiletray
 			return strStats;
 		}
 	}
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /// Team Fortress Classic
+    //////////////////////////////////////////////////////////////////////////////////////////////
+  
+    public class CProfileTeamFortressClassic_XMLDeath
+    {
+        public String name;
+        public UInt32 deaths;
+
+        public CProfileTeamFortressClassic_XMLDeath()
+        {
+            deaths = new UInt32();
+        }
+    }
+    public class CProfileTeamFortressClassic_Stats
+    {
+        public UInt32 teamkills;
+        public UInt32 teamkilled;
+        public UInt32 flaggot;
+        public UInt32 flaglost;
+        public UInt32 captures;
+        [XmlIgnoreAttribute]
+        public Hashtable gun;
+        [XmlElement(ElementName = "gun")]
+        public CProfile_XMLGun[] xmlgun;
+        [XmlIgnoreAttribute]
+        public Hashtable death;
+        [XmlElement(ElementName = "death")]
+        public CProfileTeamFortressClassic_XMLDeath[] xmldeath;
+
+        public CProfileTeamFortressClassic_Stats()
+        {
+            teamkills = new UInt32();
+            teamkilled = new UInt32();
+            flaggot = new UInt32();
+            flaglost = new UInt32();
+            captures = new UInt32();
+            gun = new Hashtable();
+            death = new Hashtable();
+        }
+    }
+
+    public class CProfileTeamFortressClassic : CProfile
+    {
+        public CProfileTeamFortressClassic_Stats stats;
+
+        private String alias;
+        private Regex rKill;
+        private Regex rKilled;
+        private Regex rSuicide;
+        private Regex rNickChange;
+        private Regex rTeamKill;
+        private Regex rTeamKilled;
+        private Regex rDeath;
+        private Regex rFlagGot;
+        private Regex rFlagLost;
+        private Regex rCaptured;
+
+        public CProfileTeamFortressClassic()
+        {
+            this.ProfileName = "Team Fortress Classic";
+            this.SnapName = "Team Fortress Classic";
+            this.stats = new CProfileTeamFortressClassic_Stats();
+        }
+        private void PopulateRegEx()
+        {
+            rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+)$");
+            rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+)$");
+            rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
+            rSuicide = new Regex("^" + Regex.Escape(this.alias) + " killed self with (\\w+)$");
+            rDeath = new Regex("^" + Regex.Escape(this.alias) + " died$");
+            rTeamKill = new Regex("^" + Regex.Escape(this.alias) + " killed his teammate .+$");
+            rTeamKilled = new Regex("^.+ killed his teammate " + Regex.Escape(this.alias) + "$");
+            rFlagGot = new Regex("^" + Regex.Escape(this.alias) + " GOT the ENEMY flag!$");
+            rFlagLost = new Regex("^" + Regex.Escape(this.alias) + " LOST the \\w+ flag!$");
+            rCaptured = new Regex("^" + Regex.Escape(this.alias) + " captured the .+!$");
+        }
+
+        public override void Parse()
+        {
+            if (!this.IsOpen())
+                return;
+
+            Match match;
+            String strLine;
+
+            while ((strLine = ReadLine()) != null)
+            {
+
+                // Match kills given
+                if (EnableSnaps || EnableStats)
+                {
+                    match = rKill.Match(strLine);
+                    if (match.Success)
+                    {
+                        if (EnableStats)
+                        {
+                            String strGun = match.Groups[1].Value;
+                            CProfile_Gun gun;
+                            if (stats.gun.Contains(strGun))
+                            {
+                                gun = (CProfile_Gun)stats.gun[strGun];
+                                gun.kills++;
+                                stats.gun[strGun] = gun;
+                            }
+                            else
+                            {
+                                gun = new CProfile_Gun();
+                                gun.kills = 1;
+                                stats.gun.Add(strGun, gun);
+                            }
+                            NewStats = true;
+                        }
+                        if (EnableSnaps)
+                        {
+                            NewSnaps = true;
+                        }
+                        continue;
+                    }
+                }
+
+                if (EnableStats)
+                {
+                    // Match times self has been killed
+                    match = rKilled.Match(strLine);
+                    if (match.Success)
+                    {
+                        String strGun = match.Groups[1].Value;
+                        CProfile_Gun gun;
+                        if (stats.gun.Contains(strGun))
+                        {
+                            gun = (CProfile_Gun)stats.gun[strGun];
+                            gun.killed++;
+                            stats.gun[strGun] = gun;
+                        }
+                        else
+                        {
+                            gun = new CProfile_Gun();
+                            gun.killed = 1;
+                            stats.gun.Add(strGun, gun);
+                        }
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Match misc deaths
+                    match = rSuicide.Match(strLine);
+                    if (match.Success)
+                    {
+                        String strSuicide = match.Groups[1].Value;
+                        UInt32 count;
+                        if (stats.death.Contains(strSuicide))
+                        {
+                            count = (UInt32)stats.death[strSuicide];
+                            count++;
+                            stats.death[strSuicide] = count;
+                        }
+                        else
+                        {
+                            count = 1;
+                            stats.death.Add(strSuicide, count);
+                        }
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Match Misc Death
+                    match = rDeath.Match(strLine);
+                    if (match.Success)
+                    {
+                        UInt32 count;
+                        if (stats.death.Contains("died."))
+                        {
+                            count = (UInt32)stats.death["died."];
+                            count++;
+                            stats.death["died."] = count;
+                        }
+                        else
+                        {
+                            count = 1;
+                            stats.death.Add("died.", count);
+                        }
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Flag captures
+                    match = rFlagGot.Match(strLine);
+                    if (match.Success)
+                    {
+                        stats.flaggot++;
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Flag dropped
+                    match = rFlagLost.Match(strLine);
+                    if (match.Success)
+                    {
+                        stats.flaglost++;
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // captures
+                    match = rCaptured.Match(strLine);
+                    if (match.Success)
+                    {
+                        stats.captures++;
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Match nickchange of self
+                    match = rNickChange.Match(strLine);
+                    if (match.Success)
+                    {
+                        this.alias = match.Groups[1].Value;
+                        PopulateRegEx();
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Team kills
+                    match = rTeamKill.Match(strLine);
+                    if (match.Success)
+                    {
+                        stats.teamkills++;
+                        NewStats = true;
+                        continue;
+                    }
+
+                    // Team killed
+                    match = rTeamKilled.Match(strLine);
+                    if (match.Success)
+                    {
+                        stats.teamkilled++;
+                        NewStats = true;
+                        continue;
+                    }
+                }
+            }
+        }
+        public override bool Open()
+        {
+            base.Open();
+            try
+            {
+                this.alias = GetGameAlias();
+                this.log = new StreamReader(new FileStream(this.path + @"\qconsole.log", FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                this.log.BaseStream.Seek(0, SeekOrigin.End);		// Set to End
+                PopulateRegEx();								// Create our Regex objects
+                return true;
+            }
+            catch
+            {
+                this.alias = null;
+                if (this.log != null)
+                    this.log.Close();
+                this.log = null;
+                return false;
+            }
+        }
+        public override bool CheckActive()
+        {
+            return NativeMethods.FindWindow("Valve001", "Team Fortress Classic") != 0;
+        }
+        public override String GetDefaultPath()
+        {
+            string result = null;
+            frmSearch search = null;
+            try
+            {
+                RegistryKey Key = Registry.CurrentUser;
+                Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
+                search = new frmSearch();
+                search.Show();
+                result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()),
+                    new Regex(@"\\team fortress classic$", RegexOptions.IgnoreCase));
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
+        }
+        public String GetGameAlias()
+        {
+            String strLine;
+            Match match;
+            String nick = null;
+            StreamReader sr = null;
+
+            try
+            {
+                sr = new StreamReader(this.path + @"\tfc\config.cfg");
+                //Continues to output one line at a time until end of file(EOF) is reached
+                Regex rNick = new Regex("^\\s*name\\s*\"(.+)\"\\s*$");
+                while ((strLine = sr.ReadLine()) != null)
+                {
+                    match = rNick.Match(strLine);
+                    if (match.Success)
+                    {
+                        nick = match.Groups[1].Value;
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                nick = null;
+            }
+            finally
+            {
+                // Cleanup
+                if (sr != null) sr.Close();
+            }
+            return nick;
+        }
+        public override void toXMLOperations()
+        {
+            // Turn gun hastable into something more useable
+            if (stats.gun == null || stats.death == null)
+                return;
+            stats.xmlgun = new CProfile_XMLGun[stats.gun.Count];
+            int i = 0;
+            foreach (String key in stats.gun.Keys)
+            {
+                stats.xmlgun[i] = new CProfile_XMLGun();
+                stats.xmlgun[i].name = key;
+                stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
+                i++;
+            }
+            stats.xmldeath = new CProfileTeamFortressClassic_XMLDeath[stats.death.Count];
+            i = 0;
+            foreach (String key in stats.death.Keys)
+            {
+                stats.xmldeath[i] = new CProfileTeamFortressClassic_XMLDeath();
+                stats.xmldeath[i].name = key;
+                stats.xmldeath[i].deaths = (UInt32)stats.death[key];
+                i++;
+            }
+
+        }
+        public override void fromXMLOperations()
+        {
+            if (stats.xmlgun == null || stats.xmldeath == null)
+                return;
+
+            if (stats.gun == null)
+                stats.gun = new Hashtable();
+            if (stats.xmldeath == null)
+                stats.death = new Hashtable();
+
+            for (int i = 0; i < stats.xmlgun.Length; i++)
+            {
+                stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+            }
+            for (int i = 0; i < stats.xmldeath.Length; i++)
+            {
+                stats.death.Add(stats.xmldeath[i].name, stats.xmldeath[i].deaths);
+            }
+        }
+        public override void ResetStats()
+        {
+            stats = new CProfileTeamFortressClassic_Stats();
+        }
+        public override string GetStatsReport(String font, CProfile.SaveTypes format)
+        {
+            string strStats = null;
+            CProfileTeamFortressClassic_Stats stats = this.stats;
+            switch (format)
+            {
+                case CProfile.SaveTypes.HTML:
+                    {
+                        strStats = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n";
+                        strStats += "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n";
+                        strStats += "\t<head>\r\n";
+                        strStats += "\t\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=iso-8859-1\" />\r\n";
+                        strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
+                        strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
+                        strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
+                        strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
+                        strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
+                        strStats += "\t</head>\r\n";
+                        strStats += "\t<body>\r\n";
+                        strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
+                        strStats += "\t\t<hr />\r\n";
+                        strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
+                        strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+                        strStats += "\t\t<hr />\r\n";
+
+                        strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
+                        strStats += "\t\tTeam Kills: " + stats.teamkills + "<br />\r\n";
+                        strStats += "\t\tTeam Killed: " + stats.teamkilled + "<br />\r\n";
+                        strStats += "\t\tFlag Captured: " + stats.flaggot + "<br />\r\n";
+                        strStats += "\t\tFlag Dropped: " + stats.flaglost + "<br />\r\n";
+                        strStats += "\t\tPoint Captures: " + stats.captures + "<br />\r\n";
+                        strStats += "\t\t<br /><br />\r\n";
+
+                        strStats += "\t\t<h3>Misc Death Statistics:</h3>\r\n";
+                        uint TotalDeaths = 0;
+                        foreach (String Key in stats.death.Keys)
+                        {
+                            TotalDeaths += (UInt32)stats.death[Key];
+                            strStats += "\t\t<b>" + Key + ":</b> " + (UInt32)stats.death[Key] + "<br />\r\n";
+                        }
+                        strStats += "\t\tTotal Misc Deaths: " + TotalDeaths + "<br />\r\n";
+                        strStats += "\t\t<br /><br />\r\n";
+
+                        strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+                        uint TotalKills = 0;
+                        uint TotalKilled = 0;
+                        foreach (String Key in stats.gun.Keys)
+                        {
+                            TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+                            TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+                            strStats += "\t\t<b>" + Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killed + "<br />\r\n";
+                        }
+                        strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
+                        strStats += "\t\t<br /><br />\r\n";
+                        strStats += "\t</body>\r\n";
+                        strStats += "</html>";
+                        break;
+                    }
+                case CProfile.SaveTypes.RTF:
+                case CProfile.SaveTypes.TXT:
+                    {
+                        RichTextBox c = new RichTextBox();
+
+                        try
+                        {
+                            // Populate the rich text box
+                            c.SelectionStart = 0;
+                            c.SelectionFont = new Font(font, 12, FontStyle.Bold);
+                            c.SelectedText = ProfileName + " Statistics:\n";
+                            c.SelectionFont = new Font(font, 12, FontStyle.Bold | FontStyle.Underline);
+                            c.SelectedText = "                                                                \n\n";
+                            c.SelectedText = "Created with Smile! v" + Info.version + "\n";
+                            c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
+                            c.SelectionFont = new Font(font, 12, FontStyle.Bold | FontStyle.Underline);
+                            c.SelectedText = "                                                                \n\n";
+
+                            c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+                            c.SelectedText = "Misc Statistics:\n";
+                            c.SelectedText = "Team Kills: " + stats.teamkills + "\n";
+                            c.SelectedText = "Team Killed: " + stats.teamkilled + "\n";
+                            c.SelectedText = "Flag Captured: " + stats.flaggot + "\n";
+                            c.SelectedText = "Flag Dropped: " + stats.flaglost + "\n";
+                            c.SelectedText = "Point Captures: " + stats.captures + "\n";
+                            c.SelectedText = "\n";
+
+                            c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+                            c.SelectedText = "Misc Death Statistics:\n";
+                            uint TotalDeaths = 0;
+                            foreach (String Key in stats.death.Keys)
+                            {
+                                TotalDeaths += (UInt32)stats.death[Key];
+                                c.SelectionFont = new Font(font, 9, FontStyle.Bold | FontStyle.Italic);
+                                c.SelectedText = Key + ": ";
+                                c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+                                c.SelectedText = (UInt32)stats.death[Key] + "\n";
+                            }
+                            c.SelectedText = "Total Misc Deaths: " + TotalDeaths + "\n";
+                            c.SelectedText = "\n";
+
+                            c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+                            c.SelectedText = "Weapon Statistics:\n";
+                            uint TotalKills = 0;
+                            uint TotalKilled = 0;
+                            foreach (String Key in stats.gun.Keys)
+                            {
+                                TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+                                TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+                                c.SelectionFont = new Font(font, 9, FontStyle.Bold | FontStyle.Italic);
+                                c.SelectedText = Key + ": ";
+                                c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+                                c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
+                                c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed;
+                            }
+                            c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
+                            c.SelectedText = "\n\n";
+
+                            c.SelectionStart = 0;
+                        }
+                        catch
+                        {
+                            c.Clear();
+                            c.SelectionStart = 0;
+                            c.SelectedText = "There was an error writing the stats, (missing font?) Try saving it to html instead using the edit menu.\n\n";
+                            c.SelectionStart = 0;
+                        }
+
+                        switch (format)
+                        {
+                            case CProfile.SaveTypes.RTF:
+                                strStats = c.Rtf;
+                                break;
+                            case CProfile.SaveTypes.TXT:
+                                strStats = c.Text;
+                                break;
+                        }
+                        c.Dispose();
+                        break;
+                    }
+            }
+            return strStats;
+        }
+    }
+
 
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Quake III Arena
@@ -2244,29 +2789,38 @@ namespace smiletray
 		{
 			const int LocalDisk = 3;
 
-			frmSearch search = new frmSearch();
-			try
-			{
-				search.Show();
-				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
-				ManagementObjectCollection queryCollection = query.Get();
-				string result = null;
-				foreach( ManagementObject mo in queryCollection )
-				{
-					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
-						new Regex(@"\\quake3.exe$", RegexOptions.IgnoreCase));
-					if(result != null || search.Stopped())
-						break;
-				}
-				search.Close();
-				result = Path.GetDirectoryName(result) + "\\baseq3";
-				return result;
-			}
-			catch
-			{
-				search.Close();
-				return null;
-			}
+			frmSearch search = null;
+            string result = null;
+            try
+            {
+                search = new frmSearch();
+                search.Show();
+                ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
+                ManagementObjectCollection queryCollection = query.Get();
+                foreach (ManagementObject mo in queryCollection)
+                {
+                    result = search.Search(ProfileName, mo["Name"].ToString() + "\\",
+                        new Regex(@"\\quake3.exe$", RegexOptions.IgnoreCase));
+                    if (result != null || search.Stopped())
+                        break;
+                }
+
+                if (result != null)
+                    result = Path.GetDirectoryName(result) + "\\baseq3";
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias(String file)
@@ -2379,7 +2933,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Self-Inflicted/Unknown Death Statistics:</h3>\r\n";
@@ -2740,28 +3294,36 @@ namespace smiletray
 		{
 			const int LocalDisk = 3;
 
-			frmSearch search = new frmSearch();
-			try
-			{
-				search.Show();
-				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
-				ManagementObjectCollection queryCollection = query.Get();
-				string result = null;
-				foreach( ManagementObject mo in queryCollection )
-				{
-					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
-						new Regex(@"\\et.exe$", RegexOptions.IgnoreCase));
-					if(result != null || search.Stopped())
-						break;
-				}
-				search.Close();
-				return Path.GetDirectoryName(result);	
-			}
-			catch
-			{
-				search.Close();
-				return null;
-			}
+			frmSearch search = null;
+            string result = null;
+            try
+            {
+                search = new frmSearch();
+                search.Show();
+                ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
+                ManagementObjectCollection queryCollection = query.Get();
+                foreach (ManagementObject mo in queryCollection)
+                {
+                    result = search.Search(ProfileName, mo["Name"].ToString() + "\\",
+                        new Regex(@"\\et.exe$", RegexOptions.IgnoreCase));
+                    if (result != null || search.Stopped())
+                        break;
+                }
+                result = Path.GetDirectoryName(result);
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias(String dir)
@@ -2900,7 +3462,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Self-Inflicted Statistics:</h3>\r\n";
@@ -3254,24 +3816,30 @@ namespace smiletray
 		}
 		public override String GetDefaultPath()
 		{
+            string result = null;
+            frmSearch search = null;
 			try
 			{
 				RegistryKey Key = Registry.CurrentUser;
 				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
-				frmSearch search = new frmSearch();
+				search = new frmSearch();
 				search.Show();
-				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()) + @"\SteamApps", 
+				result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()) + @"\SteamApps", 
 					new Regex(@"day of defeat source\\dod$", RegexOptions.IgnoreCase));
-				search.Close();
-				if(result != null)
-					return result;
-				
-			}
-			catch
-			{
-				return null;
-			}
-			return null;
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias()
@@ -3380,7 +3948,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Enagement Information</h3>\r\n";
@@ -3695,24 +4263,30 @@ namespace smiletray
 		}
 		public override String GetDefaultPath()
 		{
+            string result = null;
+            frmSearch search = null;
 			try
 			{
 				RegistryKey Key = Registry.CurrentUser;
 				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
-				frmSearch search = new frmSearch();
+				search = new frmSearch();
 				search.Show();
-				string result = search.Search(ProfileName, Key.GetValue("SourceModInstallPath").ToString(), 
+				result = search.Search(ProfileName, Key.GetValue("SourceModInstallPath").ToString(), 
 					new Regex(@"\\dystopia$", RegexOptions.IgnoreCase));
-				search.Close();
-				if(result != null)
-					return result;
-				
-			}
-			catch
-			{
-				return null;
-			}
-			return null;
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias()
@@ -3802,7 +4376,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
@@ -4115,28 +4689,36 @@ namespace smiletray
 		{
 			const int LocalDisk = 3;
 
-			frmSearch search = new frmSearch();
-			try
-			{
-				search.Show();
-				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
-				ManagementObjectCollection queryCollection = query.Get();
-				string result = null;
-				foreach( ManagementObject mo in queryCollection )
-				{
-					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
-						new Regex(@"\\JediAcademy.exe$", RegexOptions.IgnoreCase));
-					if(result != null || search.Stopped())
-						break;
-				}
-				search.Close();
-				return Path.GetDirectoryName(result);	
-			}
-			catch
-			{
-				search.Close();
-				return null;
-			}
+			frmSearch search = null;
+            string result = null;
+            try
+            {
+                search = new frmSearch();
+                search.Show();
+                ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
+                ManagementObjectCollection queryCollection = query.Get();
+                foreach (ManagementObject mo in queryCollection)
+                {
+                    result = search.Search(ProfileName, mo["Name"].ToString() + "\\",
+                        new Regex(@"\\JediAcademy.exe$", RegexOptions.IgnoreCase));
+                    if (result != null || search.Stopped())
+                        break;
+                }
+                result = Path.GetDirectoryName(result);
+            }
+            catch
+            {
+                result = null;
+            }
+            finally
+            {
+                if (search != null)
+                {
+                    search.Close();
+                    search.Dispose();
+                }
+            }
+            return result;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias(String file)
@@ -4249,7 +4831,7 @@ namespace smiletray
 					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
 					strStats += "\t\t<hr />\r\n";
 					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
-					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t" + Info.copyrightdate + " Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
 					strStats += "\t\t<h3>Self-Inflicted/Unknown Death Statistics:</h3>\r\n";

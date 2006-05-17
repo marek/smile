@@ -18,9 +18,9 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.6.2";
-		public static readonly String intversion = "1.6.2";
-		public static readonly String copyrightdate = "©2005";
+		public static readonly String version = "1.7";
+		public static readonly String intversion = "1.7.0";
+		public static readonly String copyrightdate = "©2005-2006";
 	}
 
 	public class HotKeySettings_t

@@ -84,7 +84,8 @@ namespace smiletray
 				typeof(CProfileDayofDefeat),
 				typeof(CProfileDayofDefeatSource),
 				typeof(CProfileSourceDystopia),
-				typeof(CProfileJediAcademy)
+				typeof(CProfileJediAcademy),
+                typeof(CProfileTeamFortressClassic)
 			};
 
 		// form elements
@@ -272,11 +273,11 @@ namespace smiletray
 			rtxtAbout.SelectedText = "Smile! " ;
 			rtxtAbout.SelectionFont = new Font("Verdana", 10, FontStyle.Regular);
 			rtxtAbout.SelectedText = "v" + Info.version + "\n";
-			rtxtAbout.SelectedText = "©2005 Marek Kudlacz\nhttp://www.kudlacz.com\n";
+			rtxtAbout.SelectedText = "©2005-2006 Marek Kudlacz\nhttp://www.kudlacz.com\n";
 			rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold|FontStyle.Underline);
 			rtxtAbout.SelectedText = "                                                                                                            \n\n";
 			rtxtAbout.SelectedText = "This is a program designed in C#/.NET to keep track of statistics, and to take \"kill\" screenshots when you actually manage to kill someone. Enjoy!\n";
-			rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
+			rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005-2006 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
 			rtxtAbout.SelectionStart = 0 ;
 			
 			// Save queue starts here because now we can take screenshots at any moment
@@ -1650,7 +1651,7 @@ namespace smiletray
 			// 
 			// frmMain
 			// 
-			this.AutoScale = false;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
 			this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
 			this.ClientSize = new System.Drawing.Size(450, 447);
 			this.Controls.Add(this.cmdApply);
@@ -1716,6 +1717,9 @@ namespace smiletray
 		[STAThread]
 		static void Main() 
 		{
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
 			string indentifier = "smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}";
 			MessageId = NativeMethods.RegisterWindowMessage(indentifier);
 			using(SingleProgramInstance spi = new SingleProgramInstance(indentifier))

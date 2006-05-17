@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // Smile! -- Screenshot and Statistics Utility
-// Copyright (c) 2005 Marek Kudlacz
+// Copyright (c) 2005-2006 Marek Kudlacz
 //
 // http://kudlacz.com
 //
@@ -51,6 +51,7 @@ Dystopia (HL2/Source Mod)
 Half-Life 2: Deatchmatch
 Jedi Academy
 Quake III Arena (and some mods)
+Team Fortress Classic
 Wolfenstein: Enemy Territory
 
 
@@ -66,7 +67,7 @@ details on what you should enter.
 
 Game Configuration:
 ------------------------
-• Steam Installation (HL, CS, DOD, DOD:S, CS:S, HL2:DM & Dystopia):
+• Steam Installation (HL, CS, DOD, DOD:S, CS:S, TFC, HL2:DM & Dystopia):
 Open steam. Go to "Play Games". Right-Click on "Counter-Strike: Source" and/or "Half-Life 2: Deathmatch", and/or any other steam game
 and click the “Launch Options" button. Add " -condebug" (without the quotes) as launch parameter.
 
@@ -116,6 +117,10 @@ X:\ being the letter of the drive steam is installed to.
 • Quake III Arena (And Mods like Team Arena and OSP)
 	Game Path: "X:\...\Quake III Arena\baseq3" (or wherever quake3.exe\mod_name is located)
 	Log File: "\qconsole.log"
+
+• Team Fortress Classic
+	Game Path: "X:\...\Steam\SteamApps\<account name>\team fortress classic"
+	Log File: "qconsole.log"
 
 • Wolfenstein: Enemy Territory
 	Game Path: "X:\...\Enemy Territory" (or wherever et.exe is located)
@@ -221,6 +226,7 @@ tiki from planetquake (for lots of testing, bug fixing, and JediAcademy Profile 
 Leo for suggestions
 `star from #counter-strike
 KodeK for .manifest file and bug reports/suggestions
+Flank for team fortress classic support
 Everyone who has sent me a "thanks"
 
 
@@ -244,6 +250,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.6.2: Compatible
 1.6.1: Compatible
 1.6: Compatible
 1.5: Compatible
@@ -258,6 +265,18 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.7**
+-Converted to .NET Framework v2.0 using Visual Studio 2005
+-Removed depricated code
+-Fixed Counter-Strike death statistics
+-Minor adjustments to statistics text For all Profiles
+-Added Team Fortress classic Profile (thanks Flank!)
+-Fixed version checker
+-Removed smiletray.exe.manifest file, instead it's now embeded into the program.
+-Fixed path auto-detect for the Quake III Arena profile
+-Modified auto-detect's search dialog for all profiles so if a supressed exception occurs it does not remain shown.
+
+
 **v1.6.2**
 -Application will now come to foreground if another instance tries to start
 -Fixed a bug with Enabling/Disabling Snaps/Stats
@@ -356,6 +375,8 @@ Changelog:
 
 **v1.0**
 - Initial Release
+- Rewritten in C#
 
-
+**v0.0-v1.0 Alpha**
+- Initial proof of concept release, written in C
 

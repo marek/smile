@@ -194,8 +194,12 @@ namespace Kudlacz.Web
 			{
 				try
 				{
-					if(int.Parse(split_ver[i]) < int.Parse(split_sver[i])) 
-						return Error.NewVersion;
+                    if (int.Parse(split_ver[i]) < int.Parse(split_sver[i]))
+                        return Error.NewVersion;
+                    else if (int.Parse(split_ver[i]) > int.Parse(split_sver[i]))
+                        break;
+                    else
+                        continue;
 				}
 				catch
 				{
