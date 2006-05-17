@@ -1,11 +1,12 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// Smile! -- CounterStrike: Source Screenshot and Statistics Utility
-// v1.2
-// Written by Marek Kudlacz
-// Copyright (c)2005
+// Smile! -- Screenshot and Statistics Utility
+// Copyright (c) 2005 Marek Kudlacz
+//
+// http://kudlacz.com
 //
 /////////////////////////////////////////////////////////////////////////////
+
 
 
 using System;
@@ -20,6 +21,7 @@ namespace smiletray
 	public sealed class ScreenCapture
 	{
 		private const int SRCCOPY = 0x00CC0020;
+		private const int CAPTUREBLT = 0x40000000;
 
 
 		public static Image GetDesktopImage()
@@ -44,7 +46,7 @@ namespace smiletray
 				desktopWindowGraphics = Graphics.FromHdc(pWindowDC);
 
 				desktopWindowGraphics.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
-				NativeMethods.BitBlt(pDesktop, 0, 0, screen.Width, screen.Height, pWindowDC, screen.X, screen.Y, SRCCOPY);
+				NativeMethods.BitBlt(pDesktop, 0, 0, screen.Width, screen.Height, pWindowDC, screen.X, screen.Y, SRCCOPY|CAPTUREBLT);
 
 				// Release device contexts
 				NativeMethods.ReleaseDC(pDesktopWindow, pWindowDC);

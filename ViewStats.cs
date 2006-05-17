@@ -1,11 +1,12 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// Smile! -- CounterStrike: Source Screenshot and Statistics Utility
-// v1.2
-// Written by Marek Kudlacz
-// Copyright (c)2005
+// Smile! -- Screenshot and Statistics Utility
+// Copyright (c) 2005 Marek Kudlacz
+//
+// http://kudlacz.com
 //
 /////////////////////////////////////////////////////////////////////////////
+
 
 
 using System;

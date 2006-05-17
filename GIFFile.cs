@@ -6,18 +6,7 @@ So, .NET does not support animated gifs, only single framed ones. So what must o
 For the official specifications:
 http://www.netsw.org/graphic/bitmap/formats/gif/gifmerge/docs/gifspecs.txt
 
-In short it can be described with:
----
-GIF89a HEADER 
-LOGICAL SCREEN DESCRIPTOR BLOCK 
-optional GLOBAL COLOR TABLE
-optional NETSCAPE APPLICATION EXTENSION BLOCK(:-> surprise) 
-a collection of graphic blocks 
-GIF TRAILER ends the series of images 
---
-
-What we need to define is the application extension, and graphic control blocks. The rest will be copied from
-information we already have (the one framed gif we CAN make).
+We copy over what we can from the portion .NET can do(The LZW image data compression), the rest we do ourselves.
 
 */
 
@@ -38,9 +27,13 @@ namespace smiletray
 		{
 			SaveAnimation(file, frames, frameDelay, 0);
 		}
-		public static void SaveAnimation(String file, ArrayList frames, int frameDelay)
+		public static void SaveAnimation(String file, ArrayList frames, int frameDelay, bool optimized)
 		{
-			SaveAnimation(file, frames, frameDelay, 0, true);
+			SaveAnimation(file, frames, frameDelay, 0, optimized);
+		}
+		public static void SaveAnimation(String file, ArrayList frames, int frameDelay, int rest)
+		{
+			SaveAnimation(file, frames, frameDelay, rest, true);
 		}
 		public static void SaveAnimation(String file, ArrayList frames, int frameDelay, int rest, bool optimized)
 		{
@@ -51,7 +44,7 @@ namespace smiletray
 				return;
 
 			// Define the control block (such as frame delay)
-			Byte[] ctlblock = new Byte[8];
+			Byte[] cb = new Byte[8];
 			cb[0] = 33;									// Extension introducer
 			cb[1] = 249;								// Graphic control extension
 			cb[2] = 4;									// Size of block
@@ -73,107 +66,151 @@ namespace smiletray
 			id[7] = 0;			// Height low byte
 			id[8] = 0;			// Height high byte
 			id[9] = 135;		// [10000111] Flags: local color table, not interlaced, not sorted, reserved, 8bit= 256 colors = 2^((8 bit)-1)
-			Thread.Sleep(1);
 
 			MemoryStream ms = new MemoryStream();
 			BinaryWriter bw;
 			Byte[] temp;
+			int	width = 0;
+			int height = 0;
 			// Create binary writer so we can write our bytes
 			bw = new BinaryWriter(File.Open(file, FileMode.Create, FileAccess.Write, FileShare.None));
 			Thread.Sleep(1);
 			for(int i = 0; i < frames.Count; i++)
 			{
-				Image frame = (Image)frames[i];	
-				Image optimized_frame = Quantize(frame);
-				Thread.Sleep(1);
-				optimized_frame.Save(ms, System.Drawing.Imaging.ImageFormat.Gif);		// Save the image as a gif
+				Image frame = (Image)frames[i];
+				Image optimized_frame;
+				if(optimized)
+				{
+					optimized_frame = Quantize(frame);
+					Thread.Sleep(1);
+					optimized_frame.Save(ms, System.Drawing.Imaging.ImageFormat.Gif);		// Save the image as a gif
+					width = optimized_frame.Width;
+					height = optimized_frame.Height;
+					optimized_frame.Dispose();
+				}
+				else
+				{
+					frame.Save(ms, System.Drawing.Imaging.ImageFormat.Gif);		// Save the image as a gif
+				}
 				frame.Dispose();
 				frame = null;
+				optimized_frame = null;
 				Thread.Sleep(1);
-				temp = ms.ToArray();										// Copy the gif into a byte array
+				temp = ms.ToArray();	// Copy the gif into a byte array
 				Thread.Sleep(1);
 				if(i == 0) 
 				{
-					// Define Header
-					Byte[] header = new Byte[6];
-					header[0] = (byte)'G';
-					header[1] = (byte)'I';
-					header[2] = (byte)'F';
-					header[3] = (byte)'8';
-					header[4] = (byte)'9';
-					header[5] = (byte)'a';
+					if(optimized)
+					{
+						// Define Header
+						Byte[] header = new Byte[6];
+						header[0] = (byte)'G';
+						header[1] = (byte)'I';
+						header[2] = (byte)'F';
+						header[3] = (byte)'8';
+						header[4] = (byte)'9';
+						header[5] = (byte)'a';
 
-					// Logical Screen Discriptor
-					Byte[] lsd = new Byte[7];
-					lsd[0] = (byte)(optimized_frame.Width & 0xFF);			// Width low byte
-					lsd[1] = (byte)((optimized_frame.Width >> 8) & 0xFF);	// Width high byte
-					lsd[2] = (byte)(optimized_frame.Height & 0xFF);			// Height low byte
-					lsd[3] = (byte)((optimized_frame.Height >> 8) & 0xFF);	// Height high byte
-					lsd[4] = 119;											// [01110111] Flags: No Global Color Table, 111=((8bit color)-1), Not ordered, 111 = n^((8 bits)-1) colors
-					lsd[5] = 0;												// Background Color Index
-					lsd[6] = 0;												// No pixel aspect ratio (it will determin itself)
+						// Logical Screen Discriptor
+						Byte[] lsd = new Byte[7];
+						lsd[0] = (byte)(width & 0xFF);			// Width low byte
+						lsd[1] = (byte)((width >> 8) & 0xFF);	// Width high byte
+						lsd[2] = (byte)(height & 0xFF);			// Height low byte
+						lsd[3] = (byte)((height >> 8) & 0xFF);	// Height high byte
+						lsd[4] = 119;											// [01110111] Flags: No Global Color Table, 111=((8bit color)-1), Not ordered, 111 = n^((8 bits)-1) colors
+						lsd[5] = 0;												// Background Color Index
+						lsd[6] = 0;												// No pixel aspect ratio (it will determin itself)
+					
+						// Fill in some of the Image Descriptor data here even though we dont write it
+						id[5] = (byte)(width & 0xFF);			// Width low byte
+						id[6] = (byte)((width >> 8) & 0xFF);	// Width high byte
+						id[7] = (byte)(height & 0xFF);			// Height low byte
+						id[8] = (byte)((height >> 8) & 0xFF);	// Height high byte
 
-					Byte[] extblock = new Byte[19];
+						bw.Write(header, 0, 6);		// Write Header
+						Thread.Sleep(1);
+						bw.Write(lsd, 0, 7);		// Write Logical Screen Discriptor
+						Thread.Sleep(1);
+
+						header = null;
+						lsd = null;
+					}
+					else
+					{
+						bw.Write(temp, 0, 781);		// Header, screen descriptor & global color table from first frame
+					}
+
+					Byte[] ae = new Byte[19];
 					// Define the application extension (A netscape animation)
-					ae[0] = 33;			// extension introducer
-					ae[1] = 255;		// application extension
-					ae[2] = 11;			// size of block
-					ae[3] = (byte)'N';  // N		// App identifier
-					ae[4] = (byte)'E';  // E
-					ae[5] = (byte)'T';  // T
-					ae[6] = (byte)'S';  // S
-					ae[7] = (byte)'C';  // C
-					ae[8] = (byte)'A';  // A
-					ae[9] = (byte)'P';  // P
-					ae[10] = (byte)'E'; // E
-					ae[11] = (byte)'2'; // 2		// App Version
-					ae[12] = (byte)'.'; // .
-					ae[13] = (byte)'0'; // 0
-					ae[14] = 3;			// Size of block
-					ae[15] = 1;			//
-					ae[16] = 0;			//
-					ae[17] = 0;			//
-					ae[18] = 0;			 // Block terminator
+					ae[0] = 33;				// extension introducer
+					ae[1] = 255;			// application extension
+					ae[2] = 11;				// size of block
+					ae[3] = (byte)'N';		// N		// App identifier
+					ae[4] = (byte)'E';		// E
+					ae[5] = (byte)'T';		// T
+					ae[6] = (byte)'S';		// S
+					ae[7] = (byte)'C';		// C
+					ae[8] = (byte)'A';		// A
+					ae[9] = (byte)'P';		// P
+					ae[10] = (byte)'E';		// E
+					ae[11] = (byte)'2';		// 2		// App Version
+					ae[12] = (byte)'.';		// .
+					ae[13] = (byte)'0';		// 0
+					ae[14] = 3;				// Size of block
+					ae[15] = 1;				//
+					ae[16] = 0;				//
+					ae[17] = 0;				//
+					ae[18] = 0;				// Block terminator
 
-					// Fill in some of the Image Descriptor data here even though we dont write it
-					id[5] = (byte)(optimized_frame.Width & 0xFF);			// Width low byte
-					id[6] = (byte)((optimized_frame.Width >> 8) & 0xFF);	// Width high byte
-					id[7] = (byte)(optimized_frame.Height & 0xFF);			// Height low byte
-					id[8] = (byte)((optimized_frame.Height >> 8) & 0xFF);	// Height high byte
+					bw.Write(ae, 0, 19);	// Copy the application extension we defined
+					Thread.Sleep(1);
 
-					bw.Write(header, 0, 6);		// Write Header
-					Thread.Sleep(1);
-					bw.Write(lsd, 0, 7);		// Write Logical Screen Discriptor
-					Thread.Sleep(1);
-					bw.Write(extblock, 0, 19);	// Copy the application extension we defined
-					Thread.Sleep(1);
-					lsd = null;
-					extblock = null;
+					// Comment Extension
+					String ce_txt = "Captured with Smile! - www.Kudlacz.com";
+					Byte[] ce = new Byte[3];
+					ce[0] = 33;						// Extension Introducer
+					ce[1] = 254;					// Comment Label
+					ce[2] = (byte)ce_txt.Length;	// Size
+					Byte ce_term = 0;
 
-						
+					// Write comment
+					bw.Write(ce, 0, 3);					// Comment Descriptor
+					bw.Write(ce_txt.ToCharArray());		// Comment Text
+					bw.Write(ce_term);					// Comment Terminator
+
 				}
-				bw.Write(ctlblock, 0, 8);					// Graphic control block
+				bw.Write(cb, 0, 8);		// Graphic control block
 				Thread.Sleep(1);
-				bw.Write(id, 0, 10);						// Image Descriptor block
+				if(optimized)
+				{
+					bw.Write(id, 0, 10);						// Image Descriptor block
+					Thread.Sleep(1);
+					bw.Write(temp, 13, 768);					// Copy Optimized Color Table
+					Thread.Sleep(1);							
+					bw.Write(temp, 799, temp.Length - 800);		// Image data (skip over original header/screen descriptor/colortable/image descriptor)
+				}
+				else
+				{
+					bw.Write(temp, 789, temp.Length - 790);		// Image data. include image descriptor
+				}
+				
 				Thread.Sleep(1);
-				bw.Write(temp, 13, 768);					// Copy Optimized Color Table
-				Thread.Sleep(1);							
-				bw.Write(temp, 799, temp.Length - 800);		// Image data (skip over original header/screen descriptor/colortable/image descriptor)
-				Thread.Sleep(1);
-				ms.SetLength(0);							// Flush current frame
+				ms.SetLength(0);		// Flush current frame
 				Thread.Sleep(rest);
 			}
-			bw.Write(';'); //Image terminator
+			bw.Write(';'); // Image terminator
 			
 			ms.Close();
 			bw.Close();
 			ms = null;
 			bw = null;
-			ctlblock = null;
+			cb = null;
 			
 
 		}
 
+		// This Portion of the script i can thank Microsoft, it was part of one of their sample code
+		// on msdn about gif optimization in .NET
 		unsafe public static Bitmap Quantize ( Image source )
 		{
 			Octree octree = new Octree(8);
@@ -209,9 +246,7 @@ namespace smiletray
 				// Get the source image bits and lock into memory
 				sourceData = copy.LockBits ( bounds , System.Drawing.Imaging.ImageLockMode.ReadOnly , System.Drawing.Imaging.PixelFormat.Format32bppArgb ) ;
 
-				// Call the FirstPass function if not a single pass algorithm.
-				// For something like an octree quantizer, this will run through
-				// all image pixels, build a data structure, and create a palette.
+				// run trhough all image pixels, build a data structure, and create a palette.
 				{
 					// Define the source data pointers. The source row is a byte to
 					// keep addition of the stride value easier (as this is in bytes)
@@ -234,8 +269,7 @@ namespace smiletray
 					}
 				}
 
-				// Then set the color palette on the output bitmap. I'm passing in the current palette 
-				// as there's no way to construct a new, empty palette.
+				// Then set the color palette on the output bitmap.
 				{
 					System.Drawing.Imaging.ColorPalette c = output.Palette;
 					// First off convert the octree to _maxColors colors

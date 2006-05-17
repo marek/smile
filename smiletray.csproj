@@ -129,22 +129,7 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "OctreeQuantizer.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "PaletteQuantizer.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
                     RelPath = "Profiles.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Quantizer.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

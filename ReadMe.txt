@@ -1,9 +1,9 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// Smile! -- CounterStrike: Source Screenshot and Statistics Utility
-// v1.2
-// Written by Marek Kudlacz
-// Copyright (c)2005
+// Smile! -- Screenshot and Statistics Utility
+// Copyright (c) 2005 Marek Kudlacz
+//
+// http://kudlacz.com
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -43,6 +43,7 @@ Counter-Strike
 Counter-Strike Source
 Day of Defeat
 Day of Defeat: Source
+Dystopia (HL2/Source Mod)
 Wolfenstein: Enemy Territory
 Half-Life 2: Deatchmatch
 Quake III Arena
@@ -146,6 +147,9 @@ Options that are globally used by default.
 		• Height: Height of animation
 	• Use MultiSnap Delay: Whether to use a fixed delay for all animations, or use the capture delay between multiple frames
 		• Delay: Custom delay inbetween frames
+	• Use Optimized Palette: Use an Optimized Octree algorithm for saving gif animations (slower + bigger file size), 
+	otherwise used a fixed palette.
+
 	[Global Stats Settings]
 	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for all games by default
 	• View: View stats.

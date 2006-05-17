@@ -1,0 +1,464 @@
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	/// Quake III Arena
+	//////////////////////////////////////////////////////////////////////////////////////////////
+
+	public class CProfileQuakeIIIArena_MOD
+	{
+		public string name;
+		public string mod;
+		public Regex r;
+		public CProfileQuakeIIIArena_MOD(string name, string mod)
+		{
+			this.name = name;
+			this.mod = mod;
+			r = new Regex (mod);
+		}
+	}
+	public class CProfileQuakeIIIArena_XMLDeath
+	{
+		public String name;
+		public UInt32 deaths;
+	
+		public CProfileQuakeIIIArena_XMLDeath()
+		{
+			deaths = new UInt32();
+		}
+	}
+	public class CProfileQuakeIIIArena_Stats
+	{
+		public UInt32 hits_team;
+		[XmlIgnoreAttribute] public Hashtable gun;
+		[XmlIgnoreAttribute] public Hashtable death;
+		[XmlElement(ElementName = "gun")]public CProfile_XMLGun [] xmlgun;
+		[XmlElement(ElementName = "death")]public CProfileQuakeIIIArena_XMLDeath [] xmldeath;
+
+		public CProfileQuakeIIIArena_Stats()
+		{
+			death = new Hashtable();
+			gun = new Hashtable();
+		}
+	}
+
+	public class CProfileQuakeIIIArena : CProfile
+	{
+		public CProfileQuakeIIIArena_Stats stats;
+
+		protected String alias;
+		private CProfileQuakeIIIArena_MOD [] weapons;
+		private CProfileQuakeIIIArena_MOD [] deaths;
+		private Regex rNickChange;
+		private Regex rStripColor;
+
+		public CProfileQuakeIIIArena()
+		{
+			this.ProfileName = "Quake III Arena";
+			this.SnapName = "Quake III Arena";
+			this.stats = new CProfileQuakeIIIArena_Stats();
+			this.deaths = new CProfileQuakeIIIArena_MOD [] 
+				{
+					new CProfileQuakeIIIArena_MOD("Suicide", "^(.+) suicides$"),
+					new CProfileQuakeIIIArena_MOD("Falling", "^(.+) cratered$"),
+					new CProfileQuakeIIIArena_MOD("Crush", "^(.+) was squished$"),
+					new CProfileQuakeIIIArena_MOD("Water", "^(.+) sank like a rock$"),
+					new CProfileQuakeIIIArena_MOD("Slime", "^(.+) melted$"),
+					new CProfileQuakeIIIArena_MOD("Lava", "^(.+) does a back flip into the lava$"),
+					new CProfileQuakeIIIArena_MOD("Target_laser", "(^.+) saw the light$"),
+					new CProfileQuakeIIIArena_MOD("Trigger_hurt", "^(.+) was in the wrong place$"),
+					new CProfileQuakeIIIArena_MOD("Own Grenades", "^(.+) tripped on .+ own grenade$"),
+					new CProfileQuakeIIIArena_MOD("Own Rocket", "^(.+) blew .+self up$"),
+					new CProfileQuakeIIIArena_MOD("Own Plasma", "^(.+) melted .+self$"),
+					new CProfileQuakeIIIArena_MOD("Own BFG", "^(.+) should have used a smaller gun$"),
+					new CProfileQuakeIIIArena_MOD("Own Prox Mine", "^(.+) found .+ prox mine$"),
+					new CProfileQuakeIIIArena_MOD("Other Self-Inflicted Means", "^(.+) killed .+self$"),
+					new CProfileQuakeIIIArena_MOD("Unknown means", "^(.+) died\\.$")
+				};
+			this.weapons = new CProfileQuakeIIIArena_MOD [] 
+				{ 
+					new CProfileQuakeIIIArena_MOD("Grapple", "^(.+) was caught by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Gauntlet", "^(.+) was pummeled by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Machine Gun", "^(.+) was machinegunned by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Shotgun", "^(.+) was gunned down by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Grenade", "^(.+) ate (.+)'s grenade$"),
+					new CProfileQuakeIIIArena_MOD("Grenade Splash", "^(.+) was shredded by (.+)'s shrapnel$"),
+					new CProfileQuakeIIIArena_MOD("Rocket", "^(.+) ate (.+)'s rocket$"),
+					new CProfileQuakeIIIArena_MOD("Rocket Splash", "^(.+) almost dodged (.+)'s rocket$"),
+					new CProfileQuakeIIIArena_MOD("Plasma", "^(.+) was melted by (.+)'s plasmagun$"),
+					new CProfileQuakeIIIArena_MOD("Railgun", "^(.+) was railed by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Lightning", "^(.+) was electrocuted by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("BFG", "^(.+) was blasted by (.+)'s BFG$"),
+					new CProfileQuakeIIIArena_MOD("Nail", "^(.+) was nailed by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Chaingun", "^(.+) got lead poisoning from (.+)'s Chaingun$"),
+					new CProfileQuakeIIIArena_MOD("Prox Mine", "^(.+) was too close to (.+)'s Prox Mine$"),
+					new CProfileQuakeIIIArena_MOD("Nail", "^(.+) falls to (.+)'s Kamikaze blast$"),
+					new CProfileQuakeIIIArena_MOD("Juiced", "(^.+) was juiced by (.+)$"),
+					new CProfileQuakeIIIArena_MOD("Telefrag", "^(.+) tried to invade (.+)'s personal space$"),
+					new CProfileQuakeIIIArena_MOD("Other", "^(.+) was killed by (.+)$")
+				};
+				this.rNickChange = new Regex("^(.+) renamed to (.+)$");
+				this.rStripColor = new Regex("\\^\\d");
+		}
+
+		public override void Parse()
+		{
+			if(this.log == null)
+				return;
+
+			Match match;
+			String strLine;
+			bool found;
+
+			while ((strLine = this.log.ReadLine()) != null)
+			{
+				strLine = rStripColor.Replace(strLine, "");
+
+				// Match weapon kills/deaths
+				found = false;
+				for(int i = 0; i < weapons.Length; i++)
+				{
+					match = weapons[i].r.Match(strLine);
+					if(match.Success)
+					{
+						// Kills
+						if(match.Groups[2].Value == alias)
+						{
+							if(EnableStats)
+							{
+								CProfile_Gun gun;
+								if(stats.gun.Contains(weapons[i].name))
+								{
+									gun = (CProfile_Gun)stats.gun[weapons[i].name];
+									gun.kills++;
+									stats.gun[weapons[i].name] = gun;
+								}
+								else 
+								{
+									gun = new CProfile_Gun();
+									gun.kills = 1;
+									stats.gun.Add(weapons[i].name, gun);
+								}
+								NewStats = true;
+							}
+							NewSnaps = true;
+						} 
+						// Deaths
+						else if(match.Groups[1].Value == alias && EnableStats)
+						{
+							CProfile_Gun gun;
+							if(stats.gun.Contains(weapons[i].name))
+							{
+								gun = (CProfile_Gun)stats.gun[weapons[i].name];
+								gun.killed++;
+								stats.gun[weapons[i].name] = gun;
+							}
+							else 
+							{
+								gun = new CProfile_Gun();
+								gun.killed = 1;
+								stats.gun.Add(weapons[i].name, gun);
+							}
+							NewStats = true;
+						}
+						found = true;
+					}
+					if(found) break;
+				}
+				if(found) continue;
+
+				if(EnableStats)
+				{
+					found = false;
+					// Match weapon kills/deaths
+					for(int i = 0; i < deaths.Length; i++)
+					{
+						match = deaths[i].r.Match(strLine);
+						if(match.Success)
+						{
+							// Kills
+							if(match.Groups[1].Value == alias)
+							{
+								uint count;
+								if(stats.death.Contains(deaths[i].name))
+								{
+									count = (uint)stats.gun[deaths[i].name];
+									count++;
+									stats.death[deaths[i].name] = count;
+								}
+								else 
+								{
+									count = 1;
+									stats.death.Add(deaths[i].name, count);
+								}
+								NewStats = true;
+							} 
+							found = true;
+						}
+						if(found) break;
+					}
+					if(found) continue;
+				}
+				match = rNickChange.Match(strLine);
+				if(match.Success)
+				{
+					if(match.Groups[1].Value == alias)
+					{
+						alias = match.Groups[2].Value;
+					}
+					continue;
+				}
+			}
+		}
+		public override bool Open()
+		{
+			try 
+			{
+				this.alias = GetGameAlias(@"\baseq3\q3config.cfg");
+				this.log = new StreamReader(new FileStream(this.path + @"\baseq3\qconsole.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
+				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End	
+				return true;
+			}
+			catch 
+			{
+				return false;
+			}
+		}
+		public override bool CheckActive()
+		{
+			return NativeMethods.FindWindow("Quake 3: Arena","Quake 3: Arena") != 0;
+		}
+		public override String GetDefaultPath()
+		{
+			const int LocalDisk = 3;
+
+			frmSearch search = new frmSearch();
+			try
+			{
+				
+				search.Show();
+				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
+				ManagementObjectCollection queryCollection = query.Get();
+				foreach( ManagementObject mo in queryCollection )
+				{
+					string result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
+						new Regex(@"\\quake3.exe$", RegexOptions.IgnoreCase));
+					search.Close();
+					if(result != null)
+						return Path.GetDirectoryName(result);	
+				}
+			}
+			catch
+			{
+				search.Close();
+				return null;
+			}
+			search.Close();
+			return null;
+		}
+		// Get the game alias for said default user
+		public String GetGameAlias(String file)
+		{
+			String strLine;
+			Match match;
+			String nick = null;
+			StreamReader sr = null;
+		
+			try
+			{
+				sr = new StreamReader(this.path + file);
+				//Continues to output one line at a time until end of file(EOF) is reached
+				while ( (strLine = sr.ReadLine()) != null)
+				{
+					Regex rNick=new Regex("^seta name\\s+\"(.+)\"$");
+					match = rNick.Match(strLine);
+					if(match.Success)
+					{
+						nick = match.Groups[1].Value;
+						break;
+					}
+				}
+			}
+			catch
+			{
+				nick = null;
+			}
+			finally 
+			{
+				// Cleanup
+				if(sr != null) sr.Close();	
+			}
+			return rStripColor.Replace(nick, "");
+		}
+		public override void toXMLOperations()
+		{
+			// Turn gun hastable into something more useable
+			if(stats.gun == null)
+				return;
+			stats.xmlgun = new CProfile_XMLGun [ stats.gun.Count ];
+			int i = 0;
+			foreach(String key in stats.gun.Keys)
+			{
+				stats.xmlgun[i] = new CProfile_XMLGun();
+				stats.xmlgun[i].name = key;
+				stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
+				i++;
+			}
+			if(stats.death == null)
+				return;
+			stats.xmldeath = new CProfileQuakeIIIArena_XMLDeath [ stats.death.Count ];
+			i = 0;
+			foreach(String key in stats.death.Keys)
+			{
+				stats.xmldeath[i] = new CProfileQuakeIIIArena_XMLDeath();
+				stats.xmldeath[i].name = key;
+				stats.xmldeath[i].deaths = (uint)stats.gun[key];
+				i++;
+			}
+
+		}
+		public override void fromXMLOperations()
+		{
+			if(stats.xmlgun == null)
+				return;
+
+			if(stats.gun == null)
+				stats.gun = new Hashtable();
+
+			for(int i = 0; i < stats.xmlgun.Length; i++)
+			{
+				stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+			}
+
+			if(stats.xmldeath == null)
+				return;
+
+			if(stats.death == null)
+				stats.death = new Hashtable();
+
+			for(int i = 0; i < stats.xmldeath.Length; i++)
+			{
+				stats.death.Add(stats.xmldeath[i].name, stats.xmldeath[i].deaths);
+			}
+		}
+		public override void ResetStats()
+		{
+			stats = new CProfileQuakeIIIArena_Stats();
+		}
+		public override string GetStatsReport(String font, CProfile.SaveTypes format)
+		{
+			string strStats = null;
+			CProfileQuakeIIIArena_Stats stats = this.stats;
+			switch(format)
+			{
+				case CProfile.SaveTypes.HTML:
+				{
+					strStats = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n";
+					strStats += "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n";
+					strStats += "\t<head>\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=iso-8859-1\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
+					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
+					strStats += "\t</head>\r\n";
+					strStats += "\t<body>\r\n";
+					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
+					strStats += "\t\t<hr />\r\n";
+					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
+					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t<hr />\r\n";
+
+					strStats += "\t\t<h3>Self-Inflicted/Unknown Death Statistics:</h3>\r\n";
+					foreach(String Key in stats.death.Keys)
+					{
+						strStats += "\t\t<b>"+ Key + ":</b> " + (uint)stats.death[Key] + "<br />\r\n";
+					}
+					strStats += "\t\t<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
+					foreach(String Key in stats.gun.Keys)
+					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
+					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
+					strStats += "\t\t<br /><br />\r\n";
+					strStats += "\t</body>\r\n";
+					strStats += "</html>";
+					break;
+				}
+				case CProfile.SaveTypes.RTF:
+				case CProfile.SaveTypes.TXT:
+				{
+					RichTextBox c = new RichTextBox();
+
+					try
+					{
+						// Populate the rich text box
+						c.SelectionStart = 0 ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold);
+						c.SelectedText = ProfileName + " Statistics:\n" ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Self-Inflicted/Unknown Death Statistics:\n" ;
+						foreach(String Key in stats.death.Keys)
+						{
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = (uint)stats.death[Key] + "\n";
+						}
+						c.SelectedText = "\n\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Weapon Statistics:\n";
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
+						foreach(String Key in stats.gun.Keys)
+						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
+							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
+						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
+						c.SelectedText = "\n\n";
+
+						c.SelectionStart = 0 ;
+					}
+					catch
+					{
+						c.Clear();
+						c.SelectionStart = 0 ;
+						c.SelectedText = "There was an error writing the stats, (missing font?) Try saving it to html instead using the edit menu.\n\n";
+						c.SelectionStart = 0 ;
+					}
+
+					switch(format)
+					{
+						case CProfile.SaveTypes.RTF:
+							strStats = c.Rtf;
+							break;
+						case CProfile.SaveTypes.TXT:
+							strStats = c.Text;
+							break;
+					}
+					c.Dispose();
+					break;
+				}
+			}
+			return strStats;
+		}
+	}

@@ -1,11 +1,12 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// Smile! -- CounterStrike: Source Screenshot and Statistics Utility
-// v1.2
-// Written by Marek Kudlacz
-// Copyright (c)2005
+// Smile! -- Screenshot and Statistics Utility
+// Copyright (c) 2005 Marek Kudlacz
+//
+// http://kudlacz.com
 //
 /////////////////////////////////////////////////////////////////////////////
+
 
 
 using System;
@@ -17,7 +18,7 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.5 BETA 5";
+		public static readonly String version = "1.5 BETA 6";
 		public static readonly String copyrightdate = "©2005";
 	}
 
@@ -28,6 +29,7 @@ namespace smiletray
 		public Boolean SaveBug;
 		public Boolean AnimOriginalDimentions;
 		public Boolean AnimUseMultiSnapDelay;
+		public Boolean AnimOptimizePalette;
 		public Int32 AnimWidth;
 		public Int32 AnimHeight;
 		public Int32 AnimFrameDelay;
@@ -43,6 +45,7 @@ namespace smiletray
 			Enabled = new Boolean();
 			SingleDisplay = new Boolean();
 			SaveBug = new Boolean();
+			AnimOptimizePalette = new Boolean();
 			AnimOriginalDimentions = new Boolean();
 			AnimUseMultiSnapDelay = new Boolean();
 			AnimWidth = new Int32();
