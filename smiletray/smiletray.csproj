@@ -124,14 +124,9 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "HotKeys.cs"
+                    RelPath = "GlobalHotKey.cs"
                     SubType = "Component"
                     BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "HotKeys.resx"
-                    DependentUpon = "HotKeys.cs"
-                    BuildAction = "EmbeddedResource"
                 />
                 <File
                     RelPath = "Main.cs"
@@ -169,11 +164,21 @@
                     BuildAction = "EmbeddedResource"
                 />
                 <File
+                    RelPath = "SingleInstance.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "tray_icon.ico"
                     BuildAction = "Content"
                 />
                 <File
                     RelPath = "TypeDef.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "VersionCheck.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -187,7 +192,11 @@
                     DependentUpon = "ViewStats.cs"
                     BuildAction = "EmbeddedResource"
                 />
-                <Folder RelPath = "Profiles\" />
+                <File
+                    RelPath = "XML.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
             </Include>
         </Files>
     </CSHARP>

@@ -9,13 +9,14 @@
 
 using System;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace smiletray
 {
 	public class frmExMsgBox : System.Windows.Forms.Form
 	{
 		private System.Windows.Forms.Button cmdOK;
-		private System.Windows.Forms.TextBox txtMsg;
+		private System.Windows.Forms.RichTextBox rtxtMsg;
 
 		/// <summary>
 		/// Required designer variable.
@@ -27,7 +28,7 @@ namespace smiletray
 			InitializeComponent();
 
 			this.Text = title;
-			this.txtMsg.Text = message;
+			this.rtxtMsg.Text = message;
 		}
 
 		protected override void Dispose( bool disposing )
@@ -46,42 +47,46 @@ namespace smiletray
 		private void InitializeComponent()
 		{
 			this.cmdOK = new System.Windows.Forms.Button();
-			this.txtMsg = new System.Windows.Forms.TextBox();
+			this.rtxtMsg = new System.Windows.Forms.RichTextBox();
 			this.SuspendLayout();
 			// 
 			// cmdOK
 			// 
-			this.cmdOK.Location = new System.Drawing.Point(-8, 328);
+			this.cmdOK.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+			this.cmdOK.Location = new System.Drawing.Point(96, 376);
 			this.cmdOK.Name = "cmdOK";
-			this.cmdOK.Size = new System.Drawing.Size(320, 24);
+			this.cmdOK.Size = new System.Drawing.Size(104, 24);
 			this.cmdOK.TabIndex = 0;
 			this.cmdOK.Text = "OK";
 			this.cmdOK.Click += new System.EventHandler(this.cmdOK_Click);
 			// 
-			// txtMsg
+			// rtxtMsg
 			// 
-			this.txtMsg.Location = new System.Drawing.Point(0, 0);
-			this.txtMsg.Multiline = true;
-			this.txtMsg.Name = "txtMsg";
-			this.txtMsg.ReadOnly = true;
-			this.txtMsg.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-			this.txtMsg.Size = new System.Drawing.Size(312, 328);
-			this.txtMsg.TabIndex = 1;
-			this.txtMsg.Text = "textBox1";
+			this.rtxtMsg.Dock = System.Windows.Forms.DockStyle.Top;
+			this.rtxtMsg.Location = new System.Drawing.Point(0, 0);
+			this.rtxtMsg.Name = "rtxtMsg";
+			this.rtxtMsg.ReadOnly = true;
+			this.rtxtMsg.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
+			this.rtxtMsg.Size = new System.Drawing.Size(306, 376);
+			this.rtxtMsg.TabIndex = 3;
+			this.rtxtMsg.Text = "";
+			this.rtxtMsg.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.rtxtMsg_LinkClicked);
 			// 
 			// frmExMsgBox
 			// 
 			this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-			this.ClientSize = new System.Drawing.Size(312, 351);
-			this.Controls.Add(this.txtMsg);
+			this.ClientSize = new System.Drawing.Size(306, 399);
+			this.Controls.Add(this.rtxtMsg);
 			this.Controls.Add(this.cmdOK);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "frmExMsgBox";
+			this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ExMessageBox";
 			this.TopMost = true;
+			this.Resize += new System.EventHandler(this.frmExMsgBox_Resize);
+			this.Load += new System.EventHandler(this.frmExMsgBox_Load);
 			this.ResumeLayout(false);
 
 		}
@@ -90,6 +95,28 @@ namespace smiletray
 		private void cmdOK_Click(object sender, System.EventArgs e)
 		{
 			this.Close();
+		}
+
+		private void frmExMsgBox_Resize(object sender, System.EventArgs e)
+		{
+			rtxtMsg.Height = cmdOK.Top;
+		}
+
+		private void frmExMsgBox_Load(object sender, System.EventArgs e)
+		{
+			frmExMsgBox_Resize(this, null);
+		}
+
+		private void rtxtMsg_LinkClicked(object sender, System.Windows.Forms.LinkClickedEventArgs e)
+		{
+			try
+			{
+				Process.Start(e.LinkText);
+			}
+			catch
+			{
+				MessageBox.Show("Error: Could not open default browser!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}		
 		}
 	}
 
@@ -148,8 +175,21 @@ namespace smiletray
 			Msg("Exception", msg);
 		}
 
+		public static void Msg(string title, string message, int width, int height)
+		{
+			message = message.Replace("\r\n", "\n");
+			message = message.Replace("\n", "\r\n");
+			Form f = new frmExMsgBox(title, message);
+			f.Width = width;
+			f.Height = height;
+			f.ShowDialog();
+			f.Dispose();
+		}
+
 		public static void Msg(string title, string message)
 		{
+			message = message.Replace("\r\n", "\n");
+			message = message.Replace("\n", "\r\n");
 			Form f = new frmExMsgBox(title, message);
 			f.ShowDialog();
 			f.Dispose();

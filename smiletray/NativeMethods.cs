@@ -21,6 +21,17 @@ namespace smiletray
 	{
 
 		#region Dll Imports
+		[DllImport("user32.dll", CharSet=CharSet.Auto, ExactSpelling=true)]
+		public static extern IntPtr GetWindow(HandleRef hWnd, int uCmd);
+		
+		[DllImport("user32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+		public static extern bool EnumWindows(NativeMethods.EnumThreadWindowsCallback callback, IntPtr extraData);
+
+		[DllImport("user32.dll", CharSet=CharSet.Auto, SetLastError=true)]
+		public static extern int GetWindowThreadProcessId(HandleRef handle, out int processId);
+		
+		[DllImport("user32.dll", EntryPoint="ShowScrollBar")] 
+		public static extern int ShowScrollBar(IntPtr hwnd, int wBar, int bShow);
 
 		[DllImport("user32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
 		public static extern IntPtr GetDesktopWindow();
@@ -68,6 +79,7 @@ namespace smiletray
 		#endregion
 
 		public delegate Int32 LowLevelKeyboardDelegate(Int32 nCode, Int32 wParam, ref KBDLLHOOKSTRUCT lParam); 
+		public delegate bool EnumThreadWindowsCallback(IntPtr hWnd, IntPtr lParam);
 
 		public const Int32 HC_ACTION = 0; 
 

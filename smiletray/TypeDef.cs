@@ -18,7 +18,8 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.5";
+		public static readonly String version = "1.6";
+		public static readonly String intversion = "1.6.0";
 		public static readonly String copyrightdate = "©2005";
 	}
 
@@ -35,6 +36,18 @@ namespace smiletray
 			HKWindow = "F10";
 			HKDesktop = "F11";
 			HKActiveProfile = "F12";
+		}
+	}
+
+	public class MiscSettings_t
+	{
+		public String CheckUpdates;
+		public Int64 LastCheckTime;
+
+		public MiscSettings_t()
+		{
+			CheckUpdates = "Every Day";
+			LastCheckTime = new Int64();
 		}
 	}
 
@@ -87,12 +100,14 @@ namespace smiletray
 		public SnapSettings_t SnapSettings;
 		public StatsSettings_t StatsSettings;
 		public HotKeySettings_t HotKeySettings;
+		public MiscSettings_t MiscSettings;
 
 		public Settings_t()
 		{
 			SnapSettings = new SnapSettings_t();
 			StatsSettings = new StatsSettings_t();
 			HotKeySettings = new HotKeySettings_t();
+			MiscSettings = new MiscSettings_t();
 		}
 	}
 

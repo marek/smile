@@ -203,29 +203,37 @@ namespace smiletray
 
 		private void mnuEdit_SaveFile_Click(object sender, System.EventArgs e)
 		{
-			saveStatsDialog.ShowDialog();
+			if(saveStatsDialog.ShowDialog() == DialogResult.Cancel)
+				return;
 			
-			switch(saveStatsDialog.FilterIndex)
+			try
 			{
-				case 1:
+				switch(saveStatsDialog.FilterIndex)
 				{
-					Stream stream = saveStatsDialog.OpenFile();
-					StreamWriter html = new StreamWriter(stream, System.Text.Encoding.ASCII);
-					html.Write(profiles[SelectedProfile].GetStatsReport("Verdana", CProfile.SaveTypes.HTML));
-					html.Close();
-					stream.Close();
-					break;
+					case 1:
+					{
+						Stream stream = saveStatsDialog.OpenFile();
+						StreamWriter html = new StreamWriter(stream, System.Text.Encoding.ASCII);
+						html.Write(profiles[SelectedProfile].GetStatsReport("Verdana", CProfile.SaveTypes.HTML));
+						html.Close();
+						stream.Close();
+						break;
+					}
+					case 2:
+					{
+						rtxtStats.SaveFile(saveStatsDialog.FileName, System.Windows.Forms.RichTextBoxStreamType.RichText);
+						break;
+					}
+					case 3:
+					{
+						rtxtStats.SaveFile(saveStatsDialog.FileName, System.Windows.Forms.RichTextBoxStreamType.PlainText);
+						break;
+					}
 				}
-				case 2:
-				{
-					rtxtStats.SaveFile(saveStatsDialog.FileName, System.Windows.Forms.RichTextBoxStreamType.RichText);
-					break;
-				}
-				case 3:
-				{
-					rtxtStats.SaveFile(saveStatsDialog.FileName, System.Windows.Forms.RichTextBoxStreamType.PlainText);
-					break;
-				}
+			}
+			catch
+			{
+				MessageBox.Show("Error: ViewStats->Save To File: Cannot Save File");
 			}
 			
 		}

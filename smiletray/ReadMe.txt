@@ -225,6 +225,7 @@ Fuzzy from Team Dystopia
 tiki from planetquake (for lots of testing, bug fixing, and JediAcademy Profile help)
 Leo for suggestions
 `star from #counter-strike
+KodeK for .manifest file and bug reports
 Everyone who has sent me a "thanks"
 
 
@@ -248,6 +249,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.5: Compatible
 1.4: Compatible
 	-- Need to update Quake III Arena Paths
 1.3: Compatible
@@ -259,6 +261,18 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.6**
+-Added smiletray.manifest file into the distrubution to enable XP themes (thanks KodeK)
+-Fixed Index out of bounds error on ViewStats: Edit->Save To File->Cancel
+-Now only one instance of Smile! is allowed. 
+-Should no longer crash if cannot open session log file will warn you if anything (one instance only should also prevent this further)
+-Pressing "X" in the main form no longer closes the program, but minimizes it instead.
+-Removed Minimize and Maximize buttons in the main form.
+-General Form timers now will not start till all other things are initiated. Should get rid of all init bugs involving them.
+-Fixed bug with blank hotkeys
+-Added version checking. Will contact the site for new version details (Enabled by default to "Every Day")
+
+
 **v1.5**
 -Rewrote a lot of stuff to introduce threading (SaveQueue w/ 3 workers and one Scanner/Capture thread).
 -MultiSnap support for sequenced captures

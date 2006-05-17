@@ -21,6 +21,8 @@ using System.Xml.Serialization;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
+using Kudlacz.Web;
+using Kudlacz.Hooks;
 
 namespace smiletray
 {
@@ -63,10 +65,15 @@ namespace smiletray
 		private TimerCallback TimerCheckConsoleLogDelegate;
 		private System.Threading.Timer TimerSave;
 		private TimerCallback TimerSaveDelegate;
-		private SystemHotkey HKCaptureDesktop;
-		private SystemHotkey HKCaptureWindow;
-		private SystemHotkey HKCaptureActiveProfile;
+		private GlobalHotKey HKCaptureDesktop;
+		private GlobalKotKey HKCaptureWindow;
+		private GlobalKotKey HKCaptureActiveProfile;
 		private StreamWriter log;
+		private bool closing = false;
+		private VersionCheck vc;
+		private long lastVersionCheck = 0;
+		private long versionCheckDelay = 0;
+
 		private readonly Type [] ProfileTypes =  new Type [ ] 
 			{ 
 				typeof(CProfileCounterStrikeSource), 
@@ -187,6 +194,10 @@ namespace smiletray
 		private System.Windows.Forms.TextBox txtGeneral_HotKeys_CaptureWindow;
 		private System.Windows.Forms.TextBox txtGeneral_HotKeys_CaptureDesktop;
 		private System.Windows.Forms.TextBox txtGeneral_HotKeys_CaptureActiveProfile;
+		private System.Windows.Forms.TabPage tabGeneral_Misc;
+		private System.Windows.Forms.GroupBox grpGeneral_Misc_Updates;
+		private System.Windows.Forms.ComboBox cbGeneral_Misc_CheckUpdates;
+		private System.Windows.Forms.Label lblGeneral_Misc_CheckUpdates;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,9 +210,16 @@ namespace smiletray
 			InitializeComponent();
 
 			// Init log file
-			log = new StreamWriter(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "\\" + Path.GetFileNameWithoutExtension(System.Windows.Forms.Application.ExecutablePath) + ".log", true);
-			log.WriteLine("\r\n\r\n-----Log Session Started: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
-			log.Flush();
+			try
+			{
+				log = new StreamWriter(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "\\" + Path.GetFileNameWithoutExtension(System.Windows.Forms.Application.ExecutablePath) + ".log", true);
+				log.WriteLine("\r\n\r\n-----Log Session Started: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
+				log.Flush();
+			}
+			catch
+			{
+				MessageBox.Show("Error: Cannot open smiletray session log for writing.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			}
 
 			// Init MsgQueue
 			this.MsgQueue = new TSArrayList(10);
@@ -268,15 +286,23 @@ namespace smiletray
 			AddLogMessage("SaveQueue starting up.");
 
 			// Start key gooks
-			SystemHotkey.RegisterHook();
+			GlobalKotKey.RegisterHook();
 			AddLogMessage("Registering system keyboard hook.");
 			DisableHotkeys = false;
-			HKCaptureWindow.Shortcut = SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKWindow);
-			HKCaptureDesktop.Shortcut = SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop);
-			HKCaptureActiveProfile.Shortcut = SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile);
+			HKCaptureWindow.Shortcut = GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow);
+			HKCaptureDesktop.Shortcut = GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop);
+			HKCaptureActiveProfile.Shortcut = GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile);
+
+			// Set up version checker
+			lastVersionCheck = Settings.MiscSettings.LastCheckTime;
+			UpdateCheckDelay();
+			vc = new VersionCheck("http://www.kudlacz.com/version.xml", "Smile");
+
+			// Start timers
+			TimerMisc.Start();
+			TimerMsg.Start();
 
 			CheckEnabled();
-
 		}
 
 		private void rtxtAbout_LinkClicked(object sender, System.Windows.Forms.LinkClickedEventArgs e)
@@ -314,9 +340,9 @@ namespace smiletray
 		{
 			this.components = new System.ComponentModel.Container();
 			System.Resources.ResourceManager resources = new System.Resources.ResourceManager(typeof(frmMain));
-			this.HKCaptureDesktop = new smiletray.SystemHotkey(this.components);
-			this.HKCaptureWindow = new smiletray.SystemHotkey(this.components);
-			this.HKCaptureActiveProfile = new smiletray.SystemHotkey(this.components);
+			this.HKCaptureDesktop = new smiletray.GlobalKotKey(this.components);
+			this.HKCaptureWindow = new smiletray.GlobalKotKey(this.components);
+			this.HKCaptureActiveProfile = new smiletray.GlobalKotKey(this.components);
 			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.contextMenu = new System.Windows.Forms.ContextMenu();
 			this.mnuEnableSnaps = new System.Windows.Forms.MenuItem();
@@ -377,6 +403,10 @@ namespace smiletray
 			this.lblGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.Label();
 			this.lblGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.Label();
 			this.chkGeneral_HotKeys_Enabled = new System.Windows.Forms.CheckBox();
+			this.tabGeneral_Misc = new System.Windows.Forms.TabPage();
+			this.grpGeneral_Misc_Updates = new System.Windows.Forms.GroupBox();
+			this.lblGeneral_Misc_CheckUpdates = new System.Windows.Forms.Label();
+			this.cbGeneral_Misc_CheckUpdates = new System.Windows.Forms.ComboBox();
 			this.tabProfiles = new System.Windows.Forms.TabPage();
 			this.lblProfiles_ActiveProfile = new System.Windows.Forms.Label();
 			this.tabProfileOptions = new System.Windows.Forms.TabControl();
@@ -440,6 +470,8 @@ namespace smiletray
 			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).BeginInit();
 			this.tabGeneral_GlobalStatsSettings.SuspendLayout();
 			this.tabGeneral_HotKeys.SuspendLayout();
+			this.tabGeneral_Misc.SuspendLayout();
+			this.grpGeneral_Misc_Updates.SuspendLayout();
 			this.tabProfiles.SuspendLayout();
 			this.tabProfileOptions.SuspendLayout();
 			this.tabProfiles_GameSettings.SuspendLayout();
@@ -566,7 +598,6 @@ namespace smiletray
 			// 
 			// TimerMisc
 			// 
-			this.TimerMisc.Enabled = true;
 			this.TimerMisc.Interval = 5000;
 			this.TimerMisc.Tick += new System.EventHandler(this.TimerMisc_Tick);
 			// 
@@ -628,6 +659,7 @@ namespace smiletray
 			this.tabGeneralOptions.Controls.Add(this.tabGeneral_GlobalSnapSettings);
 			this.tabGeneralOptions.Controls.Add(this.tabGeneral_GlobalStatsSettings);
 			this.tabGeneralOptions.Controls.Add(this.tabGeneral_HotKeys);
+			this.tabGeneralOptions.Controls.Add(this.tabGeneral_Misc);
 			this.tabGeneralOptions.Location = new System.Drawing.Point(8, 8);
 			this.tabGeneralOptions.Name = "tabGeneralOptions";
 			this.tabGeneralOptions.SelectedIndex = 0;
@@ -1074,6 +1106,49 @@ namespace smiletray
 			this.chkGeneral_HotKeys_Enabled.Size = new System.Drawing.Size(96, 24);
 			this.chkGeneral_HotKeys_Enabled.TabIndex = 1;
 			this.chkGeneral_HotKeys_Enabled.Text = "Enabled";
+			// 
+			// tabGeneral_Misc
+			// 
+			this.tabGeneral_Misc.Controls.Add(this.grpGeneral_Misc_Updates);
+			this.tabGeneral_Misc.Location = new System.Drawing.Point(4, 22);
+			this.tabGeneral_Misc.Name = "tabGeneral_Misc";
+			this.tabGeneral_Misc.Size = new System.Drawing.Size(416, 342);
+			this.tabGeneral_Misc.TabIndex = 3;
+			this.tabGeneral_Misc.Text = "Misc";
+			// 
+			// grpGeneral_Misc_Updates
+			// 
+			this.grpGeneral_Misc_Updates.Controls.Add(this.lblGeneral_Misc_CheckUpdates);
+			this.grpGeneral_Misc_Updates.Controls.Add(this.cbGeneral_Misc_CheckUpdates);
+			this.grpGeneral_Misc_Updates.Location = new System.Drawing.Point(8, 8);
+			this.grpGeneral_Misc_Updates.Name = "grpGeneral_Misc_Updates";
+			this.grpGeneral_Misc_Updates.Size = new System.Drawing.Size(400, 80);
+			this.grpGeneral_Misc_Updates.TabIndex = 0;
+			this.grpGeneral_Misc_Updates.TabStop = false;
+			this.grpGeneral_Misc_Updates.Text = "Updates";
+			// 
+			// lblGeneral_Misc_CheckUpdates
+			// 
+			this.lblGeneral_Misc_CheckUpdates.Location = new System.Drawing.Point(8, 16);
+			this.lblGeneral_Misc_CheckUpdates.Name = "lblGeneral_Misc_CheckUpdates";
+			this.lblGeneral_Misc_CheckUpdates.Size = new System.Drawing.Size(112, 24);
+			this.lblGeneral_Misc_CheckUpdates.TabIndex = 23;
+			this.lblGeneral_Misc_CheckUpdates.Text = "Check for updates:";
+			this.lblGeneral_Misc_CheckUpdates.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// cbGeneral_Misc_CheckUpdates
+			// 
+			this.cbGeneral_Misc_CheckUpdates.Items.AddRange(new object[] {
+																			 "Never",
+																			 "Every Hour",
+																			 "Every Day",
+																			 "Every Week",
+																			 "Every Month"});
+			this.cbGeneral_Misc_CheckUpdates.Location = new System.Drawing.Point(128, 16);
+			this.cbGeneral_Misc_CheckUpdates.Name = "cbGeneral_Misc_CheckUpdates";
+			this.cbGeneral_Misc_CheckUpdates.Size = new System.Drawing.Size(120, 21);
+			this.cbGeneral_Misc_CheckUpdates.TabIndex = 22;
+			this.cbGeneral_Misc_CheckUpdates.Text = "Update Options";
 			// 
 			// tabProfiles
 			// 
@@ -1525,6 +1600,7 @@ namespace smiletray
 			this.rtxtLog.Size = new System.Drawing.Size(436, 368);
 			this.rtxtLog.TabIndex = 11;
 			this.rtxtLog.Text = "";
+			this.rtxtLog.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.rtxtLog_LinkClicked);
 			// 
 			// tabAbout
 			// 
@@ -1560,7 +1636,6 @@ namespace smiletray
 			// 
 			// TimerMsg
 			// 
-			this.TimerMsg.Enabled = true;
 			this.TimerMsg.Interval = 500;
 			this.TimerMsg.Tick += new System.EventHandler(this.TimerMsg_Tick);
 			// 
@@ -1585,9 +1660,11 @@ namespace smiletray
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MaximizeBox = false;
+			this.MinimizeBox = false;
 			this.Name = "frmMain";
 			this.Text = "Smile!";
 			this.WindowState = System.Windows.Forms.FormWindowState.Minimized;
+			this.Closing += new System.ComponentModel.CancelEventHandler(this.frmMain_Closing);
 			this.Load += new System.EventHandler(this.frmMain_Load);
 			this.Closed += new System.EventHandler(this.frmMain_Closed);
 			this.VisibleChanged += new System.EventHandler(this.frmMain_VisibleChanged);
@@ -1608,6 +1685,8 @@ namespace smiletray
 			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).EndInit();
 			this.tabGeneral_GlobalStatsSettings.ResumeLayout(false);
 			this.tabGeneral_HotKeys.ResumeLayout(false);
+			this.tabGeneral_Misc.ResumeLayout(false);
+			this.grpGeneral_Misc_Updates.ResumeLayout(false);
 			this.tabProfiles.ResumeLayout(false);
 			this.tabProfileOptions.ResumeLayout(false);
 			this.tabProfiles_GameSettings.ResumeLayout(false);
@@ -1637,8 +1716,15 @@ namespace smiletray
 		[STAThread]
 		static void Main() 
 		{
-			// Start Main Form
-			Application.Run(new frmMain());
+			using(SingleProgramInstance spi = new SingleProgramInstance("smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}"))
+			{
+				if (spi.IsSingleInstance)
+				{
+					// Start Main Form
+					Application.Run(new frmMain());
+				}
+			}
+
 		}
 
 		private void frmMain_Load(object sender, System.EventArgs e)
@@ -1646,20 +1732,32 @@ namespace smiletray
 			Hide();
 		}
 
+		private void frmMain_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			if(!closing)
+			{
+				e.Cancel = true;
+				this.Hide();
+			}
+		}
+
 		private void frmMain_Closed(object sender, System.EventArgs e)
 		{
 			HKCaptureDesktop.Dispose();
 			HKCaptureWindow.Dispose();
 			HKCaptureActiveProfile.Dispose();
-			SystemHotkey.UnregisterHook();
+			GlobalKotKey.UnregisterHook();
 			AddLogMessage("Unregistering system keyboard hook.");
 			TimerSave.Dispose();
 			TimerSave = null;
 			AddLogMessage("SaveQueue shutting down.");
 			SaveSettings();
-			log.WriteLine("\r\n\r\n-----Log Session Ended: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
-			log.Flush();
-			log.Close();
+			if(log != null)
+			{
+				log.WriteLine("\r\n\r\n-----Log Session Ended: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
+				log.Flush();
+				log.Close();
+			}
 		}
 
 		private void frmMain_Resize(object sender, System.EventArgs e)
@@ -1793,6 +1891,18 @@ namespace smiletray
 					PopulateOptions();
 					CopyProfile(Profiles[i], TempProfiles[i]);
 				}
+			}
+		}
+
+		private void rtxtLog_LinkClicked(object sender, System.Windows.Forms.LinkClickedEventArgs e)
+		{
+			try
+			{
+				Process.Start(e.LinkText);
+			}
+			catch
+			{
+				MessageBox.Show("Error: Could not open default browser!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
@@ -1960,6 +2070,7 @@ namespace smiletray
 
 		private void mnuExit_Click(object sender, System.EventArgs e)
 		{
+			closing = true;
 			Close();
 		}
 
@@ -2088,6 +2199,40 @@ namespace smiletray
 						break;
 					}
 				}
+
+				if(versionCheckDelay > 0 && ActiveProfile == null && lastVersionCheck + versionCheckDelay < CurrentTimeInSeconds())
+				{
+					AddLogMessage("Checking for new version...");
+					switch(vc.Check(Info.intversion))
+					{
+						case Error.NewVersion:
+							TimerMisc.Enabled = false;
+							AddLogMessage("New Version Available!: " + vc.vd.version + " -- " + vc.vd.downloadurl);
+							Ex.Msg("New Version", "New Version Available!: " + vc.vd.version + "\n" + 
+								"Date: " + vc.vd.date + "\n" +
+								"Time: " + vc.vd.time + "\n" +
+								"Download from: " + vc.vd.downloadurl + "\n\n" +
+								"Additional Info:\n" + vc.vd.comments, 640, 480);
+							TimerMisc.Enabled = true;
+							break;
+						case Error.NoNewVersion:
+							AddLogMessage("Version up to date.");
+							break;
+						case Error.ServerError:
+							AddLogMessage("Error: Cannot Connect To " + vc.URL);
+							break;
+						case Error.ParseError:
+							AddLogMessage("Error: Failed Parsing + " + vc.URL);
+							break;
+						case Error.StringMissMatch:
+							AddLogMessage("Error: Version string type mismatch");
+							break;
+						case Error.Fail:
+							AddLogMessage("Error: An unknown error has occured while checking for the latest version.");
+							break;
+					}
+					lastVersionCheck =  CurrentTimeInSeconds();
+				}
 			}
 		}
 
@@ -2137,8 +2282,11 @@ namespace smiletray
 			{
 				string s = String.Format("[{0:D2}:{1:D2}:{2:D2}] ", DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second) + msg;
 				MsgQueue.Add(s);
-				log.WriteLine(s);
-				log.Flush();
+				if(log != null)
+				{
+					log.WriteLine(s);
+					log.Flush();
+				}
 			}
 		}
 
@@ -2172,13 +2320,16 @@ namespace smiletray
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
 
 			// Hot Keys
-			if(SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKWindow) != null)
+			if(GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow) != null)
 				txtGeneral_HotKeys_CaptureWindow.Text = Settings.HotKeySettings.HKWindow;
-			if(SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop) != null)
+			if(GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop) != null)
 				txtGeneral_HotKeys_CaptureDesktop.Text = Settings.HotKeySettings.HKDesktop;
-			if(SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile) != null)
+			if(GlobalKotKey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile) != null)
 				txtGeneral_HotKeys_CaptureActiveProfile.Text = Settings.HotKeySettings.HKActiveProfile;
 			chkGeneral_HotKeys_Enabled.Checked = Settings.HotKeySettings.Enabled;
+
+			// Misc options
+			cbGeneral_Misc_CheckUpdates.SelectedItem  = Settings.MiscSettings.CheckUpdates;
 
 			// Load first profile options
 			PopulateProfile(Profiles[0]);
@@ -2485,6 +2636,7 @@ namespace smiletray
 					Settings.HotKeySettings.HKWindow = "F10";
 					Settings.HotKeySettings.HKDesktop = "F11";
 					Settings.HotKeySettings.HKActiveProfile = "F12";
+					Settings.MiscSettings.CheckUpdates = "Every Day";
 
 					AddProfiles ( ref Profiles );  // Just in case none where created
 
@@ -2513,6 +2665,7 @@ namespace smiletray
 				{
 					profile.toXMLOperations();
 				}
+				Settings.MiscSettings.LastCheckTime = lastVersionCheck;
 				Data.Settings = Settings;
 				Data.Profiles = Profiles;
 
@@ -2533,6 +2686,16 @@ namespace smiletray
 				Ex.DumpException(e);
 			}
 			return true;
+		}
+
+		public long CurrentTimeInSeconds()
+		{
+			return DateTime.Now.Ticks/10000000;
+		}
+
+		public long CurrentTimeInMilliseconds()
+		{
+			return DateTime.Now.Ticks/10000;
 		}
 
 		public static System.Array ResizeArray(System.Array oldArray, Type type, int newSize) 
@@ -2646,7 +2809,7 @@ namespace smiletray
 				{
 					if(ActiveProfile.NewSnaps)
 					{
-						if(this.LastSnapTime + this.NextSnapDelay > DateTime.Now.Ticks)
+						if(this.LastSnapTime + this.NextSnapDelay > CurrentTimeInMilliseconds())
 						{
 							ActiveProfile.NewSnaps = false;
 							return;
@@ -2656,7 +2819,7 @@ namespace smiletray
 						{
 							Thread.Sleep(ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.Delay : ActiveProfile.SnapSettings.Delay);
 							Image img = ScreenCapture.GetDesktopImage(false);
-							this.LastSnapTime = DateTime.Now.Ticks;
+							this.LastSnapTime = CurrentTimeInMilliseconds();
 
 							// Take multiple screenshots if specified
 							if(!ActiveProfile.SnapSettings.UseGlobal && ActiveProfile.SnapSettings.SnapCount > 1)
@@ -2668,7 +2831,7 @@ namespace smiletray
 									Thread.Sleep(ActiveProfile.SnapSettings.MultiSnapDelay);
 									img = ScreenCapture.GetDesktopImage(false);
 									frames.Add(img);
-									this.LastSnapTime = DateTime.Now.Ticks;
+									this.LastSnapTime = CurrentTimeInMilliseconds();
 								}
 								AddToSaveQueue(ActiveProfile, frames);
 							} 
@@ -2677,7 +2840,7 @@ namespace smiletray
 								ArrayList frames = new ArrayList(1);
 								frames.Add(img);
 								AddToSaveQueue(ActiveProfile, frames);
-								this.LastSnapTime = DateTime.Now.Ticks;
+								this.LastSnapTime = CurrentTimeInMilliseconds();
 							}
 							ActiveProfile.NewSnaps = false;
 						}
@@ -2700,7 +2863,7 @@ namespace smiletray
 			while(queuesize > 0)
 			{
 				// estimated item count by current active profile
-				if(NumFrames < 20 && LastSnapTime + 2000 > DateTime.Now.Ticks)
+				if(NumFrames < 20 && LastSnapTime + 2000 > CurrentTimeInMilliseconds())
 					return;
 
 				SaveQueueItem item;
@@ -2882,6 +3045,28 @@ namespace smiletray
 			}
 		}
 
+		private void UpdateCheckDelay()
+		{
+			switch(Settings.MiscSettings.CheckUpdates)
+			{
+				case "Never":
+					versionCheckDelay = -1;
+					break;
+				case "Every Hour":
+					versionCheckDelay = 3600;
+					break;
+				case "Every Day":
+					versionCheckDelay = 86400;
+					break;
+				case "Every Week":
+					versionCheckDelay = 604800;
+					break;
+				case "Every Month":
+					versionCheckDelay = 2629743;
+					break;
+			}
+		}
+
 		private void UpdateActiveProfileDependancies(bool restart)
 		{
 			// Lock profile here because once we read from it, and it becomes null we may lose data
@@ -2948,20 +3133,20 @@ namespace smiletray
 		private int ApplySettings()
 		{
 			// Hot Keys
-			SystemHotkey.keycombo hkindexCaptureWindow;
-			SystemHotkey.keycombo hkindexCaptureDesktop;
-			SystemHotkey.keycombo hkindexCaptureActiveProfile;
-			if(txtGeneral_HotKeys_CaptureWindow.Text == null || (hkindexCaptureWindow = SystemHotkey.StringToKeyCombo(txtGeneral_HotKeys_CaptureWindow.Text)) == null)
+			GlobalKotKey.keycombo hkindexCaptureWindow;
+			GlobalKotKey.keycombo hkindexCaptureDesktop;
+			GlobalKotKey.keycombo hkindexCaptureActiveProfile;
+			if(txtGeneral_HotKeys_CaptureWindow.Text == null || (hkindexCaptureWindow = GlobalKotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureWindow.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Window.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
 			}
-			if(txtGeneral_HotKeys_CaptureDesktop.Text == null || (hkindexCaptureDesktop = SystemHotkey.StringToKeyCombo(txtGeneral_HotKeys_CaptureDesktop.Text)) == null)
+			if(txtGeneral_HotKeys_CaptureDesktop.Text == null || (hkindexCaptureDesktop = GlobalKotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureDesktop.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Desktop.", "HotKey Error", MessageBoxButtons.OK);
 				return -1;
 			}
-			if(txtGeneral_HotKeys_CaptureActiveProfile.Text == null || (hkindexCaptureActiveProfile = SystemHotkey.StringToKeyCombo(txtGeneral_HotKeys_CaptureActiveProfile.Text)) == null)
+			if(txtGeneral_HotKeys_CaptureActiveProfile.Text == null || (hkindexCaptureActiveProfile = GlobalKotKey.StringToKeyCombo(txtGeneral_HotKeys_CaptureActiveProfile.Text)) == null)
 			{
 				MessageBox.Show("Error: Invalid HotKey assigned to Capture Active Profile");
 				return -1;
@@ -2995,6 +3180,9 @@ namespace smiletray
 			// Global Stats Settings
 			Settings.StatsSettings.Enabled = chkGeneral_StatsSettings_Enabled.Checked;
 
+			// Global Misc Settings
+			Settings.MiscSettings.CheckUpdates = cbGeneral_Misc_CheckUpdates.SelectedItem.ToString();
+
 			// Copy profiles
 			// Copy last active profile
 			SaveProfile(TempProfiles[ActiveTempProfile]);
@@ -3017,9 +3205,13 @@ namespace smiletray
 
 			UpdateActiveProfileDependancies(false);
 
+			UpdateCheckDelay();
+
 			CheckEnabled();
 
 			return 0;
 		}
+
+
 	}
 }
