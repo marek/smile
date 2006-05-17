@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smiletray", "smiletray.vcproj", "{0324E4BB-3BC4-41A0-816F-1F1A82FE4C6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "smiletray", "smiletray.csproj", "{B87A3EFE-7747-488D-BF5D-71274E6D956E}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
@@ -9,10 +9,10 @@ Global
 		Release = Release
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{0324E4BB-3BC4-41A0-816F-1F1A82FE4C6A}.Debug.ActiveCfg = Debug|Win32
-		{0324E4BB-3BC4-41A0-816F-1F1A82FE4C6A}.Debug.Build.0 = Debug|Win32
-		{0324E4BB-3BC4-41A0-816F-1F1A82FE4C6A}.Release.ActiveCfg = Release|Win32
-		{0324E4BB-3BC4-41A0-816F-1F1A82FE4C6A}.Release.Build.0 = Release|Win32
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Debug.ActiveCfg = Debug|.NET
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Debug.Build.0 = Debug|.NET
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Release.ActiveCfg = Release|.NET
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Release.Build.0 = Release|.NET
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
