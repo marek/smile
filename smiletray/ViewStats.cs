@@ -46,18 +46,19 @@ namespace smiletray
 		public frmViewStats(CProfile [] profiles, int index)
 		{
 			this.profiles = profiles;
+            Array.Sort(this.profiles);
 
 			InitializeComponent();
 
-			for(int i = 0; i < profiles.Length; i++)
+			for(int i = 0; i < this.profiles.Length; i++)
 			{
-				MenuItem item = new MenuItem(profiles[i].ProfileName, new System.EventHandler(this.MenuHandler));
+                MenuItem item = new MenuItem(this.profiles[i].ProfileName, new System.EventHandler(this.MenuHandler));
 				mnuSelectGame.MenuItems.Add(i,item);
 			}
 			
 			// Load first profile
 			SelectedProfile = index;
-			rtxtStats.Rtf = profiles[SelectedProfile].GetStatsReport("Verdana", CProfile.SaveTypes.RTF);
+            rtxtStats.Rtf = this.profiles[SelectedProfile].GetStatsReport("Verdana", CProfile.SaveTypes.RTF);
 		}
 
 		/// Clean up any resources being used.

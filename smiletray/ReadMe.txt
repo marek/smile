@@ -297,7 +297,7 @@ KodeK for .manifest file and bug reports/suggestions
 Flank for team fortress classic support (via logs)
 Jake for counter-strike: condition zero logs
 eram for priority testing.
-T@T-5-MoNk3y for Ricochet logs and testing
+T@T-2-MoNk3y for Ricochet logs and testing
 Everyone who has sent me a "thanks"
 
 
@@ -348,6 +348,7 @@ to change it once i picked it.
 
 Version Compatiblity:
 ------------------------
+1.8: Compatible
 1.7: Compatible
 1.6.2: Compatible
 1.6.1: Compatible
@@ -365,6 +366,9 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.9**
+-Select Game Menu under the ViewStats form should now display sorted.
+
 **v1.8**
 -Fixed the tray icon's right click 'about' menu item.
 -Added Counter-Strike: Condition Zero support (thanks Jake)

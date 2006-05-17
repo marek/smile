@@ -100,7 +100,7 @@ namespace smiletray
     [XmlInclude(typeof(CProfileTeamFortressClassic))]
     [XmlInclude(typeof(CProfileConditionZero))]
     [XmlInclude(typeof(CProfileRicochet))]
-	public abstract class CProfile
+    public abstract class CProfile : IComparable
 	{
 		// Public XML attributes
 		public String path;
@@ -168,7 +168,16 @@ namespace smiletray
 			SnapSettings = new CGameSnapSettings();
 			StatsSettings = new CGameStatSettings();
 		}
-	}
+
+        #region IComparable Members
+
+        public int CompareTo(object obj)
+        {
+            return ((IComparable)obj).CompareTo(ProfileName);
+        }
+
+        #endregion
+    }
 
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Counter Strike: Source

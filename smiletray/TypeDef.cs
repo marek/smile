@@ -18,8 +18,8 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.8";
-		public static readonly String intversion = "1.8.0";
+		public static readonly String version = "1.9";
+		public static readonly String intversion = "1.9.0";
 		public static readonly String copyrightdate = "©2005-2006";
 	}
 
