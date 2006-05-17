@@ -104,16 +104,6 @@
                     BuildAction = "Compile"
                 />
                 <File
-                    RelPath = "CaptureKey.cs"
-                    SubType = "Form"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "CaptureKey.resx"
-                    DependentUpon = "CaptureKey.cs"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
                     RelPath = "Exception.cs"
                     SubType = "Form"
                     BuildAction = "Compile"

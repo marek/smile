@@ -1,3 +1,12 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// Smile! -- Screenshot and Statistics Utility
+// Copyright (c) 2005 Marek Kudlacz
+//
+// http://kudlacz.com
+//
+/////////////////////////////////////////////////////////////////////////////
+
 using System;
 using System.ComponentModel;
 using System.Collections;
@@ -35,10 +44,8 @@ namespace smiletray
 		{
 			if (isRegistered)
 			{
-				if (UnregisterHotkey())
-					System.Diagnostics.Debug.WriteLine("Unreg: OK");
+				UnregisterHotkey();
 			}
-			System.Diagnostics.Debug.WriteLine("Disposed");
 		}
 		#region Component Designer generated code
 		/// <summary>
@@ -56,7 +63,6 @@ namespace smiletray
 			if ((m.Msg==(int)NativeMethods.Msgs.WM_HOTKEY)&&(m.WParam==(IntPtr)this.GetType().GetHashCode()))
 			{
 				Handled=true;
-				System.Diagnostics.Debug.WriteLine("HOTKEY pressed!");
 				if (Pressed!=null) Pressed(this,EventArgs.Empty);
 			}
 		}
@@ -74,8 +80,6 @@ namespace smiletray
 			if (((int)key & (int)Keys.Shift)==(int)Keys.Shift) {mod+=(int)NativeMethods.Modifiers.MOD_SHIFT;k2=Keys.Shift;}
 			if (((int)key & (int)Keys.Control)==(int)Keys.Control) {mod+=(int)NativeMethods.Modifiers.MOD_CONTROL;k2=Keys.Control;}
 			
-			System.Diagnostics.Debug.Write(mod.ToString()+" ");
-			System.Diagnostics.Debug.WriteLine((((int)key)-((int)k2)).ToString());
 
 			return NativeMethods.RegisterHotKey(m_Window.Handle,this.GetType().GetHashCode(),(int)mod,((int)key)-((int)k2));
 		}
@@ -97,25 +101,21 @@ namespace smiletray
 				{
 					if (UnregisterHotkey())
 					{
-						System.Diagnostics.Debug.WriteLine("Unreg: OK");
 						isRegistered=false;
 					}
 					else 
 					{
 						if (Error!=null) Error(this,EventArgs.Empty);
-						System.Diagnostics.Debug.WriteLine("Unreg: ERR");
 					}
 				}
 				if (value==Shortcut.None) {m_HotKey=value;return;}
 				if (RegisterHotkey(value))	//Register new Hotkey
 				{
-					System.Diagnostics.Debug.WriteLine("Reg: OK");
 					isRegistered=true;
 				}
 				else 
 				{
 					if (Error!=null) Error(this,EventArgs.Empty);
-					System.Diagnostics.Debug.WriteLine("Reg: ERR");
 				}
 				m_HotKey=value;
 			}

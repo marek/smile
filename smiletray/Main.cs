@@ -54,6 +54,7 @@ namespace smiletray
 		private int NextSnapDelay;
 		private int NumFrames = 0;
 		private int NextSnapNo;
+		private int GlobalNextSnapNo = 0;
 		private ArrayList extlist;
 		private System.Threading.Timer TimerCheckConsoleLog;
 		private TimerCallback TimerCheckConsoleLogDelegate;
@@ -64,6 +65,7 @@ namespace smiletray
 		private SystemHotkey HKCaptureDesktop;
 		private SystemHotkey HKCaptureWindow;
 		private SystemHotkey HKCaptureActiveProfile;
+		private StreamWriter log;
 
 		// form elements
 		private System.Windows.Forms.NotifyIcon notifyIcon;
@@ -183,6 +185,11 @@ namespace smiletray
 			// Required for Windows Form Designer support
 			InitializeComponent();
 
+			// Init log file
+			log = new StreamWriter(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath) + "\\" + Path.GetFileNameWithoutExtension(System.Windows.Forms.Application.ExecutablePath) + ".log", true);
+			log.WriteLine("\r\n\r\n-----Log Session Started: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
+			log.Flush();
+
 			// Init MsgQueue
 			this.MsgQueue = new TSArrayList(10);
 
@@ -251,6 +258,13 @@ namespace smiletray
 			rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
 			rtxtAbout.SelectionStart = 0 ;
 			
+			// Save queue starts here because now we can take screenshots at any moment
+			NumSaveThreads = 0;
+			TimerSaveDelegate = new TimerCallback(TimerSave_Tick);
+			TimerSave = new System.Threading.Timer(TimerSaveDelegate, null, 10, 100);
+			AddLogMessage("SaveQueue starting up.");
+
+
 			CheckEnabled();
 
 		}
@@ -1606,7 +1620,13 @@ namespace smiletray
 
 		private void frmMain_Closed(object sender, System.EventArgs e)
 		{
+			TimerSave.Dispose();
+			TimerSave = null;
+			AddLogMessage("SaveQueue shutting down.");
 			SaveSettings();
+			log.WriteLine("\r\n\r\n-----Log Session Ended: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
+			log.Flush();
+			log.Close();
 		}
 
 		private void frmMain_Resize(object sender, System.EventArgs e)
@@ -1944,11 +1964,7 @@ namespace smiletray
 
 						TimerCheckConsoleLogDelegate = new TimerCallback(TimerCheckConsoleLog_Tick);
 						TimerCheckConsoleLog = new System.Threading.Timer(TimerCheckConsoleLogDelegate, null, 10, 10);
-						TimerSaveDelegate = new TimerCallback(TimerSave_Tick);
-						TimerSave = new System.Threading.Timer(TimerSaveDelegate, null, 10, 100);
 						AddLogMessage("Scanner starting up.");
-						AddLogMessage("SaveQueue starting up.");
-						NumSaveThreads = 0;
 						break;
 					}
 				}
@@ -1977,29 +1993,15 @@ namespace smiletray
 
 			ExecSaveQueue();
 			
-
 			lock(QueueLock)
 			{
 				if(TimerSave != null)
 				{
-					// Kill Save timer
-					if(ActiveProfile == null)
+					lock(SaveThreadCountLock)
 					{
-						if(SaveQueue.Count() == 0)
-						{
-							TimerSave.Dispose();
-							TimerSave = null;
-							AddLogMessage("SaveQueue shutting down.");
-						}
+						NumSaveThreads--;
 					}
-					else
-					{
-						lock(SaveThreadCountLock)
-						{
-							NumSaveThreads--;
-						}
-						TimerSave.Change(1, 100);
-					}
+					TimerSave.Change(1, 100);
 				}
 			}
 		}
@@ -2013,7 +2015,10 @@ namespace smiletray
 		{
 			lock(MsgLock)
 			{
-				MsgQueue.Add(String.Format("[{0:D2}:{1:D2}:{2:D2}] ", DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second) + msg);
+				string s = String.Format("[{0:D2}:{1:D2}:{2:D2}] ", DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second) + msg;
+				MsgQueue.Add(s);
+				log.WriteLine(s);
+				log.Flush();
 			}
 		}
 
@@ -2511,100 +2516,103 @@ namespace smiletray
 				}
 				Thread.Sleep(1);
 
-				// Do Gamma Adjust
-				if(item.p.SnapSettings.Gamma != 10) // 10/10 = 1.0
+				if(item.p != null)
 				{
-					float gamma = (float)item.p.SnapSettings.Gamma/10;
-					foreach(Image img in frames)
+					// Do Gamma Adjust
+					if(item.p.SnapSettings.Gamma != 10) // 10/10 = 1.0
 					{
-						Filters.Gamma((Bitmap)img, gamma, gamma, gamma);
-						Thread.Sleep(10);
-					}
-				}
-
-				// Do Contrast Adjust
-				if(item.p.SnapSettings.Contrast != 0) // 10/10 = 1.0
-				{
-					foreach(Image img in frames)
-					{
-						Filters.Contrast((Bitmap)img, (sbyte)item.p.SnapSettings.Contrast);
-						Thread.Sleep(10);
-					}
-				}
-
-				// Do Brightness Adjust
-				if(item.p.SnapSettings.Brightness != 0) // 10/10 = 1.0
-				{
-					foreach(Image img in frames)
-					{
-						Filters.Brightness((Bitmap)img, (sbyte)item.p.SnapSettings.Brightness);
-						Thread.Sleep(10);
-					}
-				}
-
-				int framedelay = Settings.SnapSettings.AnimUseMultiSnapDelay ? item.p.SnapSettings.MultiSnapDelay : Settings.SnapSettings.AnimFrameDelay;
-				// Save copy of animation
-				if	(
-						!item.p.SnapSettings.UseGlobal && 
-						(
-							item.p.SnapSettings.SaveType.CompareTo("Only Animations") == 0 || 
-							item.p.SnapSettings.SaveType.CompareTo("Snaps & Animations") == 0
-						) 
-					)
-				{
-					string file;
-					if(!Settings.SnapSettings.AnimOriginalDimentions)
-					{
-						ArrayList newframes = new ArrayList(frames.Count);
-						for(int i = 0; i < frames.Count; i++)
+						float gamma = (float)item.p.SnapSettings.Gamma/10;
+						foreach(Image img in frames)
 						{
-							Image img = (Image)frames[i];
-							Thread.Sleep(1);
-
-							Image newimg = new Bitmap(Settings.SnapSettings.AnimWidth, Settings.SnapSettings.AnimHeight);
-							Graphics g = Graphics.FromImage(newimg);
-							// Resize Options
-							g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-							g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-							g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-							g.DrawImage(img, new Rectangle(0, 0, Settings.SnapSettings.AnimWidth, Settings.SnapSettings.AnimHeight));
-
-							newframes.Add(newimg);
-							g.Dispose();
-							g = null;
+							Filters.Gamma((Bitmap)img, gamma, gamma, gamma);
 							Thread.Sleep(10);
 						}
-						
-						lock(FileSaveLock)
-						{
-							file = GetNextSnapName("smile", ".gif", dir);
-							CGifFile.SaveAnimation(file, newframes, framedelay, Settings.SnapSettings.AnimOptimizePalette  );
-						}
-						Thread.Sleep(1);
-						for(int i = 0; i < newframes.Count; i++)
-						{
-							((Image)newframes[i]).Dispose();
-							newframes[i] = null;
-						}
-						newframes.Clear();
-						newframes.TrimToSize();
-						newframes = null;
 					}
-					else
-					{
-						lock(FileSaveLock)
-						{
-							file = GetNextSnapName("smile", ".gif", dir);
-							CGifFile.SaveAnimation(file, frames, framedelay, Settings.SnapSettings.AnimOptimizePalette );
-						}
-					}
-					AddLogMessage("Saved Animation to: " + file);
 
-					if(ActiveProfile != null)
-						Thread.Sleep(100);	
+					// Do Contrast Adjust
+					if(item.p.SnapSettings.Contrast != 0) // 10/10 = 1.0
+					{
+						foreach(Image img in frames)
+						{
+							Filters.Contrast((Bitmap)img, (sbyte)item.p.SnapSettings.Contrast);
+							Thread.Sleep(10);
+						}
+					}
+
+					// Do Brightness Adjust
+					if(item.p.SnapSettings.Brightness != 0) // 10/10 = 1.0
+					{
+						foreach(Image img in frames)
+						{
+							Filters.Brightness((Bitmap)img, (sbyte)item.p.SnapSettings.Brightness);
+							Thread.Sleep(10);
+						}
+					}
+
+					int framedelay = Settings.SnapSettings.AnimUseMultiSnapDelay ? item.p.SnapSettings.MultiSnapDelay : Settings.SnapSettings.AnimFrameDelay;
+					// Save copy of animation
+					if	(
+						!item.p.SnapSettings.UseGlobal && 
+						(
+						item.p.SnapSettings.SaveType.CompareTo("Only Animations") == 0 || 
+						item.p.SnapSettings.SaveType.CompareTo("Snaps & Animations") == 0
+						) 
+						)
+					{
+						string file;
+						if(!Settings.SnapSettings.AnimOriginalDimentions)
+						{
+							ArrayList newframes = new ArrayList(frames.Count);
+							for(int i = 0; i < frames.Count; i++)
+							{
+								Image img = (Image)frames[i];
+								Thread.Sleep(1);
+
+								Image newimg = new Bitmap(Settings.SnapSettings.AnimWidth, Settings.SnapSettings.AnimHeight);
+								Graphics g = Graphics.FromImage(newimg);
+								// Resize Options
+								g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+								g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+								g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+								g.DrawImage(img, new Rectangle(0, 0, Settings.SnapSettings.AnimWidth, Settings.SnapSettings.AnimHeight));
+
+								newframes.Add(newimg);
+								g.Dispose();
+								g = null;
+								Thread.Sleep(10);
+							}
+						
+							lock(FileSaveLock)
+							{
+								file = GetNextSnapName(ref NextSnapNo, "smile", ".gif", dir);
+								CGifFile.SaveAnimation(file, newframes, framedelay, Settings.SnapSettings.AnimOptimizePalette  );
+							}
+							Thread.Sleep(1);
+							for(int i = 0; i < newframes.Count; i++)
+							{
+								((Image)newframes[i]).Dispose();
+								newframes[i] = null;
+							}
+							newframes.Clear();
+							newframes.TrimToSize();
+							newframes = null;
+						}
+						else
+						{
+							lock(FileSaveLock)
+							{
+								file = GetNextSnapName(ref NextSnapNo, "smile", ".gif", dir);
+								CGifFile.SaveAnimation(file, frames, framedelay, Settings.SnapSettings.AnimOptimizePalette );
+							}
+						}
+						AddLogMessage("Saved Animation to: " + file);
+
+						if(ActiveProfile != null)
+							Thread.Sleep(100);	
+					}
 				}
 				
-				if	(	
+				if	(	item.p == null ||
 						(
 							item.p.SnapSettings.UseGlobal && 
 							Settings.SnapSettings.Enabled
@@ -2625,7 +2633,10 @@ namespace smiletray
 						string file;
 						lock(FileSaveLock)
 						{
-							file = GetNextSnapName("smile", encoderext, dir);
+							if(item.p != null)
+								file = GetNextSnapName(ref NextSnapNo, "smile", encoderext, dir);
+							else
+								file = GetNextSnapName(ref GlobalNextSnapNo, "smile", encoderext, dir);
 							img.Save(file, encoder, encoderParams);
 							if(Settings.SnapSettings.SaveBug)
 							{
@@ -2716,15 +2727,15 @@ namespace smiletray
 		}
 
 		// Need to assume ext is in this->extlist!
-		private string GetNextSnapName(string pre, string ext, string path)
+		private string GetNextSnapName(ref int counter, string pre, string ext, string path)
 		{
 			bool exists;
 			string name;
 			do
 			{
 				exists = false;
-				NextSnapNo++;
-				name = path + "\\"+ pre + String.Format("{0:D8}", NextSnapNo);
+				counter++;
+				name = path + "\\"+ pre + String.Format("{0:D8}", counter);
 
 				foreach(string item in extlist)
 				{
@@ -2821,6 +2832,7 @@ namespace smiletray
 		{
 			if(Settings.HotKeySettings.Enabled)
 			{
+				AddLogMessage("HotKey: capturing desktop...");
 				Image img = ScreenCapture.GetDesktopImage(true);
 				ArrayList frames = new ArrayList(1);
 				frames.Add(img);
@@ -2832,6 +2844,7 @@ namespace smiletray
 		{
 			if(Settings.HotKeySettings.Enabled)
 			{
+				AddLogMessage("HotKey: capturing window...");
 				Image img = ScreenCapture.GetDesktopImage(false);
 				ArrayList frames = new ArrayList(1);
 				frames.Add(img);
@@ -2847,7 +2860,12 @@ namespace smiletray
 				{
 					if(ActiveProfile != null)
 					{
+						AddLogMessage("HotKey: Capturing active profile...");
 						ActiveProfile.NewSnaps = true;		// Force Profile screenshot
+					}
+					else
+					{
+						AddLogMessage("HotKey: Cannot capture active profile, no profile running...");
 					}
 				}
 			}

@@ -163,6 +163,13 @@ Options that are globally used by default.
 	• View: View stats.
 	• Reset: Reset statistics for all games
 
+	[Hot Keys]
+	• Enabled: Enable or disable the hot keys
+	• Capture Window: Hotkey to capture the current window.
+	• Capture Desktop: Hotkey to capture the entire desktop.
+	• Capture Active Profile: Hotkey to invoke a typical profile capture.
+
+
 [Profiles]
 options that are specific to certain games.
 	[Game Settings]
@@ -218,6 +225,7 @@ Iain for reporting bugs
 TSW|Abaddon & Sloan for feature ideas
 Fuzzy from Team Dystopia
 tiki from planetquake
+Leo for suggestions
 Everyone who has sent me a "thanks"
 
 
@@ -267,7 +275,8 @@ Changelog:
 -Added Profile Gamma Slider
 -Added Profile Contrast Slider
 -Added Profile Brightness Slider
--Added Capture Window, Capture Desktop, Capture Active Profile Hotkeys
+-Added Capture Window, Capture Desktop, and Capture Active Profile hotkeys
+-Old settings now backed up, if an error reading them occured. 
 -LICENSE CHANGED. Smile! IS NO LONGER UNDER GPL. As I am the sole contributer and owner of Smile! I am granted this right. Hey Mozilla did it! 
  My reason for this is to allow the future use of code and libraries that do not fall under specific open source requirements thus
  keeping the author's own agreements and needs intact. Smile! will remain freeware, (It's not like there is a glimpse for anything 
