@@ -61,7 +61,13 @@ namespace smiletray
 	{
 		public Boolean Enabled;
 		public Boolean SingleDisplay;
+		public Boolean SaveAnimation;
 		public Int32 Delay;
+		public Int32 SaveDelay;
+		public Int32 NextSnapDelay;
+		public Int32 MultiSnapDelay;
+		public Int32 SnapCount;
+
 		public Boolean UseGlobal;
 		public String SnapDir;
 
@@ -70,7 +76,12 @@ namespace smiletray
 			Enabled = new Boolean();
 			SingleDisplay = new Boolean();
 			UseGlobal = new Boolean();
+			SaveAnimation = new Boolean();
 			Delay = new Int32();
+			SaveDelay = new Int32();
+			NextSnapDelay = new Int32();
+			MultiSnapDelay = new Int32();
+			SnapCount = new Int32();
 		}
 	}
 	// Simplest way since we DO have access to the src:

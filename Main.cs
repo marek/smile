@@ -41,6 +41,10 @@ namespace smiletray
 		private CProfile [] TempProfiles;
 		private int ActiveTempProfile;
 		private CProfile ActiveProfile;
+		private ArrayList SaveQueue;
+		private long LastSnapTime;
+		private int NextSnapDelay;
+		private int SaveDelay;
 
 		// form elements
 		private System.Windows.Forms.NotifyIcon notifyIcon;
@@ -83,7 +87,6 @@ namespace smiletray
 		private System.Windows.Forms.TrackBar tbGeneral_SnapSettings_Quality;
 		private System.Windows.Forms.GroupBox grpGeneral_SnapSettings_SnapDir;
 		private System.Windows.Forms.Button cmdGeneral_SnapSettings_BrowseSnapDir;
-		private System.Windows.Forms.GroupBox grpGeneral_SnapSettings_Delay;
 		private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_Delay;
 		private System.Windows.Forms.Button cmdGeneral_StatsSettings_ViewStats;
 		private System.Windows.Forms.Button cmdGeneral_StatsSettings_Reset;
@@ -94,7 +97,6 @@ namespace smiletray
 		private System.Windows.Forms.CheckBox chkProfiles_SnapSettings_UseGlobal;
 		private System.Windows.Forms.GroupBox grpProfiles_SnapSettings_SnapDir;
 		private System.Windows.Forms.TextBox txtProfiles_SnapSettings_SnapDir;
-		private System.Windows.Forms.GroupBox grpProfiles_SnapSettings_Delay;
 		private System.Windows.Forms.GroupBox grpProfiles_StatsSettingsSub;
 		private System.Windows.Forms.CheckBox chkProfiles_StatsSettings_UseGlobal;
 		private System.Windows.Forms.CheckBox chkProfiles_SnapSettings_Enabled;
@@ -111,6 +113,33 @@ namespace smiletray
 		private System.Windows.Forms.TabPage tabLog;
 		private System.Windows.Forms.RichTextBox rtxtLog;
 		private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_SaveBug;
+		private System.Windows.Forms.Label lblProfiles_SnapSettings_SnapDelay;
+		private System.Windows.Forms.Label lblProfiles_SnapSettings_SaveDelay;
+		private System.Windows.Forms.NumericUpDown udProfiles_SnapSettings_SaveDelay;
+		private System.Windows.Forms.Label lblProfiles_SnapSettings_NextSnapDelay;
+		private System.Windows.Forms.NumericUpDown udProfiles_SnapSettings_NextSnapDelay;
+		private System.Windows.Forms.Label lblProfiles_SnapSettings_SnapCount;
+		private System.Windows.Forms.NumericUpDown udProfiles_SnapSettings_SnapCount;
+		private System.Windows.Forms.Label lblProfiles_SnapSettings_MultiSnapDelay;
+		private System.Windows.Forms.NumericUpDown udProfiles_SnapSettings_MultiSnapDelay;
+		private System.Windows.Forms.GroupBox grpGeneral_SnapSettings_TimingAndParameters;
+		private System.Windows.Forms.GroupBox grpProfiles_SnapSettings_TimingAndParameters;
+		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_SaveDelay;
+		private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_NextSnapDelay;
+		private System.Windows.Forms.Timer TimerSave;
+		private System.Windows.Forms.GroupBox grpGeneral_SnapSettings_AnimationSettings;
+		private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_AnimWidth;
+		private System.Windows.Forms.Label lblGeneral_SnapSettings_AnimWidth;
+		private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_AnimHeight;
+		private System.Windows.Forms.Label lblGeneral_SnapSettings_AnimHeight;
+		private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_AnimOriginalDimentions;
+		private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_AnimUseMultiSnapDelay;
+		private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_AnimFrameDelay;
+		private System.Windows.Forms.Label lblGeneral_SnapSettings_AnimFrameDelay;
+		private System.Windows.Forms.CheckBox chkProfiles_SnapSettings_SaveAnimation;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,65 +148,61 @@ namespace smiletray
 	
 		public frmMain()
 		{
-			try
+			// Required for Windows Form Designer support
+			InitializeComponent();
+
+			// Read Settings
+			this.Settings = new Settings_t();
+			AddProfiles ( ref Profiles );  // Just in case none where created
+			this.LoadSettings();
+
+			// Populate profiles
+			AddProfiles ( ref Profiles );
+			TempProfiles = new CProfile [ Profiles.Length ];
+			for(int i = 0; i < Profiles.Length; i++)
 			{
-				// Required for Windows Form Designer support
-				InitializeComponent();
-
-				// Read Settings
-				this.Settings = new Settings_t();
-				AddProfiles ( ref Profiles );  // Just in case none where created
-				this.LoadSettings();
-
-				// Populate profiles
-				AddProfiles ( ref Profiles );
-				TempProfiles = new CProfile [ Profiles.Length ];
-				for(int i = 0; i < Profiles.Length; i++)
-				{
-					TempProfiles[i] = (CProfile) System.Activator.CreateInstance(Profiles[i].GetType());
-					ListViewItem item = new ListViewItem();
-					item.Text = Profiles[i].ProfileName;
-					item.Tag = i;
-					lstProfiles_Games.Items.Add(item);
-				}
-
-				// Encoders
-				ImageCodecInfo [] encoders = ImageCodecInfo.GetImageEncoders();
-				foreach(ImageCodecInfo enc in encoders)
-				{
-					cbGeneral_SnapSettings_ImageFormat.Items.Add(enc.MimeType);
-				}
-
-				UpdateEncoder();
-
-				// Misc Dialog Options
-				this.AllowShow = true;
-				this.notifyIcon.Text = this.Text = "Smile! " + Info.version;
-
-				// Populate Dialog
-				PopulateOptions();
-				this.EnableSnaps = this.Settings.SnapSettings.Enabled;
-				this.EnableStats = this.Settings.StatsSettings.Enabled;
-
-				// Populate the rich text box for about screen
-				rtxtAbout.SelectionStart = 0 ;
-				rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold);
-				rtxtAbout.SelectedText = "Smile! " ;
-				rtxtAbout.SelectionFont = new Font("Verdana", 10, FontStyle.Regular);
-				rtxtAbout.SelectedText = "v" + Info.version + "\n";
-				rtxtAbout.SelectedText = "©2005 Marek Kudlacz\nhttp://www.kudlacz.com\n";
-				rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold|FontStyle.Underline);
-				rtxtAbout.SelectedText = "                                                                                                            \n\n";
-				rtxtAbout.SelectedText = "This is a program designed in C#/.NET to keep track of statistics, and to take \"kill\" screenshots when you actually manage to kill someone. Enjoy!\n";
-				rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
-				rtxtAbout.SelectionStart = 0 ;
-
-				CheckEnabled();
+				TempProfiles[i] = (CProfile) System.Activator.CreateInstance(Profiles[i].GetType());
+				ListViewItem item = new ListViewItem();
+				item.Text = Profiles[i].ProfileName;
+				item.Tag = i;
+				lstProfiles_Games.Items.Add(item);
 			}
-			catch ( Exception e ) 
+
+			// Encoders
+			ImageCodecInfo [] encoders = ImageCodecInfo.GetImageEncoders();
+			foreach(ImageCodecInfo enc in encoders)
 			{
-				Ex.DumpException(e);
+				cbGeneral_SnapSettings_ImageFormat.Items.Add(enc.MimeType);
 			}
+
+			UpdateEncoder();
+
+			// Create Save Queue
+			this.SaveQueue = new ArrayList(10);
+
+			// Misc Dialog Options
+			this.AllowShow = true;
+			this.notifyIcon.Text = this.Text = "Smile! " + Info.version;
+
+			// Populate Dialog
+			PopulateOptions();
+			this.EnableSnaps = this.Settings.SnapSettings.Enabled;
+			this.EnableStats = this.Settings.StatsSettings.Enabled;
+
+			// Populate the rich text box for about screen
+			rtxtAbout.SelectionStart = 0 ;
+			rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold);
+			rtxtAbout.SelectedText = "Smile! " ;
+			rtxtAbout.SelectionFont = new Font("Verdana", 10, FontStyle.Regular);
+			rtxtAbout.SelectedText = "v" + Info.version + "\n";
+			rtxtAbout.SelectedText = "©2005 Marek Kudlacz\nhttp://www.kudlacz.com\n";
+			rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold|FontStyle.Underline);
+			rtxtAbout.SelectedText = "                                                                                                            \n\n";
+			rtxtAbout.SelectedText = "This is a program designed in C#/.NET to keep track of statistics, and to take \"kill\" screenshots when you actually manage to kill someone. Enjoy!\n";
+			rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
+			rtxtAbout.SelectionStart = 0 ;
+
+			CheckEnabled();
 		}
 
 		private void rtxtAbout_LinkClicked(object sender, System.Windows.Forms.LinkClickedEventArgs e)
@@ -237,6 +262,15 @@ namespace smiletray
 			this.tabGeneral = new System.Windows.Forms.TabPage();
 			this.tabGeneralOptions = new System.Windows.Forms.TabControl();
 			this.tabGeneral_GlobalSnapSettings = new System.Windows.Forms.TabPage();
+			this.grpGeneral_SnapSettings_AnimationSettings = new System.Windows.Forms.GroupBox();
+			this.udGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.NumericUpDown();
+			this.lblGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.Label();
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay = new System.Windows.Forms.CheckBox();
+			this.udGeneral_SnapSettings_AnimHeight = new System.Windows.Forms.NumericUpDown();
+			this.lblGeneral_SnapSettings_AnimHeight = new System.Windows.Forms.Label();
+			this.udGeneral_SnapSettings_AnimWidth = new System.Windows.Forms.NumericUpDown();
+			this.lblGeneral_SnapSettings_AnimWidth = new System.Windows.Forms.Label();
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions = new System.Windows.Forms.CheckBox();
 			this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
 			this.grpGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.GroupBox();
 			this.lblGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.Label();
@@ -246,8 +280,13 @@ namespace smiletray
 			this.grpGeneral_SnapSettings_SnapDir = new System.Windows.Forms.GroupBox();
 			this.txtGeneral_SnapSettings_SnapDir = new System.Windows.Forms.TextBox();
 			this.cmdGeneral_SnapSettings_BrowseSnapDir = new System.Windows.Forms.Button();
-			this.grpGeneral_SnapSettings_Delay = new System.Windows.Forms.GroupBox();
+			this.grpGeneral_SnapSettings_TimingAndParameters = new System.Windows.Forms.GroupBox();
+			this.udGeneral_SnapSettings_NextSnapDelay = new System.Windows.Forms.NumericUpDown();
+			this.udGeneral_SnapSettings_SaveDelay = new System.Windows.Forms.NumericUpDown();
 			this.udGeneral_SnapSettings_Delay = new System.Windows.Forms.NumericUpDown();
+			this.label1 = new System.Windows.Forms.Label();
+			this.label2 = new System.Windows.Forms.Label();
+			this.label3 = new System.Windows.Forms.Label();
 			this.chkGeneral_SnapSettings_SingleDisplay = new System.Windows.Forms.CheckBox();
 			this.chkGeneral_SnapSettings_Enabled = new System.Windows.Forms.CheckBox();
 			this.tabGeneral_GlobalStatsSettings = new System.Windows.Forms.TabPage();
@@ -265,10 +304,20 @@ namespace smiletray
 			this.tabProfiles_SnapSettings = new System.Windows.Forms.TabPage();
 			this.chkProfiles_SnapSettings_UseGlobal = new System.Windows.Forms.CheckBox();
 			this.grpProfiles_SnapSettingsSub = new System.Windows.Forms.GroupBox();
+			this.chkProfiles_SnapSettings_SaveAnimation = new System.Windows.Forms.CheckBox();
 			this.grpProfiles_SnapSettings_SnapDir = new System.Windows.Forms.GroupBox();
 			this.txtProfiles_SnapSettings_SnapDir = new System.Windows.Forms.TextBox();
 			this.cmdProfiles_BrowseSnapDir = new System.Windows.Forms.Button();
-			this.grpProfiles_SnapSettings_Delay = new System.Windows.Forms.GroupBox();
+			this.grpProfiles_SnapSettings_TimingAndParameters = new System.Windows.Forms.GroupBox();
+			this.lblProfiles_SnapSettings_MultiSnapDelay = new System.Windows.Forms.Label();
+			this.udProfiles_SnapSettings_MultiSnapDelay = new System.Windows.Forms.NumericUpDown();
+			this.lblProfiles_SnapSettings_SnapCount = new System.Windows.Forms.Label();
+			this.udProfiles_SnapSettings_SnapCount = new System.Windows.Forms.NumericUpDown();
+			this.lblProfiles_SnapSettings_NextSnapDelay = new System.Windows.Forms.Label();
+			this.udProfiles_SnapSettings_NextSnapDelay = new System.Windows.Forms.NumericUpDown();
+			this.lblProfiles_SnapSettings_SaveDelay = new System.Windows.Forms.Label();
+			this.udProfiles_SnapSettings_SaveDelay = new System.Windows.Forms.NumericUpDown();
+			this.lblProfiles_SnapSettings_SnapDelay = new System.Windows.Forms.Label();
 			this.udProfiles_SnapSettings_Delay = new System.Windows.Forms.NumericUpDown();
 			this.chkProfiles_SnapSettings_SingleDisplay = new System.Windows.Forms.CheckBox();
 			this.chkProfiles_SnapSettings_Enabled = new System.Windows.Forms.CheckBox();
@@ -283,14 +332,21 @@ namespace smiletray
 			this.picAboutIcon = new System.Windows.Forms.PictureBox();
 			this.tabLog = new System.Windows.Forms.TabPage();
 			this.rtxtLog = new System.Windows.Forms.RichTextBox();
+			this.TimerSave = new System.Windows.Forms.Timer(this.components);
 			this.tabOptions.SuspendLayout();
 			this.tabGeneral.SuspendLayout();
 			this.tabGeneralOptions.SuspendLayout();
 			this.tabGeneral_GlobalSnapSettings.SuspendLayout();
+			this.grpGeneral_SnapSettings_AnimationSettings.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimWidth)).BeginInit();
 			this.grpGeneral_SnapSettings_ImageFormat.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.tbGeneral_SnapSettings_Quality)).BeginInit();
 			this.grpGeneral_SnapSettings_SnapDir.SuspendLayout();
-			this.grpGeneral_SnapSettings_Delay.SuspendLayout();
+			this.grpGeneral_SnapSettings_TimingAndParameters.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_NextSnapDelay)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveDelay)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).BeginInit();
 			this.tabGeneral_GlobalStatsSettings.SuspendLayout();
 			this.tabProfiles.SuspendLayout();
@@ -300,7 +356,11 @@ namespace smiletray
 			this.tabProfiles_SnapSettings.SuspendLayout();
 			this.grpProfiles_SnapSettingsSub.SuspendLayout();
 			this.grpProfiles_SnapSettings_SnapDir.SuspendLayout();
-			this.grpProfiles_SnapSettings_Delay.SuspendLayout();
+			this.grpProfiles_SnapSettings_TimingAndParameters.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_MultiSnapDelay)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SnapCount)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_NextSnapDelay)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SaveDelay)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_Delay)).BeginInit();
 			this.tabProfiles_StatsSettings.SuspendLayout();
 			this.grpProfiles_StatsSettingsSub.SuspendLayout();
@@ -464,10 +524,12 @@ namespace smiletray
 			// 
 			// tabGeneral_GlobalSnapSettings
 			// 
+			this.tabGeneral_GlobalSnapSettings.AutoScroll = true;
+			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_AnimationSettings);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_SaveBug);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ImageFormat);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_SnapDir);
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_Delay);
+			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_TimingAndParameters);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_SingleDisplay);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_Enabled);
 			this.tabGeneral_GlobalSnapSettings.Location = new System.Drawing.Point(4, 22);
@@ -475,6 +537,117 @@ namespace smiletray
 			this.tabGeneral_GlobalSnapSettings.Size = new System.Drawing.Size(400, 342);
 			this.tabGeneral_GlobalSnapSettings.TabIndex = 0;
 			this.tabGeneral_GlobalSnapSettings.Text = "Global Snap Settings";
+			// 
+			// grpGeneral_SnapSettings_AnimationSettings
+			// 
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimFrameDelay);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimFrameDelay);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimHeight);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimHeight);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimWidth);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimWidth);
+			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimOriginalDimentions);
+			this.grpGeneral_SnapSettings_AnimationSettings.Location = new System.Drawing.Point(8, 344);
+			this.grpGeneral_SnapSettings_AnimationSettings.Name = "grpGeneral_SnapSettings_AnimationSettings";
+			this.grpGeneral_SnapSettings_AnimationSettings.Size = new System.Drawing.Size(368, 160);
+			this.grpGeneral_SnapSettings_AnimationSettings.TabIndex = 25;
+			this.grpGeneral_SnapSettings_AnimationSettings.TabStop = false;
+			this.grpGeneral_SnapSettings_AnimationSettings.Text = "Animation Settings";
+			// 
+			// udGeneral_SnapSettings_AnimFrameDelay
+			// 
+			this.udGeneral_SnapSettings_AnimFrameDelay.Location = new System.Drawing.Point(88, 128);
+			this.udGeneral_SnapSettings_AnimFrameDelay.Maximum = new System.Decimal(new int[] {
+																								  10000,
+																								  0,
+																								  0,
+																								  0});
+			this.udGeneral_SnapSettings_AnimFrameDelay.Minimum = new System.Decimal(new int[] {
+																								  1,
+																								  0,
+																								  0,
+																								  0});
+			this.udGeneral_SnapSettings_AnimFrameDelay.Name = "udGeneral_SnapSettings_AnimFrameDelay";
+			this.udGeneral_SnapSettings_AnimFrameDelay.Size = new System.Drawing.Size(272, 20);
+			this.udGeneral_SnapSettings_AnimFrameDelay.TabIndex = 34;
+			this.udGeneral_SnapSettings_AnimFrameDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			this.udGeneral_SnapSettings_AnimFrameDelay.Value = new System.Decimal(new int[] {
+																								1,
+																								0,
+																								0,
+																								0});
+			// 
+			// lblGeneral_SnapSettings_AnimFrameDelay
+			// 
+			this.lblGeneral_SnapSettings_AnimFrameDelay.Location = new System.Drawing.Point(8, 128);
+			this.lblGeneral_SnapSettings_AnimFrameDelay.Name = "lblGeneral_SnapSettings_AnimFrameDelay";
+			this.lblGeneral_SnapSettings_AnimFrameDelay.Size = new System.Drawing.Size(72, 16);
+			this.lblGeneral_SnapSettings_AnimFrameDelay.TabIndex = 35;
+			this.lblGeneral_SnapSettings_AnimFrameDelay.Text = "Frame Delay:";
+			this.lblGeneral_SnapSettings_AnimFrameDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// chkGeneral_SnapSettings_AnimUseMultiSnapDelay
+			// 
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Location = new System.Drawing.Point(8, 104);
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Name = "chkGeneral_SnapSettings_AnimUseMultiSnapDelay";
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Size = new System.Drawing.Size(144, 16);
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.TabIndex = 33;
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Text = "Use MultiSnap Delay";
+			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.CheckedChanged += new System.EventHandler(this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay_CheckedChanged);
+			// 
+			// udGeneral_SnapSettings_AnimHeight
+			// 
+			this.udGeneral_SnapSettings_AnimHeight.Location = new System.Drawing.Point(88, 72);
+			this.udGeneral_SnapSettings_AnimHeight.Maximum = new System.Decimal(new int[] {
+																							  5000,
+																							  0,
+																							  0,
+																							  0});
+			this.udGeneral_SnapSettings_AnimHeight.Name = "udGeneral_SnapSettings_AnimHeight";
+			this.udGeneral_SnapSettings_AnimHeight.Size = new System.Drawing.Size(272, 20);
+			this.udGeneral_SnapSettings_AnimHeight.TabIndex = 31;
+			this.udGeneral_SnapSettings_AnimHeight.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// lblGeneral_SnapSettings_AnimHeight
+			// 
+			this.lblGeneral_SnapSettings_AnimHeight.Location = new System.Drawing.Point(8, 72);
+			this.lblGeneral_SnapSettings_AnimHeight.Name = "lblGeneral_SnapSettings_AnimHeight";
+			this.lblGeneral_SnapSettings_AnimHeight.Size = new System.Drawing.Size(72, 16);
+			this.lblGeneral_SnapSettings_AnimHeight.TabIndex = 32;
+			this.lblGeneral_SnapSettings_AnimHeight.Text = "Height:";
+			this.lblGeneral_SnapSettings_AnimHeight.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// udGeneral_SnapSettings_AnimWidth
+			// 
+			this.udGeneral_SnapSettings_AnimWidth.Location = new System.Drawing.Point(88, 48);
+			this.udGeneral_SnapSettings_AnimWidth.Maximum = new System.Decimal(new int[] {
+																							 5000,
+																							 0,
+																							 0,
+																							 0});
+			this.udGeneral_SnapSettings_AnimWidth.Name = "udGeneral_SnapSettings_AnimWidth";
+			this.udGeneral_SnapSettings_AnimWidth.Size = new System.Drawing.Size(272, 20);
+			this.udGeneral_SnapSettings_AnimWidth.TabIndex = 29;
+			this.udGeneral_SnapSettings_AnimWidth.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// lblGeneral_SnapSettings_AnimWidth
+			// 
+			this.lblGeneral_SnapSettings_AnimWidth.Location = new System.Drawing.Point(8, 48);
+			this.lblGeneral_SnapSettings_AnimWidth.Name = "lblGeneral_SnapSettings_AnimWidth";
+			this.lblGeneral_SnapSettings_AnimWidth.Size = new System.Drawing.Size(72, 16);
+			this.lblGeneral_SnapSettings_AnimWidth.TabIndex = 30;
+			this.lblGeneral_SnapSettings_AnimWidth.Text = "Width:";
+			this.lblGeneral_SnapSettings_AnimWidth.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// chkGeneral_SnapSettings_AnimOriginalDimentions
+			// 
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Location = new System.Drawing.Point(8, 24);
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Name = "chkGeneral_SnapSettings_AnimOriginalDimentions";
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Size = new System.Drawing.Size(160, 24);
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions.TabIndex = 26;
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Text = "Use Original Dimentions";
+			this.chkGeneral_SnapSettings_AnimOriginalDimentions.CheckedChanged += new System.EventHandler(this.chkGeneral_SnapSettings_AnimOriginalDimentions_CheckedChanged);
 			// 
 			// chkGeneral_SnapSettings_SaveBug
 			// 
@@ -490,9 +663,9 @@ namespace smiletray
 			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.cbGeneral_SnapSettings_ImageFormat);
 			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.lblGeneral_SnapSettings_Quality);
 			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.tbGeneral_SnapSettings_Quality);
-			this.grpGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(8, 168);
+			this.grpGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(8, 216);
 			this.grpGeneral_SnapSettings_ImageFormat.Name = "grpGeneral_SnapSettings_ImageFormat";
-			this.grpGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(384, 128);
+			this.grpGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(368, 120);
 			this.grpGeneral_SnapSettings_ImageFormat.TabIndex = 23;
 			this.grpGeneral_SnapSettings_ImageFormat.TabStop = false;
 			this.grpGeneral_SnapSettings_ImageFormat.Text = "Image Format";
@@ -504,18 +677,19 @@ namespace smiletray
 			this.lblGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(104, 16);
 			this.lblGeneral_SnapSettings_ImageFormat.TabIndex = 21;
 			this.lblGeneral_SnapSettings_ImageFormat.Text = "Image Output Type:";
+			this.lblGeneral_SnapSettings_ImageFormat.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// cbGeneral_SnapSettings_ImageFormat
 			// 
 			this.cbGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(120, 24);
 			this.cbGeneral_SnapSettings_ImageFormat.Name = "cbGeneral_SnapSettings_ImageFormat";
-			this.cbGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(256, 21);
+			this.cbGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(240, 21);
 			this.cbGeneral_SnapSettings_ImageFormat.TabIndex = 20;
 			this.cbGeneral_SnapSettings_ImageFormat.Text = "Image Encoders";
 			// 
 			// lblGeneral_SnapSettings_Quality
 			// 
-			this.lblGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(16, 64);
+			this.lblGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(16, 56);
 			this.lblGeneral_SnapSettings_Quality.Name = "lblGeneral_SnapSettings_Quality";
 			this.lblGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(176, 16);
 			this.lblGeneral_SnapSettings_Quality.TabIndex = 19;
@@ -523,10 +697,10 @@ namespace smiletray
 			// 
 			// tbGeneral_SnapSettings_Quality
 			// 
-			this.tbGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(8, 80);
+			this.tbGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(8, 72);
 			this.tbGeneral_SnapSettings_Quality.Maximum = 100;
 			this.tbGeneral_SnapSettings_Quality.Name = "tbGeneral_SnapSettings_Quality";
-			this.tbGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(368, 42);
+			this.tbGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(352, 42);
 			this.tbGeneral_SnapSettings_Quality.TabIndex = 18;
 			this.tbGeneral_SnapSettings_Quality.Value = 100;
 			this.tbGeneral_SnapSettings_Quality.Scroll += new System.EventHandler(this.tbGeneral_SnapSettings_Quality_Scroll);
@@ -535,9 +709,9 @@ namespace smiletray
 			// 
 			this.grpGeneral_SnapSettings_SnapDir.Controls.Add(this.txtGeneral_SnapSettings_SnapDir);
 			this.grpGeneral_SnapSettings_SnapDir.Controls.Add(this.cmdGeneral_SnapSettings_BrowseSnapDir);
-			this.grpGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 112);
+			this.grpGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 160);
 			this.grpGeneral_SnapSettings_SnapDir.Name = "grpGeneral_SnapSettings_SnapDir";
-			this.grpGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(384, 48);
+			this.grpGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(368, 48);
 			this.grpGeneral_SnapSettings_SnapDir.TabIndex = 22;
 			this.grpGeneral_SnapSettings_SnapDir.TabStop = false;
 			this.grpGeneral_SnapSettings_SnapDir.Text = "Snap Directory";
@@ -546,42 +720,100 @@ namespace smiletray
 			// 
 			this.txtGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 16);
 			this.txtGeneral_SnapSettings_SnapDir.Name = "txtGeneral_SnapSettings_SnapDir";
-			this.txtGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(304, 20);
+			this.txtGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(288, 20);
 			this.txtGeneral_SnapSettings_SnapDir.TabIndex = 5;
 			this.txtGeneral_SnapSettings_SnapDir.Text = "";
 			// 
 			// cmdGeneral_SnapSettings_BrowseSnapDir
 			// 
 			this.cmdGeneral_SnapSettings_BrowseSnapDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.Location = new System.Drawing.Point(320, 16);
+			this.cmdGeneral_SnapSettings_BrowseSnapDir.Location = new System.Drawing.Point(304, 16);
 			this.cmdGeneral_SnapSettings_BrowseSnapDir.Name = "cmdGeneral_SnapSettings_BrowseSnapDir";
 			this.cmdGeneral_SnapSettings_BrowseSnapDir.Size = new System.Drawing.Size(56, 24);
 			this.cmdGeneral_SnapSettings_BrowseSnapDir.TabIndex = 6;
 			this.cmdGeneral_SnapSettings_BrowseSnapDir.Text = "Browse";
 			this.cmdGeneral_SnapSettings_BrowseSnapDir.Click += new System.EventHandler(this.cmdGeneral_SnapSettings_BrowseSnapDir_Click);
 			// 
-			// grpGeneral_SnapSettings_Delay
+			// grpGeneral_SnapSettings_TimingAndParameters
 			// 
-			this.grpGeneral_SnapSettings_Delay.Controls.Add(this.udGeneral_SnapSettings_Delay);
-			this.grpGeneral_SnapSettings_Delay.Location = new System.Drawing.Point(8, 56);
-			this.grpGeneral_SnapSettings_Delay.Name = "grpGeneral_SnapSettings_Delay";
-			this.grpGeneral_SnapSettings_Delay.Size = new System.Drawing.Size(384, 48);
-			this.grpGeneral_SnapSettings_Delay.TabIndex = 21;
-			this.grpGeneral_SnapSettings_Delay.TabStop = false;
-			this.grpGeneral_SnapSettings_Delay.Text = "Delay";
+			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_NextSnapDelay);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_SaveDelay);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_Delay);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.label1);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.label2);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.label3);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Location = new System.Drawing.Point(8, 56);
+			this.grpGeneral_SnapSettings_TimingAndParameters.Name = "grpGeneral_SnapSettings_TimingAndParameters";
+			this.grpGeneral_SnapSettings_TimingAndParameters.Size = new System.Drawing.Size(368, 96);
+			this.grpGeneral_SnapSettings_TimingAndParameters.TabIndex = 21;
+			this.grpGeneral_SnapSettings_TimingAndParameters.TabStop = false;
+			this.grpGeneral_SnapSettings_TimingAndParameters.Text = "Timing && Parameters";
+			// 
+			// udGeneral_SnapSettings_NextSnapDelay
+			// 
+			this.udGeneral_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(128, 64);
+			this.udGeneral_SnapSettings_NextSnapDelay.Maximum = new System.Decimal(new int[] {
+																								 10000,
+																								 0,
+																								 0,
+																								 0});
+			this.udGeneral_SnapSettings_NextSnapDelay.Name = "udGeneral_SnapSettings_NextSnapDelay";
+			this.udGeneral_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(232, 20);
+			this.udGeneral_SnapSettings_NextSnapDelay.TabIndex = 32;
+			this.udGeneral_SnapSettings_NextSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// udGeneral_SnapSettings_SaveDelay
+			// 
+			this.udGeneral_SnapSettings_SaveDelay.Location = new System.Drawing.Point(128, 40);
+			this.udGeneral_SnapSettings_SaveDelay.Maximum = new System.Decimal(new int[] {
+																							 10000,
+																							 0,
+																							 0,
+																							 0});
+			this.udGeneral_SnapSettings_SaveDelay.Name = "udGeneral_SnapSettings_SaveDelay";
+			this.udGeneral_SnapSettings_SaveDelay.Size = new System.Drawing.Size(232, 20);
+			this.udGeneral_SnapSettings_SaveDelay.TabIndex = 31;
+			this.udGeneral_SnapSettings_SaveDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
 			// 
 			// udGeneral_SnapSettings_Delay
 			// 
-			this.udGeneral_SnapSettings_Delay.Location = new System.Drawing.Point(8, 16);
+			this.udGeneral_SnapSettings_Delay.Location = new System.Drawing.Point(128, 16);
 			this.udGeneral_SnapSettings_Delay.Maximum = new System.Decimal(new int[] {
 																						 10000,
 																						 0,
 																						 0,
 																						 0});
 			this.udGeneral_SnapSettings_Delay.Name = "udGeneral_SnapSettings_Delay";
-			this.udGeneral_SnapSettings_Delay.Size = new System.Drawing.Size(368, 20);
+			this.udGeneral_SnapSettings_Delay.Size = new System.Drawing.Size(232, 20);
 			this.udGeneral_SnapSettings_Delay.TabIndex = 21;
 			this.udGeneral_SnapSettings_Delay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// label1
+			// 
+			this.label1.Location = new System.Drawing.Point(16, 64);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(96, 16);
+			this.label1.TabIndex = 30;
+			this.label1.Text = "Next Snap Delay:";
+			this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// label2
+			// 
+			this.label2.Location = new System.Drawing.Point(16, 40);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(72, 16);
+			this.label2.TabIndex = 29;
+			this.label2.Text = "Save Delay:";
+			this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// label3
+			// 
+			this.label3.Location = new System.Drawing.Point(16, 16);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(72, 16);
+			this.label3.TabIndex = 28;
+			this.label3.Text = "Snap Delay:";
+			this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// chkGeneral_SnapSettings_SingleDisplay
 			// 
@@ -739,8 +971,9 @@ namespace smiletray
 			// 
 			// grpProfiles_SnapSettingsSub
 			// 
+			this.grpProfiles_SnapSettingsSub.Controls.Add(this.chkProfiles_SnapSettings_SaveAnimation);
 			this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_SnapDir);
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_Delay);
+			this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_TimingAndParameters);
 			this.grpProfiles_SnapSettingsSub.Controls.Add(this.chkProfiles_SnapSettings_SingleDisplay);
 			this.grpProfiles_SnapSettingsSub.Controls.Add(this.chkProfiles_SnapSettings_Enabled);
 			this.grpProfiles_SnapSettingsSub.Location = new System.Drawing.Point(8, 24);
@@ -749,11 +982,19 @@ namespace smiletray
 			this.grpProfiles_SnapSettingsSub.TabIndex = 1;
 			this.grpProfiles_SnapSettingsSub.TabStop = false;
 			// 
+			// chkProfiles_SnapSettings_SaveAnimation
+			// 
+			this.chkProfiles_SnapSettings_SaveAnimation.Location = new System.Drawing.Point(8, 32);
+			this.chkProfiles_SnapSettings_SaveAnimation.Name = "chkProfiles_SnapSettings_SaveAnimation";
+			this.chkProfiles_SnapSettings_SaveAnimation.Size = new System.Drawing.Size(224, 16);
+			this.chkProfiles_SnapSettings_SaveAnimation.TabIndex = 9;
+			this.chkProfiles_SnapSettings_SaveAnimation.Text = "Save Copy of MultiSnaps as Animation";
+			// 
 			// grpProfiles_SnapSettings_SnapDir
 			// 
 			this.grpProfiles_SnapSettings_SnapDir.Controls.Add(this.txtProfiles_SnapSettings_SnapDir);
 			this.grpProfiles_SnapSettings_SnapDir.Controls.Add(this.cmdProfiles_BrowseSnapDir);
-			this.grpProfiles_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 96);
+			this.grpProfiles_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 216);
 			this.grpProfiles_SnapSettings_SnapDir.Name = "grpProfiles_SnapSettings_SnapDir";
 			this.grpProfiles_SnapSettings_SnapDir.Size = new System.Drawing.Size(224, 48);
 			this.grpProfiles_SnapSettings_SnapDir.TabIndex = 8;
@@ -778,26 +1019,152 @@ namespace smiletray
 			this.cmdProfiles_BrowseSnapDir.Text = "Browse";
 			this.cmdProfiles_BrowseSnapDir.Click += new System.EventHandler(this.cmdProfiles_BrowseSnapDir_Click);
 			// 
-			// grpProfiles_SnapSettings_Delay
+			// grpProfiles_SnapSettings_TimingAndParameters
 			// 
-			this.grpProfiles_SnapSettings_Delay.Controls.Add(this.udProfiles_SnapSettings_Delay);
-			this.grpProfiles_SnapSettings_Delay.Location = new System.Drawing.Point(8, 40);
-			this.grpProfiles_SnapSettings_Delay.Name = "grpProfiles_SnapSettings_Delay";
-			this.grpProfiles_SnapSettings_Delay.Size = new System.Drawing.Size(224, 48);
-			this.grpProfiles_SnapSettings_Delay.TabIndex = 7;
-			this.grpProfiles_SnapSettings_Delay.TabStop = false;
-			this.grpProfiles_SnapSettings_Delay.Text = "Delay";
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_MultiSnapDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_MultiSnapDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SnapCount);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_SnapCount);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_NextSnapDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_NextSnapDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SaveDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_SaveDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SnapDelay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_Delay);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Location = new System.Drawing.Point(8, 64);
+			this.grpProfiles_SnapSettings_TimingAndParameters.Name = "grpProfiles_SnapSettings_TimingAndParameters";
+			this.grpProfiles_SnapSettings_TimingAndParameters.Size = new System.Drawing.Size(224, 144);
+			this.grpProfiles_SnapSettings_TimingAndParameters.TabIndex = 7;
+			this.grpProfiles_SnapSettings_TimingAndParameters.TabStop = false;
+			this.grpProfiles_SnapSettings_TimingAndParameters.Text = "Timing && Parameters";
+			// 
+			// lblProfiles_SnapSettings_MultiSnapDelay
+			// 
+			this.lblProfiles_SnapSettings_MultiSnapDelay.Location = new System.Drawing.Point(8, 112);
+			this.lblProfiles_SnapSettings_MultiSnapDelay.Name = "lblProfiles_SnapSettings_MultiSnapDelay";
+			this.lblProfiles_SnapSettings_MultiSnapDelay.Size = new System.Drawing.Size(96, 16);
+			this.lblProfiles_SnapSettings_MultiSnapDelay.TabIndex = 31;
+			this.lblProfiles_SnapSettings_MultiSnapDelay.Text = "MultiSnap Delay:";
+			this.lblProfiles_SnapSettings_MultiSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// udProfiles_SnapSettings_MultiSnapDelay
+			// 
+			this.udProfiles_SnapSettings_MultiSnapDelay.Location = new System.Drawing.Point(104, 112);
+			this.udProfiles_SnapSettings_MultiSnapDelay.Maximum = new System.Decimal(new int[] {
+																								   10000,
+																								   0,
+																								   0,
+																								   0});
+			this.udProfiles_SnapSettings_MultiSnapDelay.Minimum = new System.Decimal(new int[] {
+																								   1,
+																								   0,
+																								   0,
+																								   0});
+			this.udProfiles_SnapSettings_MultiSnapDelay.Name = "udProfiles_SnapSettings_MultiSnapDelay";
+			this.udProfiles_SnapSettings_MultiSnapDelay.Size = new System.Drawing.Size(112, 20);
+			this.udProfiles_SnapSettings_MultiSnapDelay.TabIndex = 30;
+			this.udProfiles_SnapSettings_MultiSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			this.udProfiles_SnapSettings_MultiSnapDelay.Value = new System.Decimal(new int[] {
+																								 1,
+																								 0,
+																								 0,
+																								 0});
+			// 
+			// lblProfiles_SnapSettings_SnapCount
+			// 
+			this.lblProfiles_SnapSettings_SnapCount.Location = new System.Drawing.Point(8, 88);
+			this.lblProfiles_SnapSettings_SnapCount.Name = "lblProfiles_SnapSettings_SnapCount";
+			this.lblProfiles_SnapSettings_SnapCount.Size = new System.Drawing.Size(96, 16);
+			this.lblProfiles_SnapSettings_SnapCount.TabIndex = 29;
+			this.lblProfiles_SnapSettings_SnapCount.Text = "Snap Count:";
+			this.lblProfiles_SnapSettings_SnapCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// udProfiles_SnapSettings_SnapCount
+			// 
+			this.udProfiles_SnapSettings_SnapCount.Location = new System.Drawing.Point(104, 88);
+			this.udProfiles_SnapSettings_SnapCount.Maximum = new System.Decimal(new int[] {
+																							  20,
+																							  0,
+																							  0,
+																							  0});
+			this.udProfiles_SnapSettings_SnapCount.Minimum = new System.Decimal(new int[] {
+																							  1,
+																							  0,
+																							  0,
+																							  0});
+			this.udProfiles_SnapSettings_SnapCount.Name = "udProfiles_SnapSettings_SnapCount";
+			this.udProfiles_SnapSettings_SnapCount.Size = new System.Drawing.Size(112, 20);
+			this.udProfiles_SnapSettings_SnapCount.TabIndex = 28;
+			this.udProfiles_SnapSettings_SnapCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			this.udProfiles_SnapSettings_SnapCount.Value = new System.Decimal(new int[] {
+																							1,
+																							0,
+																							0,
+																							0});
+			// 
+			// lblProfiles_SnapSettings_NextSnapDelay
+			// 
+			this.lblProfiles_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(8, 64);
+			this.lblProfiles_SnapSettings_NextSnapDelay.Name = "lblProfiles_SnapSettings_NextSnapDelay";
+			this.lblProfiles_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(96, 16);
+			this.lblProfiles_SnapSettings_NextSnapDelay.TabIndex = 27;
+			this.lblProfiles_SnapSettings_NextSnapDelay.Text = "Next Snap Delay:";
+			this.lblProfiles_SnapSettings_NextSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// udProfiles_SnapSettings_NextSnapDelay
+			// 
+			this.udProfiles_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(104, 64);
+			this.udProfiles_SnapSettings_NextSnapDelay.Maximum = new System.Decimal(new int[] {
+																								  10000,
+																								  0,
+																								  0,
+																								  0});
+			this.udProfiles_SnapSettings_NextSnapDelay.Name = "udProfiles_SnapSettings_NextSnapDelay";
+			this.udProfiles_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(112, 20);
+			this.udProfiles_SnapSettings_NextSnapDelay.TabIndex = 26;
+			this.udProfiles_SnapSettings_NextSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// lblProfiles_SnapSettings_SaveDelay
+			// 
+			this.lblProfiles_SnapSettings_SaveDelay.Location = new System.Drawing.Point(8, 40);
+			this.lblProfiles_SnapSettings_SaveDelay.Name = "lblProfiles_SnapSettings_SaveDelay";
+			this.lblProfiles_SnapSettings_SaveDelay.Size = new System.Drawing.Size(72, 16);
+			this.lblProfiles_SnapSettings_SaveDelay.TabIndex = 25;
+			this.lblProfiles_SnapSettings_SaveDelay.Text = "Save Delay:";
+			this.lblProfiles_SnapSettings_SaveDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// udProfiles_SnapSettings_SaveDelay
+			// 
+			this.udProfiles_SnapSettings_SaveDelay.Location = new System.Drawing.Point(104, 40);
+			this.udProfiles_SnapSettings_SaveDelay.Maximum = new System.Decimal(new int[] {
+																							  10000,
+																							  0,
+																							  0,
+																							  0});
+			this.udProfiles_SnapSettings_SaveDelay.Name = "udProfiles_SnapSettings_SaveDelay";
+			this.udProfiles_SnapSettings_SaveDelay.Size = new System.Drawing.Size(112, 20);
+			this.udProfiles_SnapSettings_SaveDelay.TabIndex = 24;
+			this.udProfiles_SnapSettings_SaveDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// lblProfiles_SnapSettings_SnapDelay
+			// 
+			this.lblProfiles_SnapSettings_SnapDelay.Location = new System.Drawing.Point(8, 16);
+			this.lblProfiles_SnapSettings_SnapDelay.Name = "lblProfiles_SnapSettings_SnapDelay";
+			this.lblProfiles_SnapSettings_SnapDelay.Size = new System.Drawing.Size(72, 16);
+			this.lblProfiles_SnapSettings_SnapDelay.TabIndex = 23;
+			this.lblProfiles_SnapSettings_SnapDelay.Text = "Snap Delay:";
+			this.lblProfiles_SnapSettings_SnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			// 
 			// udProfiles_SnapSettings_Delay
 			// 
-			this.udProfiles_SnapSettings_Delay.Location = new System.Drawing.Point(8, 16);
+			this.udProfiles_SnapSettings_Delay.Location = new System.Drawing.Point(104, 16);
 			this.udProfiles_SnapSettings_Delay.Maximum = new System.Decimal(new int[] {
 																						  10000,
 																						  0,
 																						  0,
 																						  0});
 			this.udProfiles_SnapSettings_Delay.Name = "udProfiles_SnapSettings_Delay";
-			this.udProfiles_SnapSettings_Delay.Size = new System.Drawing.Size(208, 20);
+			this.udProfiles_SnapSettings_Delay.Size = new System.Drawing.Size(112, 20);
 			this.udProfiles_SnapSettings_Delay.TabIndex = 22;
 			this.udProfiles_SnapSettings_Delay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
 			// 
@@ -926,6 +1293,11 @@ namespace smiletray
 			this.rtxtLog.TabIndex = 11;
 			this.rtxtLog.Text = "";
 			// 
+			// TimerSave
+			// 
+			this.TimerSave.Enabled = true;
+			this.TimerSave.Tick += new System.EventHandler(this.TimerSave_Tick);
+			// 
 			// frmMain
 			// 
 			this.AutoScale = false;
@@ -947,10 +1319,16 @@ namespace smiletray
 			this.tabGeneral.ResumeLayout(false);
 			this.tabGeneralOptions.ResumeLayout(false);
 			this.tabGeneral_GlobalSnapSettings.ResumeLayout(false);
+			this.grpGeneral_SnapSettings_AnimationSettings.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimWidth)).EndInit();
 			this.grpGeneral_SnapSettings_ImageFormat.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.tbGeneral_SnapSettings_Quality)).EndInit();
 			this.grpGeneral_SnapSettings_SnapDir.ResumeLayout(false);
-			this.grpGeneral_SnapSettings_Delay.ResumeLayout(false);
+			this.grpGeneral_SnapSettings_TimingAndParameters.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_NextSnapDelay)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveDelay)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).EndInit();
 			this.tabGeneral_GlobalStatsSettings.ResumeLayout(false);
 			this.tabProfiles.ResumeLayout(false);
@@ -960,7 +1338,11 @@ namespace smiletray
 			this.tabProfiles_SnapSettings.ResumeLayout(false);
 			this.grpProfiles_SnapSettingsSub.ResumeLayout(false);
 			this.grpProfiles_SnapSettings_SnapDir.ResumeLayout(false);
-			this.grpProfiles_SnapSettings_Delay.ResumeLayout(false);
+			this.grpProfiles_SnapSettings_TimingAndParameters.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_MultiSnapDelay)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SnapCount)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_NextSnapDelay)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SaveDelay)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_Delay)).EndInit();
 			this.tabProfiles_StatsSettings.ResumeLayout(false);
 			this.grpProfiles_StatsSettingsSub.ResumeLayout(false);
@@ -1017,10 +1399,17 @@ namespace smiletray
 			Settings.SnapSettings.Enabled = chkGeneral_SnapSettings_Enabled.Checked;
 			Settings.SnapSettings.SingleDisplay = chkGeneral_SnapSettings_SingleDisplay.Checked;
 			Settings.SnapSettings.Delay = (int)udGeneral_SnapSettings_Delay.Value;
+			Settings.SnapSettings.SaveDelay = (int)udGeneral_SnapSettings_SaveDelay.Value;
+			Settings.SnapSettings.NextSnapDelay = (int)udGeneral_SnapSettings_NextSnapDelay.Value;
 			Settings.SnapSettings.SnapDir = txtGeneral_SnapSettings_SnapDir.Text;
 			Settings.SnapSettings.Quality = tbGeneral_SnapSettings_Quality.Value;
 			Settings.SnapSettings.Encoder = cbGeneral_SnapSettings_ImageFormat.SelectedItem.ToString();
 			Settings.SnapSettings.SaveBug = chkGeneral_SnapSettings_SaveBug.Checked;
+			Settings.SnapSettings.AnimOriginalDimentions = chkGeneral_SnapSettings_AnimOriginalDimentions.Checked;
+			Settings.SnapSettings.AnimUseMultiSnapDelay = chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked;
+			Settings.SnapSettings.AnimWidth = (int)udGeneral_SnapSettings_AnimWidth.Value;
+			Settings.SnapSettings.AnimHeight = (int)udGeneral_SnapSettings_AnimHeight.Value;
+			Settings.SnapSettings.AnimFrameDelay = (int)udGeneral_SnapSettings_AnimFrameDelay.Value;
 
 			// Global Stats Settings
 			Settings.StatsSettings.Enabled = chkGeneral_StatsSettings_Enabled.Checked;
@@ -1157,6 +1546,16 @@ namespace smiletray
 			grpProfiles_StatsSettingsSub.Enabled = !chkProfiles_StatsSettings_UseGlobal.Checked;
 		}
 
+		private void chkGeneral_SnapSettings_AnimUseMultiSnapDelay_CheckedChanged(object sender, System.EventArgs e)
+		{
+			lblGeneral_SnapSettings_AnimFrameDelay.Enabled = udGeneral_SnapSettings_AnimFrameDelay.Enabled = !chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked;
+		}
+
+		private void chkGeneral_SnapSettings_AnimOriginalDimentions_CheckedChanged(object sender, System.EventArgs e)
+		{
+			lblGeneral_SnapSettings_AnimWidth.Enabled = lblGeneral_SnapSettings_AnimHeight.Enabled = udGeneral_SnapSettings_AnimWidth.Enabled = udGeneral_SnapSettings_AnimHeight.Enabled = !chkGeneral_SnapSettings_AnimOriginalDimentions.Checked;
+		}
+
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		/// Notify Icon (system tray) Methods
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -1247,33 +1646,41 @@ namespace smiletray
 			{
 				if(ActiveProfile.NewSnaps)
 				{
+					if(this.LastSnapTime + this.NextSnapDelay > DateTime.Now.Ticks)
+					{
+						ActiveProfile.NewSnaps = false;
+						return;
+					}
+
 					try
 					{
 						Thread.Sleep(ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.Delay : ActiveProfile.SnapSettings.Delay);
 						Image img = ScreenCapture.GetDesktopImage(Settings.SnapSettings.SingleDisplay);
-						Graphics g = Graphics.FromImage(img);
+						this.LastSnapTime = DateTime.Now.Ticks;
 
-						g.DrawString(encoderstring, encoderfont , new SolidBrush(Color.FromArgb(75, Color.White)), img.Width - g.MeasureString(encoderstring, encoderfont).Width - 5, img.Height - g.MeasureString(encoderstring, encoderfont).Height - 5);
-
-						String dir = ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.SnapDir + @"\" + ActiveProfile.SnapName : ActiveProfile.SnapSettings.SnapDir;
-						if(!Directory.Exists(dir))
+						// Take multiple screenshots if specified
+						if(!ActiveProfile.SnapSettings.UseGlobal && ActiveProfile.SnapSettings.SnapCount > 1)
 						{
-							Directory.CreateDirectory(dir);
-							AddLogMessage("Created Directory: " + dir);
-						}
-						String file = dir + @"\kill-" + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + encoderext;
-						img.Save(file, encoder, encoderParams);
-						if(Settings.SnapSettings.SaveBug)
-						{
-							for(int i = 0; !File.Exists(file) && i < 8; i++)
+							ArrayList frames = new ArrayList(ActiveProfile.SnapSettings.SnapCount);
+							frames.Add(img);
+							for(int i = 0; i < ActiveProfile.SnapSettings.SnapCount-1; i++)
 							{
-								img.Save(file, encoder, encoderParams);
+								Thread.Sleep(ActiveProfile.SnapSettings.MultiSnapDelay);
+								img = ScreenCapture.GetDesktopImage(Settings.SnapSettings.SingleDisplay);
+								frames.Add(img);
+								this.LastSnapTime = DateTime.Now.Ticks;
 							}
+							AddToSaveQueue(ActiveProfile, frames);
+						} 
+						else 
+						{
+							ArrayList frames = new ArrayList(1);
+							frames.Add(img);
+							AddToSaveQueue(ActiveProfile, frames);
+							this.LastSnapTime = DateTime.Now.Ticks;
 						}
-						AddLogMessage("Saved Image to: " + file);
+
 						ActiveProfile.NewSnaps = false;
-						g.Dispose();
-						img.Dispose();
 					}
 					catch
 					{
@@ -1300,7 +1707,11 @@ namespace smiletray
 				{
 					ActiveProfile.Open();
 					if(ActiveProfile.IsOpen())
+					{
 						AddLogMessage("Begining Session For: " + ActiveProfile.ProfileName);
+						this.NextSnapDelay = ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.NextSnapDelay :ActiveProfile.SnapSettings.NextSnapDelay;
+						this.SaveDelay = ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.SaveDelay : ActiveProfile.SnapSettings.SaveDelay;
+					}
 					else
 					{
 						AddLogMessage("Error Starting Session For: " + ActiveProfile.ProfileName);
@@ -1335,6 +1746,12 @@ namespace smiletray
 			}
 		}
 
+		
+		private void TimerSave_Tick(object sender, System.EventArgs e)
+		{
+			ExecSaveQueue();
+		}
+
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		/// Helper Methods
@@ -1354,11 +1771,20 @@ namespace smiletray
 			chkGeneral_SnapSettings_Enabled.Checked = Settings.SnapSettings.Enabled;
 			chkGeneral_SnapSettings_SingleDisplay.Checked = Settings.SnapSettings.SingleDisplay;
 			udGeneral_SnapSettings_Delay.Value = Settings.SnapSettings.Delay;
+			udGeneral_SnapSettings_SaveDelay.Value = Settings.SnapSettings.SaveDelay;
+			udGeneral_SnapSettings_NextSnapDelay.Value = Settings.SnapSettings.NextSnapDelay;
 			txtGeneral_SnapSettings_SnapDir.Text = Settings.SnapSettings.SnapDir;
 			tbGeneral_SnapSettings_Quality.Value = Settings.SnapSettings.Quality;
 			lblGeneral_SnapSettings_Quality.Text = "Quality " + tbGeneral_SnapSettings_Quality.Value + "% (100% = Clearest):";
 			cbGeneral_SnapSettings_ImageFormat.SelectedItem = Settings.SnapSettings.Encoder;
 			chkGeneral_SnapSettings_SaveBug.Checked = Settings.SnapSettings.SaveBug;
+			chkGeneral_SnapSettings_AnimOriginalDimentions.Checked = Settings.SnapSettings.AnimOriginalDimentions;
+			chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked = Settings.SnapSettings.AnimUseMultiSnapDelay;
+			udGeneral_SnapSettings_AnimWidth.Value = Settings.SnapSettings.AnimWidth;
+			udGeneral_SnapSettings_AnimHeight.Value = Settings.SnapSettings.AnimHeight;
+			udGeneral_SnapSettings_AnimFrameDelay.Value = Math.Max(1, Settings.SnapSettings.AnimFrameDelay);
+			lblGeneral_SnapSettings_AnimFrameDelay.Enabled = udGeneral_SnapSettings_AnimFrameDelay.Enabled = !chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked;
+			lblGeneral_SnapSettings_AnimWidth.Enabled = lblGeneral_SnapSettings_AnimHeight.Enabled = udGeneral_SnapSettings_AnimWidth.Enabled = udGeneral_SnapSettings_AnimHeight.Enabled = !chkGeneral_SnapSettings_AnimOriginalDimentions.Checked;
 
 			// Global Stats Settings
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
@@ -1386,6 +1812,11 @@ namespace smiletray
 			chkProfiles_SnapSettings_SingleDisplay.Checked = p.SnapSettings.SingleDisplay;
 			txtProfiles_SnapSettings_SnapDir.Text = p.SnapSettings.SnapDir;
 			udProfiles_SnapSettings_Delay.Value = p.SnapSettings.Delay;
+			udProfiles_SnapSettings_SaveDelay.Value = p.SnapSettings.SaveDelay;
+			udProfiles_SnapSettings_NextSnapDelay.Value = p.SnapSettings.NextSnapDelay;
+			udProfiles_SnapSettings_MultiSnapDelay.Value = Math.Max(p.SnapSettings.MultiSnapDelay, 1);
+			udProfiles_SnapSettings_SnapCount.Value = Math.Max(p.SnapSettings.SnapCount, 1);
+			chkProfiles_SnapSettings_SaveAnimation.Checked = p.SnapSettings.SaveAnimation;
 
 			// StatsSettings
 			chkProfiles_StatsSettings_UseGlobal.Checked = p.StatsSettings.UseGlobal;
@@ -1404,6 +1835,11 @@ namespace smiletray
 			p.SnapSettings.SingleDisplay = chkProfiles_SnapSettings_SingleDisplay.Checked;
 			p.SnapSettings.SnapDir = txtProfiles_SnapSettings_SnapDir.Text;
 			p.SnapSettings.Delay = (int)udProfiles_SnapSettings_Delay.Value;
+			p.SnapSettings.SaveDelay = (int)udProfiles_SnapSettings_SaveDelay.Value;
+			p.SnapSettings.NextSnapDelay = (int)udProfiles_SnapSettings_NextSnapDelay.Value;
+			p.SnapSettings.MultiSnapDelay = (int)udProfiles_SnapSettings_MultiSnapDelay.Value;
+			p.SnapSettings.SnapCount = (int)udProfiles_SnapSettings_SnapCount.Value;
+			p.SnapSettings.SaveAnimation = chkProfiles_SnapSettings_SaveAnimation.Checked;
 
 			// StatsSettings
 			p.StatsSettings.UseGlobal = chkProfiles_StatsSettings_UseGlobal.Checked;
@@ -1443,6 +1879,11 @@ namespace smiletray
 			b.SnapSettings.SingleDisplay = a.SnapSettings.SingleDisplay;
 			b.SnapSettings.SnapDir = a.SnapSettings.SnapDir;
 			b.SnapSettings.Delay = a.SnapSettings.Delay;
+			b.SnapSettings.SaveDelay = a.SnapSettings.SaveDelay;
+			b.SnapSettings.NextSnapDelay = a.SnapSettings.NextSnapDelay;
+			b.SnapSettings.SnapCount = a.SnapSettings.SnapCount;
+			b.SnapSettings.MultiSnapDelay = a.SnapSettings.MultiSnapDelay;
+			b.SnapSettings.SaveAnimation = a.SnapSettings.SaveAnimation;
 
 			// StatsSettings
 			b.StatsSettings.UseGlobal = a.StatsSettings.UseGlobal;
@@ -1507,6 +1948,13 @@ namespace smiletray
 					Settings.SnapSettings.Quality = 85;
 					Settings.SnapSettings.SaveBug = false;
 					Settings.SnapSettings.Encoder = "image/jpeg";
+					Settings.SnapSettings.SaveDelay = 1000;
+					Settings.SnapSettings.NextSnapDelay = 500;
+					Settings.SnapSettings.AnimOriginalDimentions = false;
+					Settings.SnapSettings.AnimUseMultiSnapDelay = true;
+					Settings.SnapSettings.AnimFrameDelay = 35;
+					Settings.SnapSettings.AnimWidth = 320;
+					Settings.SnapSettings.AnimHeight = 240;
 					SaveSettings();
 				}
 			} 
@@ -1599,10 +2047,108 @@ namespace smiletray
 					// Default options
 					p[length].SnapSettings.Enabled = p[length].StatsSettings.Enabled = true;
 					p[length].SnapSettings.Delay = Settings.SnapSettings.Delay;
+					p[length].SnapSettings.SaveDelay = Settings.SnapSettings.SaveDelay;
 					p[length].SnapSettings.SingleDisplay = Settings.SnapSettings.SingleDisplay;
 					p[length].SnapSettings.UseGlobal = p[length].StatsSettings.UseGlobal = true;
+					p[length].SnapSettings.SnapCount = 1;
+					p[length].SnapSettings.MultiSnapDelay = 35;
+					p[length].SnapSettings.NextSnapDelay = Settings.SnapSettings.NextSnapDelay;
+					p[length].SnapSettings.SnapDir = Settings.SnapSettings.SnapDir + @"\" + p[length].SnapName;
+					p[length].SnapSettings.SaveAnimation = false;
 					length++;
 				}
+			}
+		}
+
+		private void AddToSaveQueue(CProfile p, ArrayList frames)
+		{
+			SaveQueueItem i = new SaveQueueItem(p, frames);
+			SaveQueue.Add(i);
+		}
+
+		private void ExecSaveQueue()
+		{
+			while(SaveQueue.Count > 0)
+			{
+				if(LastSnapTime + SaveDelay > DateTime.Now.Ticks)
+					return;
+
+				SaveQueueItem item = (SaveQueueItem)SaveQueue[0];
+				ArrayList frames = item.frames;
+
+				String dir = item.p.SnapSettings.UseGlobal ? Settings.SnapSettings.SnapDir + @"\" + item.p.SnapName : item.p.SnapSettings.SnapDir;
+
+				// Save copy of animation
+				if(!item.p.SnapSettings.UseGlobal && item.p.SnapSettings.SaveAnimation)
+				{
+					if(!Settings.SnapSettings.AnimOriginalDimentions)
+					{
+						ArrayList newframes = new ArrayList(frames.Count);
+						for(int i = 0; i < frames.Count; i++)
+						{
+							Image img = (Image)frames[i];
+							
+
+							Image newimg = new Bitmap(Settings.SnapSettings.AnimWidth, Settings.SnapSettings.AnimHeight);
+							Graphics g = Graphics.FromImage(newimg);
+							// Resize Options
+							g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+							g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+							g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+						
+							g.DrawImage(img, new Rectangle(0, 0, Settings.SnapSettings.AnimWidth, Settings.SnapSettings.AnimHeight));
+
+							newframes.Add(newimg);
+						}
+						
+						CGifFile.SaveAnimation(dir + @"\kill-" + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + ".gif", newframes, 0);
+						
+
+						newframes.Clear();
+					}
+					else
+					{
+						CGifFile.SaveAnimation(dir + @"\kill-" + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + ".gif", frames, 0);
+					}
+					AddLogMessage("Saved Animation to: ");
+
+					if(ActiveProfile != null)
+						Thread.Sleep(SaveDelay);	
+				}
+
+				while(frames.Count > 0)
+				{
+					Image img = (Image)frames[0];
+
+					Graphics g = Graphics.FromImage(img);
+					g.DrawString(encoderstring, encoderfont , new SolidBrush(Color.FromArgb(75, Color.White)), img.Width - g.MeasureString(encoderstring, encoderfont).Width - 5, img.Height - g.MeasureString(encoderstring, encoderfont).Height - 5);
+
+					if(!Directory.Exists(dir))
+					{
+						Directory.CreateDirectory(dir);
+						AddLogMessage("Created Directory: " + dir);
+					}
+
+					String file = dir + @"\kill-" + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + encoderext;
+					img.Save(file, encoder, encoderParams);
+					if(Settings.SnapSettings.SaveBug)
+					{
+						for(int i = 0; !File.Exists(file) && i < 8; i++)
+						{
+							img.Save(file, encoder, encoderParams);
+						}
+					}
+					AddLogMessage("Saved Image to: " + file);
+
+					g.Dispose();
+					img.Dispose();
+
+					if(ActiveProfile != null)
+						Thread.Sleep(SaveDelay);	
+
+					frames.RemoveAt(0);
+				}
+				SaveQueue.RemoveAt(0);
 			}
 		}
 	}

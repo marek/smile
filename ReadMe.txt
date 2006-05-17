@@ -94,14 +94,14 @@ X:\ being the letter of the drive steam is installed to.
 
 • Day of Defeat: Source
 	Game Path: "X:\...\Steam\SteamApps\<account name>\day of defeat source\dod"
-	Log File: "qconsole.log"
+	Log File: "console.log"
 
 • Wolfenstein: Enemy Territory
 	Game Path: "X:\...\Enemy Territory" (or wherever et.exe is located)
 	Log File: "etconsole.log"
 
 • Half-Life 2: Deatchmatch
-	Game Path: "X:\...\Steam\SteamApps\<account name>\counter-strike"
+	Game Path: "X:\...\Steam\SteamApps\<account name>\half-life 2 deathmatch\hl2mp"
 	Log File: "console.log"
 
 • Quake III Arena
@@ -178,11 +178,17 @@ ShoutOuts:
 BUNG: Especially Adam for help in one thing, and pix & i[e for testing.
 Military Forces Quake 3 Team
 Steampowered.com forums
+valve for their games
+Id software for their games as well
+Splash Damage for ET
 SniperKil from #teamxecuter
 CyberRob for suggestions
 Danny for reporting bugs
 Extreme_One for help in implementing DoD:S support
 Iain for reporting bugs
+TSW|Abaddon & Sloan for feature ideas
+Everyone who has sent me a "thanks"
+
 
 
 Known Bugs:
@@ -213,6 +219,13 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.5**
+-MultiSnap support for sequenced captures
+-Save Queue with Save Delay to help decrease lag due to image saving activity
+-Next Snap Delay added help tweak capture frequencies
+-Animated GIF capture support
+
+
 **v1.4**
 -Fixed controls not updating when reopening after previously pressing "cancel" on the dialog
 -Adding "Save Bug" for antivirus scanners interfering with saving images (Norton AV, Norton Internet Security)

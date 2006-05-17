@@ -11,12 +11,13 @@
 using System;
 using System.Collections;
 using System.Xml.Serialization;
+using System.Drawing;
 
 namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.4";
+		public static readonly String version = "1.5 BETA 2";
 	}
 
 	public class SnapSettings_t
@@ -24,7 +25,14 @@ namespace smiletray
 		public Boolean Enabled;
 		public Boolean SingleDisplay;
 		public Boolean SaveBug;
+		public Boolean AnimOriginalDimentions;
+		public Boolean AnimUseMultiSnapDelay;
+		public Int32 AnimWidth;
+		public Int32 AnimHeight;
+		public Int32 AnimFrameDelay;
 		public Int32 Delay;
+		public Int32 SaveDelay;
+		public Int32 NextSnapDelay;
 		public String SnapDir;
 		public String Encoder;
 		public Int32 Quality;
@@ -34,7 +42,14 @@ namespace smiletray
 			Enabled = new Boolean();
 			SingleDisplay = new Boolean();
 			SaveBug = new Boolean();
+			AnimOriginalDimentions = new Boolean();
+			AnimUseMultiSnapDelay = new Boolean();
+			AnimWidth = new Int32();
+			AnimHeight = new Int32();
+			AnimFrameDelay = new Int32();
 			Delay = new Int32();
+			SaveDelay = new Int32();
+			NextSnapDelay = new Int32();
 			Quality = new Int32();
 		}
 	}
@@ -66,6 +81,18 @@ namespace smiletray
 	{
 		public Settings_t Settings;
 		[XmlElement(ElementName = "Profile")] public CProfile [] Profiles;
+	}
+
+	public class SaveQueueItem
+	{
+		public CProfile p;
+		public ArrayList frames;
+
+		public SaveQueueItem(CProfile p, ArrayList frames)
+		{
+			this.p = p;
+			this.frames = frames;
+		}
 	}
 
 }
