@@ -258,10 +258,10 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
-**v1.7**
+**v1.6.1**
 -Fixed Counter-Strike Profile taking screenshots when you die by killing self
 -Fixed the fix (lol) that forced closing the main form to minimizing instead, because it caused windows not to shutdown. 
--Adjusted a few things in each profile
+-Adjusted a few things in each profile yet again
 
 
 **v1.6**

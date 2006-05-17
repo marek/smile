@@ -1,176 +1,209 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <ProjectType>Local</ProjectType>
-    <ProductVersion>8.0.50727</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{B87A3EFE-7747-488D-BF5D-71274E6D956E}</ProjectGuid>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ApplicationIcon>tray_icon.ico</ApplicationIcon>
-    <AssemblyKeyContainerName>
-    </AssemblyKeyContainerName>
-    <AssemblyName>smiletray</AssemblyName>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
-    <DefaultClientScript>JScript</DefaultClientScript>
-    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
-    <DefaultTargetSchema>IE50</DefaultTargetSchema>
-    <DelaySign>false</DelaySign>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>smiletray</RootNamespace>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <StartupObject>smiletray.frmMain</StartupObject>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <ConfigurationOverrideFile>
-    </ConfigurationOverrideFile>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
-    <Optimize>true</Optimize>
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DebugType>full</DebugType>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <ConfigurationOverrideFile>
-    </ConfigurationOverrideFile>
-    <DefineConstants>TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>false</DebugSymbols>
-    <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
-    <Optimize>true</Optimize>
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DebugType>none</DebugType>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System">
-      <Name>System</Name>
-    </Reference>
-    <Reference Include="System.Data">
-      <Name>System.Data</Name>
-    </Reference>
-    <Reference Include="System.Drawing">
-      <Name>System.Drawing</Name>
-    </Reference>
-    <Reference Include="System.Management">
-      <Name>System.Management</Name>
-    </Reference>
-    <Reference Include="System.Windows.Forms">
-      <Name>System.Windows.Forms</Name>
-    </Reference>
-    <Reference Include="System.Xml">
-      <Name>System.XML</Name>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Exception.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Filters.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="GIFFile.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="GlobalHotKey.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Main.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="NativeMethods.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Profiles.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="ScreenCapture.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Search.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="SingleInstance.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="TypeDef.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="VersionCheck.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ViewStats.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="XML.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <EmbeddedResource Include="Exception.resx">
-      <DependentUpon>Exception.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="GlobalHotKey.resx">
-      <DependentUpon>GlobalHotKey.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Main.resx">
-      <DependentUpon>Main.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Search.resx">
-      <DependentUpon>Search.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ViewStats.resx">
-      <DependentUpon>ViewStats.cs</DependentUpon>
-    </EmbeddedResource>
-    <Content Include="tray_icon.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-</Project>
+<VisualStudioProject>
+    <CSHARP
+        ProjectType = "Local"
+        ProductVersion = "7.10.3077"
+        SchemaVersion = "2.0"
+        ProjectGuid = "{B87A3EFE-7747-488D-BF5D-71274E6D956E}"
+    >
+        <Build>
+            <Settings
+                ApplicationIcon = "tray_icon.ico"
+                AssemblyKeyContainerName = ""
+                AssemblyName = "smiletray"
+                AssemblyOriginatorKeyFile = ""
+                DefaultClientScript = "JScript"
+                DefaultHTMLPageLayout = "Grid"
+                DefaultTargetSchema = "IE50"
+                DelaySign = "false"
+                OutputType = "WinExe"
+                PreBuildEvent = ""
+                PostBuildEvent = ""
+                RootNamespace = "smiletray"
+                RunPostBuildEvent = "OnBuildSuccess"
+                StartupObject = "smiletray.frmMain"
+            >
+                <Config
+                    Name = "Debug"
+                    AllowUnsafeBlocks = "true"
+                    BaseAddress = "285212672"
+                    CheckForOverflowUnderflow = "false"
+                    ConfigurationOverrideFile = ""
+                    DefineConstants = "DEBUG;TRACE"
+                    DocumentationFile = ""
+                    DebugSymbols = "true"
+                    FileAlignment = "4096"
+                    IncrementalBuild = "false"
+                    NoStdLib = "false"
+                    NoWarn = ""
+                    Optimize = "true"
+                    OutputPath = "bin\Debug\"
+                    RegisterForComInterop = "false"
+                    RemoveIntegerChecks = "false"
+                    TreatWarningsAsErrors = "false"
+                    WarningLevel = "4"
+                />
+                <Config
+                    Name = "Release"
+                    AllowUnsafeBlocks = "true"
+                    BaseAddress = "285212672"
+                    CheckForOverflowUnderflow = "false"
+                    ConfigurationOverrideFile = ""
+                    DefineConstants = "TRACE"
+                    DocumentationFile = ""
+                    DebugSymbols = "false"
+                    FileAlignment = "4096"
+                    IncrementalBuild = "false"
+                    NoStdLib = "false"
+                    NoWarn = ""
+                    Optimize = "true"
+                    OutputPath = "bin\Release\"
+                    RegisterForComInterop = "false"
+                    RemoveIntegerChecks = "false"
+                    TreatWarningsAsErrors = "false"
+                    WarningLevel = "4"
+                />
+            </Settings>
+            <References>
+                <Reference
+                    Name = "System"
+                    AssemblyName = "System"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll"
+                />
+                <Reference
+                    Name = "System.Data"
+                    AssemblyName = "System.Data"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Data.dll"
+                />
+                <Reference
+                    Name = "System.Drawing"
+                    AssemblyName = "System.Drawing"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Drawing.dll"
+                />
+                <Reference
+                    Name = "System.Windows.Forms"
+                    AssemblyName = "System.Windows.Forms"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Windows.Forms.dll"
+                />
+                <Reference
+                    Name = "System.XML"
+                    AssemblyName = "System.Xml"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.XML.dll"
+                />
+                <Reference
+                    Name = "System.Management"
+                    AssemblyName = "System.Management"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Management.dll"
+                />
+            </References>
+        </Build>
+        <Files>
+            <Include>
+                <File
+                    RelPath = "AssemblyInfo.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Exception.cs"
+                    SubType = "Form"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Exception.resx"
+                    DependentUpon = "Exception.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "Filters.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "GIFFile.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "GlobalHotKey.cs"
+                    SubType = "Component"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "GlobalHotKey.resx"
+                    DependentUpon = "GlobalHotKey.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "Main.cs"
+                    SubType = "Form"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Main.resx"
+                    DependentUpon = "Main.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "NativeMethods.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Profiles.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "ScreenCapture.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Search.cs"
+                    SubType = "Form"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Search.resx"
+                    DependentUpon = "Search.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "SingleInstance.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "tray_icon.ico"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "TypeDef.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "VersionCheck.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "ViewStats.cs"
+                    SubType = "Form"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "ViewStats.resx"
+                    DependentUpon = "ViewStats.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "XML.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+            </Include>
+        </Files>
+    </CSHARP>
+</VisualStudioProject>
+
