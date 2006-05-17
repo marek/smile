@@ -50,9 +50,7 @@ Day of Defeat: Source
 Dystopia (HL2/Source Mod)
 Half-Life 2: Deatchmatch
 Jedi Academy
-Quake III Arena
-Quake III Arena: OSP
-Quake III Team Arena
+Quake III Arena (and some mods)
 Wolfenstein: Enemy Territory
 
 
@@ -75,6 +73,7 @@ and click the “Launch Options" button. Add " -condebug" (without the quotes) as 
 • Quake III Arena, Enemy Territory & Jedi Academy (And Mods if supported)
 Add "+set logfile 2" without quotes into the shortcut parameters of your favourite icon you use to start the game
 Note: A gamma value of 2.2 and contrast value of +30 is recommended for this profile in fullscreen.
+Note 2: Any mod that keeps the kill messages intact from Vanilla Quake III Arena is supported, Just make sure to change the Path to include the mod folder
 
 
 
@@ -111,20 +110,12 @@ X:\ being the letter of the drive steam is installed to.
 	Log File: "console.log"
 
 • Jedi Academy
-	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
-	Log File: "\baseq3\qconsole.log"
+	Game Path: "X:\...\Jedia Academy" (or wherever JediAcademy.exe is located)
+	Log File: "\GameData\base\qconsole.log"
 
-• Quake III Arena
-	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
-	Log File: "\GameData\Base\qconsole.log"
-
-• Quake III Arena: OSP
-	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
-	Log File: "\osp\qconsole.log"
-
-• Quake III Team Arena
-	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
-	Log File: "\missionpack\qconsole.log"
+• Quake III Arena (And Mods like Team Arena and OSP)
+	Game Path: "X:\...\Quake III Arena\baseq3" (or wherever quake3.exe\mod_name is located)
+	Log File: "\qconsole.log"
 
 • Wolfenstein: Enemy Territory
 	Game Path: "X:\...\Enemy Territory" (or wherever et.exe is located)
@@ -142,22 +133,24 @@ Right Click on the smile icon, click open. See settings.
 Options that are globally used by default.
 	[Global Snap Settings]
 	• Enabled: Enable or disable the snap settings (if you just want to do stats) for all games by default
-	• Snap Directory: Where to save your screenshots
+	• Save Bug: Allow the program to retry saving multiple times if a file does not seem to save the first time (AntiVirus conflict)
 	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
 	I have yet to find a good value myself. A delay of 0, is too fast, so the screenshot is 
 	taken to early and the player will just look like it's twitching. Good values are 
 	between 0-100ms.
+	• Next Snap Delay: How long to wait before taking another snap/series of snaps
+	• SaveQueue Size: Maximum number of pictures/frames to store in memory if not all saved yet
+	• Snap Directory: Where to save your screenshots
 	• Image Output Type: Let's you select between image formats (such as bitmap, jpeg, etc..)
 	• Quality: If the selected image format supports compression, use this quality setting.
-	• Save Bug: Allow the program to retry saving multiple times if a file does not seem to save the first time (AntiVirus conflict)
+	• Use Optimized Palette: Use an Optimized Octree algorithm for saving gif animations (slower + bigger file size), 
+	otherwise used a fixed palette.
 	• Use Original Dimentions: Whether to keep or resize the image when saving a sequence to an animation
 		• Width: Width of animation
 		• Height: Height of animation
 	• Use MultiSnap Delay: Whether to use a fixed delay for all animations, or use the capture delay between multiple frames
-		• Delay: Custom delay inbetween frames
-	• Use Optimized Palette: Use an Optimized Octree algorithm for saving gif animations (slower + bigger file size), 
-	otherwise used a fixed palette.
-
+		• Frame Delay: Custom delay inbetween frames
+	
 	[Global Stats Settings]
 	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for all games by default
 	• View: View stats.
@@ -176,19 +169,24 @@ options that are specific to certain games.
 	• Path:	Path to the game's root directory.
 
 	[Snap Settings]
+	• Use Global Settings: Use global options intead of profile specific ones.
 	• Enabled: Enable or disable the snap settings (if you just want to do stats) for just this game
-	• Snap Directory: Where to save your screenshots
+	• Save: "Only Snaps" save only single framed images, "Only Animations", Save only animatation sequences (Snap Count must be > 1)
+	or "Snaps & Animations" to save a copy of both
 	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
 	I have yet to find a good value myself. A delay of 0, is to fast, the screenshot is 
 	taken before the hit is even registered on your display. Good values are 
 	between 0-100ms.
-	• Save: "Only Snaps" save only single framed images, "Only Animations", Save only animatation sequences (Snap Count must be > 1)
-	or "Snaps & Animations" to save a copy of both
 	• Next Snap Delay: How long to wait before taking another snap/series of snaps
 	• Snap Count: How many frames to capture in a sequence
 	• MultiSnap Delay: How long to wait inbetween each frame captured in a sequence
+	• Snap Directory: Where to save your screenshots
+	• Gamma: Adjust gamma. 1.0 = No change.
+	• Contrast: Adjust contrast. 0 = No change.
+	• Brightness: Adjust brightness. 0 = No change.
 
 	[Stats Settings]
+	• Use Global Settings: Use global options intead of profile specific ones.
 	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for just this game
 	• View: View stats for this game.
 	• Reset: Reset statistics for this game
@@ -224,17 +222,18 @@ Extreme_One for help in implementing DoD:S support
 Iain for reporting bugs
 TSW|Abaddon & Sloan for feature ideas
 Fuzzy from Team Dystopia
-tiki from planetquake
+tiki from planetquake (for lots of testing, bug fixing, and JediAcademy Profile help)
 Leo for suggestions
+`star from #counter-strike
 Everyone who has sent me a "thanks"
 
 
 
 Known Bugs:
 ------------------------
-I left the below bug in just in case someone may recognize it even though i *think* i fixed it in v1.3. Never know i could have failed to fix it.
 -Captures "stray" screenshots. Looks as if the program didn't wait for D3D to finish rendering, and sometimes catches just the environment. 
- Investigating alternative capture methods. Anyone have suggestions?
+ Investigating alternative capture methods. Anyone have suggestions? I'm working on a hook dll to try and capture 
+ from DirectDraw/Direct3D/OpenGL directly.
 
 -Not all screenshots save. Problem is probably due to the "realtime" antivirus scanners. Specificaly Norton Antivirus/Norton Internet Security. 
  A similar problem used to exist with Visual Studio itself. Make sure "Save Bug" is checked under the global Snap settings, all this does is 
@@ -250,6 +249,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 Version Compatiblity:
 ------------------------
 1.4: Compatible
+	-- Need to update Quake III Arena Paths
 1.3: Compatible
 1.2: Compatible
 1.1: Compatible
@@ -267,16 +267,21 @@ Changelog:
 -Animated GIF capture support
 -Added Dystopia Profile (an HL2/Source Mod)
 -Added Jedi Academy Profile
+-Removed Quake III Arena: OSP  (See Quake III Arena Installation Notes)
+-Removed Quake III Team Arena (See Quake III Arena Installation Notes)
+-Redid Counter-Strike 1.6 Profile (Should take all screenshots + more statistics now)
 -More misc bug fixes
 -Removed "single display" check box, and am temporarly leaving window/fullscreen capture only
--Better handling of corrupt configs
 -Added QueueSize control
 -New filename format for snaps: smile00000001.jpg smile0000002.jpg  etc.
 -Added Profile Gamma Slider
 -Added Profile Contrast Slider
 -Added Profile Brightness Slider
 -Added Capture Window, Capture Desktop, and Capture Active Profile hotkeys
+-Redid log reading
+-Better handling of corrupt configs
 -Old settings now backed up, if an error reading them occured. 
+-Fixed AutoDetect for Profile Paths
 -LICENSE CHANGED. Smile! IS NO LONGER UNDER GPL. As I am the sole contributer and owner of Smile! I am granted this right. Hey Mozilla did it! 
  My reason for this is to allow the future use of code and libraries that do not fall under specific open source requirements thus
  keeping the author's own agreements and needs intact. Smile! will remain freeware, (It's not like there is a glimpse for anything 

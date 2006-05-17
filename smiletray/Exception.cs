@@ -126,6 +126,28 @@ namespace smiletray
 				+ "TargetSite: " + ex.TargetSite + "\n");
 		}
 
+		public static void DumpExceptionInfoBox( Exception ex )
+		{
+			string msg;
+			msg = "--------- Exception Data ---------\n" 
+				+ "Message: " + ex.Message + "\n"              
+				+ "Exception Type: " + ex.GetType().FullName + "\n"
+				+ "Source: " + ex.Source + "\n"               
+				+ "StrackTrace: " + ex.StackTrace + "\n"         
+				+ "TargetSite: " + ex.TargetSite + "\n";
+				if( null != ex.InnerException )               
+				{      
+                    Exception iex = ex.InnerException;                    
+					msg += "--------- Inner Exception Data ---------\n"
+					+ "Message: " + iex.Message + "\n"              
+					+ "Exception Type: " + iex.GetType().FullName + "\n"
+					+ "Source: " + iex.Source + "\n"               
+					+ "StrackTrace: " + iex.StackTrace + "\n"         
+					+ "TargetSite: " + iex.TargetSite + "\n";  
+				}
+			Msg("Exception", msg);
+		}
+
 		public static void Msg(string title, string message)
 		{
 			Form f = new frmExMsgBox(title, message);

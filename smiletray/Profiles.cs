@@ -97,8 +97,6 @@ namespace smiletray
 	[XmlInclude(typeof(CProfileCounterStrike))]
 	[XmlInclude(typeof(CProfileDayofDefeat))]
 	[XmlInclude(typeof(CProfileQuakeIIIArena))]
-	[XmlInclude(typeof(CProfileQuakeIIITeamArena))]
-	[XmlInclude(typeof(CProfileQ3OSP))]
 	[XmlInclude(typeof(CProfileEnemyTerritory))]
 	public abstract class CProfile
 	{
@@ -114,6 +112,10 @@ namespace smiletray
 		[XmlIgnoreAttribute] public bool NewStats;
 		[XmlIgnoreAttribute] public bool EnableSnaps;
 		[XmlIgnoreAttribute] public bool EnableStats;
+
+		// Read buffer
+		private string strLogBuffer;
+
 		public enum SaveTypes
 		{
 			HTML,
@@ -137,12 +139,28 @@ namespace smiletray
 		public abstract void fromXMLOperations();
 		public abstract void ResetStats();
 		public abstract string GetStatsReport(String font, CProfile.SaveTypes format);
-
+		protected string ReadLine()
+		{
+			int c;
+			string rtn;
+			while ((c = log.Read()) >= 0) 
+			{
+				if(c == '\r')
+					continue;
+				else if (c == '\n')
+				{
+					rtn = strLogBuffer;
+					strLogBuffer = "";
+					return rtn;
+				}
+				strLogBuffer += (char)c;
+			}
+			return null;
+		}
 		public CProfile()
 		{
 			SnapSettings = new CGameSnapSettings();
 			StatsSettings = new CGameStatSettings();
-
 		}
 	}
 
@@ -217,7 +235,7 @@ namespace smiletray
 			Match match;
 			String strLine;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				// Match kills given
 				if(EnableSnaps || EnableStats)
@@ -646,7 +664,7 @@ namespace smiletray
 			Match match;
 			String strLine;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				// Match kills given
 				if(EnableSnaps || EnableStats)
@@ -955,18 +973,50 @@ namespace smiletray
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// CounterStrike 1.6
 	//////////////////////////////////////////////////////////////////////////////////////////////
+	public class CProfileCounterStrike_XMLGun
+	{
+		public String name;
+		public CProfileCounterStrike_Gun stats;
+		
+		public CProfileCounterStrike_XMLGun()
+		{
+			stats = new CProfileCounterStrike_Gun();
+		}
+	}
+	public class  CProfileCounterStrike_Gun : CProfile_Gun
+	{
+		public UInt32 killshs;
+		public UInt32 killedhs;
+
+		public  CProfileCounterStrike_Gun()
+		{
+			this.killshs = new UInt32();	
+			this.killedhs = new UInt32();	
+		}
+	}
+	public class CProfileCounterStrike_XMLDeath
+	{
+		public String name;
+		public UInt32 deaths;
+	
+		public CProfileCounterStrike_XMLDeath()
+		{
+			deaths = new UInt32();
+		}
+	}
 	public class CProfileCounterStrike_Stats
 	{
-		public UInt32 deaths;		// misc deaths, does not include being killed by weapon
 		public UInt32 teamattacks;
 		[XmlIgnoreAttribute] public Hashtable gun;
-		[XmlElement(ElementName = "gun")]public CProfile_XMLGun [] xmlgun;
+		[XmlElement(ElementName = "gun")]public CProfileCounterStrike_XMLGun [] xmlgun;
+		[XmlIgnoreAttribute] public Hashtable death;
+		[XmlElement(ElementName = "death")]public CProfileCounterStrike_XMLDeath [] xmldeath;
 
 		public CProfileCounterStrike_Stats()
 		{
-			deaths = new UInt32();
 			teamattacks = new UInt32();
 			gun = new Hashtable();
+			death = new Hashtable();
 		}
 	}
 
@@ -977,6 +1027,9 @@ namespace smiletray
 		private String alias;
 		private Regex rKill;
 		private Regex rKilled;
+		private Regex rKillHS;
+		private Regex rKilledHS;
+		private Regex rSuicide;
 		private Regex rNickChange;
 		private Regex rTeamAttack;
 		private Regex rDeath;
@@ -990,8 +1043,11 @@ namespace smiletray
 		private void PopulateRegEx()
 		{
 			rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+)$");
+			rKillHS = new Regex("^\\*\\*\\* " + Regex.Escape(this.alias) + " killed .+ with a headshot from (\\w+) \\*\\*\\*$");
 			rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+)$");
+			rKilledHS = new Regex("^\\*\\*\\* .+ killed " + Regex.Escape(this.alias) + " with a headshot from (\\w+) \\*\\*\\*$");
 			rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
+			rSuicide = new Regex("^" + Regex.Escape(this.alias) + " killed self with (\\w+)$");
 			rDeath = new Regex("^" + Regex.Escape(this.alias) + " died$");
 			rTeamAttack = new Regex("^" + Regex.Escape(this.alias) + " attacked a teammate$");
 		}
@@ -1004,7 +1060,7 @@ namespace smiletray
 			Match match;
 			String strLine;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				// Match kills given
 				if(EnableSnaps || EnableStats)
@@ -1015,22 +1071,55 @@ namespace smiletray
 						if(EnableStats)
 						{
 							String strGun = match.Groups[1].Value;
-							CProfile_Gun gun;
+							CProfileCounterStrike_Gun gun;
 							if(stats.gun.Contains(strGun))
 							{
-								gun = (CProfile_Gun)stats.gun[strGun];
+								gun = (CProfileCounterStrike_Gun)stats.gun[strGun];
 								gun.kills++;
 								stats.gun[strGun] = gun;
 							}
 							else 
 							{
-								gun = new CProfile_Gun();
+								gun = new CProfileCounterStrike_Gun();
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
 							NewStats = true;
 						}
-						NewSnaps = true;
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
+						continue;
+					}
+					// Match kills given with headshot
+					match = rKillHS.Match(strLine);
+					if(match.Success) 
+					{
+						if(EnableStats)
+						{
+							String strGun = match.Groups[1].Value;
+							CProfileCounterStrike_Gun gun;
+							if(stats.gun.Contains(strGun))
+							{
+								gun = (CProfileCounterStrike_Gun)stats.gun[strGun];
+								gun.kills++;
+								gun.killshs++;
+								stats.gun[strGun] = gun;
+							}
+							else 
+							{
+								gun = new CProfileCounterStrike_Gun();
+								gun.kills = 1;
+								gun.killedhs = 1;
+								stats.gun.Add(strGun, gun);
+							}
+							NewStats = true;
+						}
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
 						continue;
 					}
 				}
@@ -1042,29 +1131,63 @@ namespace smiletray
 					if(match.Success)
 					{
 						String strGun = match.Groups[1].Value;
-						CProfile_Gun gun;
+						CProfileCounterStrike_Gun gun;
 						if(stats.gun.Contains(strGun)) 
 						{
-							gun = (CProfile_Gun)stats.gun[strGun];
+							gun = (CProfileCounterStrike_Gun)stats.gun[strGun];
 							gun.killed++;
 							stats.gun[strGun] = gun;
 						}
 						else  
 						{
-							gun = new CProfile_Gun();
+							gun = new CProfileCounterStrike_Gun();
 							gun.killed = 1;
 							stats.gun.Add(strGun, gun);
 						}
 						NewStats = true;
 						continue;
 					}
-
-					// Match nickchange of self
-					match = rNickChange.Match(strLine);
+					// Match times self has been killed with headshot
+					match = rSuicide.Match(strLine);
 					if(match.Success)
 					{
-						this.alias = match.Groups[1].Value;
-						PopulateRegEx();
+						String strGun = match.Groups[1].Value;
+						CProfileCounterStrike_Gun gun;
+						if(stats.gun.Contains(strGun)) 
+						{
+							gun = (CProfileCounterStrike_Gun)stats.gun[strGun];
+							gun.killed++;
+							gun.killedhs++;
+							stats.gun[strGun] = gun;
+						}
+						else  
+						{
+							gun = new CProfileCounterStrike_Gun();
+							gun.killed = 1;
+							gun.killedhs = 1;
+							stats.gun.Add(strGun, gun);
+						}
+						NewStats = true;
+						continue;
+					}
+
+					// Match suicides by stuff(?)
+					match = rKilledHS.Match(strLine);
+					if(match.Success)
+					{
+						String strDeath = match.Groups[1].Value;
+						UInt32 count;
+						if(stats.death.Contains(strDeath)) 
+						{
+							count = (UInt32)stats.death[strDeath];
+							count++;
+							stats.death[strDeath] = count;
+						}
+						else  
+						{
+							count = 1;
+							stats.death.Add(strDeath, count);
+						}
 						NewStats = true;
 						continue;
 					}
@@ -1073,7 +1196,29 @@ namespace smiletray
 					match = rDeath.Match(strLine);
 					if(match.Success)
 					{
-						stats.deaths++;
+						UInt32 count;
+						if(stats.death.Contains("misc")) 
+						{
+							count = (UInt32)stats.death["misc"];
+							count++;
+							stats.death["misc"] = count;
+						}
+						else  
+						{
+							count = 1;
+							stats.death.Add("misc", count);
+						}
+						NewStats = true;
+						continue;
+					}
+
+
+					// Match nickchange of self
+					match = rNickChange.Match(strLine);
+					if(match.Success)
+					{
+						this.alias = match.Groups[1].Value;
+						PopulateRegEx();
 						NewStats = true;
 						continue;
 					}
@@ -1168,29 +1313,45 @@ namespace smiletray
 		public override void toXMLOperations()
 		{
 			// Turn gun hastable into something more useable
-			if(stats.gun == null)
+			if(stats.gun == null || stats.death == null)
 				return;
-			stats.xmlgun = new CProfile_XMLGun [ stats.gun.Count ];
+			stats.xmlgun = new CProfileCounterStrike_XMLGun [ stats.gun.Count ];
 			int i = 0;
 			foreach(String key in stats.gun.Keys)
 			{
-				stats.xmlgun[i] = new CProfile_XMLGun();
+				stats.xmlgun[i] = new CProfileCounterStrike_XMLGun();
 				stats.xmlgun[i].name = key;
-				stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
+				stats.xmlgun[i].stats = (CProfileCounterStrike_Gun)stats.gun[key];
 				i++;
 			}
+			stats.xmldeath = new CProfileCounterStrike_XMLDeath [ stats.death.Count ];
+			i = 0;
+			foreach(String key in stats.death.Keys)
+			{
+				stats.xmldeath[i] = new CProfileCounterStrike_XMLDeath();
+				stats.xmldeath[i].name = key;
+				stats.xmldeath[i].deaths = (UInt32)stats.death[key];
+				i++;
+			}
+
 		}
 		public override void fromXMLOperations()
 		{
-			if(stats.xmlgun == null)
+			if(stats.xmlgun == null || stats.xmldeath == null)
 				return;
 
 			if(stats.gun == null)
 				stats.gun = new Hashtable();
+			if(stats.xmldeath == null)
+				stats.death = new Hashtable();
 
 			for(int i = 0; i < stats.xmlgun.Length; i++)
 			{
 				stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+			}
+			for(int i = 0; i < stats.xmldeath.Length; i++)
+			{
+				stats.death.Add(stats.xmldeath[i].name, stats.xmldeath[i].deaths);
 			}
 		}
 		public override void ResetStats()
@@ -1224,18 +1385,32 @@ namespace smiletray
 
 					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
 					strStats += "\t\tFriendly-fire Attacks: " + stats.teamattacks + "<br />\r\n";
-					strStats += "\t\tMiscellaneous Deaths: " + stats.deaths + "<br />\r\n";
+					strStats += "\t\t<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Death Statistics:</h3>\r\n";
+					uint TotalDeaths = 0;
+					foreach(String Key in stats.death.Keys)
+					{
+						TotalDeaths += (UInt32)stats.death[Key];
+						strStats += "\t\t<b>"+ Key + ":</b> " + (UInt32)stats.death[Key] + "<br />\r\n";
+					}
+					strStats += "\t\tTotal Other Deaths: " + TotalDeaths + "<br />\r\n";
+					strStats += "\t\t<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
 					uint TotalKills = 0;
+					uint TotalKillsHS = 0;
 					uint TotalKilled = 0;
+					uint TotalKilledHS = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
-						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
-						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
-						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
+						TotalKills += ((CProfileCounterStrike_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfileCounterStrike_Gun)stats.gun[Key]).killed;
+						TotalKillsHS += ((CProfileCounterStrike_Gun)stats.gun[Key]).killshs;
+						TotalKilledHS += ((CProfileCounterStrike_Gun)stats.gun[Key]).killedhs;
+						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfileCounterStrike_Gun)stats.gun[Key]).kills + " kills(hs): " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killshs + " deaths: " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killed + " deaths(hs): " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killedhs + "<br />\r\n";
 					}
-					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total HS Kills: " + TotalKillsHS + " Total Deaths: " + TotalKilled + " Total HS Deaths: " + TotalKilledHS + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -1262,24 +1437,43 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Misc Statistics:\n" ;
 						c.SelectedText = "Friendly-fire Attacks: " + stats.teamattacks + "\n";
-						c.SelectedText = "Miscellaneous Deaths: " + stats.deaths + "\n";
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Death Statistics:\n" ;
+						uint TotalDeaths = 0;
+						foreach(String Key in stats.death.Keys)
+						{
+							TotalDeaths += (UInt32)stats.death[Key];
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = (UInt32)stats.death[Key] + "\n";
+						}
+						c.SelectedText = "Total Other Deaths: " + TotalDeaths + "\n";
 						c.SelectedText = "\n";
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Weapon Statistics:\n" ;
 						uint TotalKills = 0;
+						uint TotalKillsHS = 0;
 						uint TotalKilled = 0;
+						uint TotalKilledHS = 0;
 						foreach(String Key in stats.gun.Keys)
 						{
-							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
-							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+							TotalKills += ((CProfileCounterStrike_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfileCounterStrike_Gun)stats.gun[Key]).killed;
+							TotalKillsHS += ((CProfileCounterStrike_Gun)stats.gun[Key]).killshs;
+							TotalKilledHS += ((CProfileCounterStrike_Gun)stats.gun[Key]).killedhs;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
-							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
-							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
+							c.SelectedText = " kills: " + ((CProfileCounterStrike_Gun)stats.gun[Key]).kills;
+							c.SelectedText = " kills(hs): " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killshs;
+							c.SelectedText = " deaths: " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killed;
+							c.SelectedText = " deaths(hs): " + ((CProfileCounterStrike_Gun)stats.gun[Key]).killedhs + "\n";
 						}
-						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
+						c.SelectedText = "Total Kills: " + TotalKills + " Total HS Kills: " + TotalKillsHS + " Total Deaths: " + TotalKilled + " Total HS Deaths: " + TotalKilledHS + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionStart = 0 ;
@@ -1423,7 +1617,7 @@ namespace smiletray
 			Match match;
 			String strLine;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				// Match kills given
 				if(EnableSnaps || EnableStats)
@@ -1899,7 +2093,7 @@ namespace smiletray
 			String strLine;
 			bool found;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				strLine = rStripColor.Replace(strLine, "");
 
@@ -2003,8 +2197,8 @@ namespace smiletray
 		{
 			try 
 			{
-				this.alias = GetGameAlias(@"\baseq3\q3config.cfg");
-				this.log = new StreamReader(new FileStream(this.path + @"\baseq3\qconsole.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
+				this.alias = GetGameAlias(@"\q3config.cfg");
+				this.log = new StreamReader(new FileStream(this.path + @"\qconsole.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
 				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End	
 				return true;
 			}
@@ -2040,7 +2234,8 @@ namespace smiletray
 						break;
 				}
 				search.Close();
-				return Path.GetDirectoryName(result);	
+				result = Path.GetDirectoryName(result) + "\\baseq3";
+				return result;
 			}
 			catch
 			{
@@ -2108,7 +2303,6 @@ namespace smiletray
 				stats.xmldeath[i].deaths = (uint)stats.gun[key];
 				i++;
 			}
-
 		}
 		public override void fromXMLOperations()
 		{
@@ -2259,59 +2453,6 @@ namespace smiletray
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////
-	/// Quake III Team Arena
-	//////////////////////////////////////////////////////////////////////////////////////////////
-
-	public class CProfileQuakeIIITeamArena : CProfileQuakeIIIArena
-	{
-		public CProfileQuakeIIITeamArena()
-		{
-			this.ProfileName = "Quake III Team Arena";
-			this.SnapName = "Quake III Team Arena";
-		}
-		public override bool Open()
-		{
-			try 
-			{
-				this.alias = GetGameAlias(@"\missionpack\q3config.cfg");
-				this.log = new StreamReader(new FileStream(this.path + @"\missionpack\qconsole.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
-				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End	
-				return true;
-			}
-			catch 
-			{
-				return false;
-			}
-		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////////////////
-	/// Q3: OSP
-	//////////////////////////////////////////////////////////////////////////////////////////////
-	public class CProfileQ3OSP : CProfileQuakeIIIArena
-	{
-		public CProfileQ3OSP()
-		{
-			this.ProfileName = "Quake III OSP";
-			this.SnapName = "Quake III OSP";
-		}
-		public override bool Open()
-		{
-			try 
-			{
-				this.alias = GetGameAlias(@"\osp\q3config.cfg");
-				this.log = new StreamReader(new FileStream(this.path + @"\osp\qconsole.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
-				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End	
-				return true;
-			}
-			catch 
-			{
-				return false;
-			}
-		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Enemy Territory
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	public class CProfileEnemyTerritory_MOD
@@ -2442,7 +2583,7 @@ namespace smiletray
 			String strLine;
 			bool found;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				strLine = rStripColor.Replace(strLine, "");
 
@@ -2927,7 +3068,7 @@ namespace smiletray
 			Match match;
 			String strLine;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				// Match kills given
 				if(EnableSnaps || EnableStats)
@@ -3407,7 +3548,7 @@ namespace smiletray
 			Match match;
 			String strLine;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				// Match kills given
 				if(EnableSnaps || EnableStats)
@@ -3718,14 +3859,39 @@ namespace smiletray
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Jedi Academy
 	//////////////////////////////////////////////////////////////////////////////////////////////
+	public class CProfileJediAcademy_MOD
+	{
+		public string name;
+		public string mod;
+		public Regex r;
+		public CProfileJediAcademy_MOD(string name, string mod)
+		{
+			this.name = name;
+			this.mod = mod;
+			r = new Regex (mod);
+		}
+	}
+	public class CProfileJediAcademy_XMLDeath
+	{
+		public String name;
+		public UInt32 deaths;
+	
+		public CProfileJediAcademy_XMLDeath()
+		{
+			deaths = new UInt32();
+		}
+	}
 	public class CProfileJediAcademy_Stats
 	{
 		[XmlIgnoreAttribute] public Hashtable gun;
+		[XmlIgnoreAttribute] public Hashtable death;
 		[XmlElement(ElementName = "gun")]public CProfile_XMLGun [] xmlgun;
+		[XmlElement(ElementName = "death")]public CProfileQuakeIIIArena_XMLDeath [] xmldeath;
 
 		public CProfileJediAcademy_Stats()
 		{
 			gun = new Hashtable();
+			death = new Hashtable();
 		}
 	}
 	public class CProfileJediAcademy : CProfile
@@ -3733,8 +3899,8 @@ namespace smiletray
 		public CProfileJediAcademy_Stats stats;
 
 		protected String alias;
-		private Regex rKill;
-		private Regex rKilled;
+		private CProfileJediAcademy_MOD [] weapons;
+		private CProfileJediAcademy_MOD [] deaths;
 		private Regex rStripColor;
 
 		public CProfileJediAcademy()
@@ -3742,13 +3908,44 @@ namespace smiletray
 			this.ProfileName = "Jedi Academy";
 			this.SnapName = "Jedi Academy";
 			this.stats = new CProfileJediAcademy_Stats();
+			this.deaths = new CProfileJediAcademy_MOD [] 
+				{
+					new CProfileJediAcademy_MOD("Blew Self Up", "^(.+) blew \\w+self up$"),
+					new CProfileJediAcademy_MOD("Shot Self", "^(.+) shot \\w+self$"),
+					new CProfileJediAcademy_MOD("Electrocuted Self", "^(.+) electrocuted \\w+self$"),
+					new CProfileJediAcademy_MOD("Generic", "^(.+) killed \\w+self$"),
+					new CProfileJediAcademy_MOD("Unknown means", "^(.+) died\\.$"),
+					new CProfileJediAcademy_MOD("Fell", "^(.+) fell to \\w+ death$"),
+					new CProfileJediAcademy_MOD("Laser", "^(.+) was blasted\\.$")
+				};
+			this.weapons = new CProfileJediAcademy_MOD [] 
+				{ 
+					new CProfileJediAcademy_MOD("Stun", "^(.+) was brutally stunned by (.+)$"),
+					new CProfileJediAcademy_MOD("Saber", "^(.+) was sabered by (.+)$"),
+					new CProfileJediAcademy_MOD("Bryar", "^(.+) was shot by (.+)$"),
+					new CProfileJediAcademy_MOD("Blaster", "^(.+) was blasted by (.+)$"),
+					new CProfileJediAcademy_MOD("Disrupter", "^(.+) was disrupted by (.+)$"),
+					new CProfileJediAcademy_MOD("Disrupter (Sniper)", "^(.+) was sniped by (.+)$"),
+					new CProfileJediAcademy_MOD("Bowcaster", "^(.+) was bolted by (.+)$"),
+					new CProfileJediAcademy_MOD("Repeater", "^(.+) was riddled by (.+)$"),
+					new CProfileJediAcademy_MOD("Repeater (Alt)", "^(.+) was smashed by (.+)$"),
+					new CProfileJediAcademy_MOD("DEMP2", "^(.+) was electrocuted by (.+)$"),
+					new CProfileJediAcademy_MOD("Flechette", "^(.+) was spiked by (.+)$"),
+					new CProfileJediAcademy_MOD("Flechette (Mine)", "^(.+) was shrapnelled by (.+)$"),
+					new CProfileJediAcademy_MOD("Rocket", "^(.+) was rocketed by (.+)$"),
+					new CProfileJediAcademy_MOD("Rocket (Homing)", "^(.+) was homed by (.+)$"),
+					new CProfileJediAcademy_MOD("Thermal", "^(.+) was detonated by (.+)$"),
+					new CProfileJediAcademy_MOD("Tripmine", "^(.+) was tripped by (.+)$"),
+					new CProfileJediAcademy_MOD("Tripmine (Timed)", "^(.+) was mined by (.+)$"),
+					new CProfileJediAcademy_MOD("Detpack", "^(.+) was detonated by (.+)$"),
+					new CProfileJediAcademy_MOD("Dark Force", "^(.+) was annihilated by (.+)$"),
+					new CProfileJediAcademy_MOD("Telefrag", "^(.+) was crushed into another dimension by (.+)$"),
+					new CProfileJediAcademy_MOD("Generic", "^(.+) was killed by (.+)$"),
+					new CProfileJediAcademy_MOD("Force Toss", "^(.+) was thrown to their doom by (.+)$"),
+					new CProfileJediAcademy_MOD("Sentry", "^(.+) was sentry-killed by (.+)$"),
+					new CProfileJediAcademy_MOD("Melee", "^(.+) was bludgeoned by (.+)$")
+				};
 			this.rStripColor = new Regex("\\^\\d");
-		}
-
-		private void PopulateRegEx()
-		{
-			this.rKill = new Regex("\\s*\\d{1,2}:\\d{1,2} Kill: \\d{1,2} \\d{1,2} \\d{1,2}: " + Regex.Escape(this.alias) + " killed .+ by MOD_(\\w+)$");
-			this.rKilled = new Regex("\\s*\\d{1,2}:\\d{1,2} Kill: \\d{1,2} \\d{1,2} \\d{1,2}: .+ killed " + Regex.Escape(this.alias) + " by MOD_(\\w+)$");
 		}
 
 		public override void Parse()
@@ -3758,63 +3955,96 @@ namespace smiletray
 
 			Match match;
 			String strLine;
+			bool found;
 
-			while ((strLine = this.log.ReadLine()) != null)
+			while ((strLine = ReadLine()) != null)
 			{
 				strLine = rStripColor.Replace(strLine, "");
 
-				// Match kills given
-				if(EnableSnaps || EnableStats)
+				// Match weapon kills/deaths
+				found = false;
+				for(int i = 0; i < weapons.Length; i++)
 				{
-					match = rKill.Match(strLine);
-					if(match.Success) 
+					match = weapons[i].r.Match(strLine);
+					if(match.Success)
 					{
-						if(EnableStats)
+						// Kills
+						if(match.Groups[2].Value == alias)
 						{
-							String strGun = match.Groups[1].Value;
-							CProfile_Gun gun;
-							if(stats.gun.Contains(strGun))
+							if(EnableStats)
 							{
-								gun = (CProfile_Gun)stats.gun[strGun];
-								gun.kills++;
-								stats.gun[strGun] = gun;
+								CProfile_Gun gun;
+								if(stats.gun.Contains(weapons[i].name))
+								{
+									gun = (CProfile_Gun)stats.gun[weapons[i].name];
+									gun.kills++;
+									stats.gun[weapons[i].name] = gun;
+								}
+								else 
+								{
+									gun = new CProfile_Gun();
+									gun.kills = 1;
+									stats.gun.Add(weapons[i].name, gun);
+								}
+								NewStats = true;
+							}
+							NewSnaps = true;
+						} 
+							// Deaths
+						else if(match.Groups[1].Value == alias && EnableStats)
+						{
+							CProfile_Gun gun;
+							if(stats.gun.Contains(weapons[i].name))
+							{
+								gun = (CProfile_Gun)stats.gun[weapons[i].name];
+								gun.killed++;
+								stats.gun[weapons[i].name] = gun;
 							}
 							else 
 							{
 								gun = new CProfile_Gun();
-								gun.kills = 1;
-								stats.gun.Add(strGun, gun);
+								gun.killed = 1;
+								stats.gun.Add(weapons[i].name, gun);
 							}
+							NewStats = true;
 						}
-						NewSnaps = true;
-						NewStats = true;
-						continue;
+						found = true;
 					}
+					if(found) break;
 				}
+				if(found) continue;
 
 				if(EnableStats)
 				{
-					// Match times self has been killed
-					match = rKilled.Match(strLine);
-					if(match.Success)
+					found = false;
+					// Match weapon kills/deaths
+					for(int i = 0; i < deaths.Length; i++)
 					{
-						String strGun = match.Groups[1].Value;
-						CProfile_Gun gun;
-						if(stats.gun.Contains(strGun)) 
+						match = deaths[i].r.Match(strLine);
+						if(match.Success)
 						{
-							gun = (CProfile_Gun)stats.gun[strGun];
-							gun.killed++;
-							stats.gun[strGun] = gun;
+							// Kills
+							if(match.Groups[1].Value == alias)
+							{
+								uint count;
+								if(stats.death.Contains(deaths[i].name))
+								{
+									count = (uint)stats.gun[deaths[i].name];
+									count++;
+									stats.death[deaths[i].name] = count;
+								}
+								else 
+								{
+									count = 1;
+									stats.death.Add(deaths[i].name, count);
+								}
+								NewStats = true;
+							} 
+							found = true;
 						}
-						else  
-						{
-							gun = new CProfile_Gun();
-							gun.killed = 1;
-							stats.gun.Add(strGun, gun);
-						}
-						NewStats = true;
-						continue;
+						if(found) break;
 					}
+					if(found) continue;
 				}
 			}
 		}
@@ -3823,9 +4053,8 @@ namespace smiletray
 			try 
 			{
 				this.alias = GetGameAlias(@"\GameData\base\jampconfig.cfg");
-				this.log = new StreamReader(new FileStream(this.path + @"\GameData\base\games.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
+				this.log = new StreamReader(new FileStream(this.path + @"\GameData\base\qconsole.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
 				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End	
-				PopulateRegEx();
 				return true;
 			}
 			catch 
@@ -3855,7 +4084,7 @@ namespace smiletray
 				foreach( ManagementObject mo in queryCollection )
 				{
 					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
-						new Regex(@"\\jamp.exe$", RegexOptions.IgnoreCase));
+						new Regex(@"\\JediAcademy.exe$", RegexOptions.IgnoreCase));
 					if(result != null || search.Stopped())
 						break;
 				}
@@ -3917,6 +4146,17 @@ namespace smiletray
 				stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
 				i++;
 			}
+			if(stats.death == null)
+				return;
+			stats.xmldeath = new CProfileQuakeIIIArena_XMLDeath [ stats.death.Count ];
+			i = 0;
+			foreach(String key in stats.death.Keys)
+			{
+				stats.xmldeath[i] = new CProfileQuakeIIIArena_XMLDeath();
+				stats.xmldeath[i].name = key;
+				stats.xmldeath[i].deaths = (uint)stats.gun[key];
+				i++;
+			}
 		}
 		public override void fromXMLOperations()
 		{
@@ -3929,6 +4169,17 @@ namespace smiletray
 			for(int i = 0; i < stats.xmlgun.Length; i++)
 			{
 				stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+			}
+
+			if(stats.xmldeath == null)
+				return;
+
+			if(stats.death == null)
+				stats.death = new Hashtable();
+
+			for(int i = 0; i < stats.xmldeath.Length; i++)
+			{
+				stats.death.Add(stats.xmldeath[i].name, stats.xmldeath[i].deaths);
 			}
 		}
 		public override void ResetStats()
@@ -3960,7 +4211,14 @@ namespace smiletray
 					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
 					strStats += "\t\t<hr />\r\n";
 
-					strStats += "\t\t<h3>Weapon/Death Statistics:</h3>\r\n";
+					strStats += "\t\t<h3>Self-Inflicted/Unknown Death Statistics:</h3>\r\n";
+					foreach(String Key in stats.death.Keys)
+					{
+						strStats += "\t\t<b>"+ Key + ":</b> " + (uint)stats.death[Key] + "<br />\r\n";
+					}
+					strStats += "\t\t<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
 					uint TotalKills = 0;
 					uint TotalKilled = 0;
 					foreach(String Key in stats.gun.Keys)
@@ -3994,7 +4252,18 @@ namespace smiletray
 						c.SelectedText = "                                                                \n\n";
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
-						c.SelectedText = "Weapon/Death Statistics:\n";
+						c.SelectedText = "Self-Inflicted/Unknown Death Statistics:\n" ;
+						foreach(String Key in stats.death.Keys)
+						{
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = (uint)stats.death[Key] + "\n";
+						}
+						c.SelectedText = "\n\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Weapon Statistics:\n";
 						uint TotalKills = 0;
 						uint TotalKilled = 0;
 						foreach(String Key in stats.gun.Keys)

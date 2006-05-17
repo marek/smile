@@ -48,6 +48,8 @@ namespace smiletray
 			if(file == null || file.Trim().Length == 0)
 				return;
 
+			frameDelay = frameDelay/10;	// Since gif framedelay is in 1/100ths of a second
+
 			// Define the control block (such as frame delay)
 			Byte[] cb = new Byte[8];
 			cb[0] = 33;									// Extension introducer

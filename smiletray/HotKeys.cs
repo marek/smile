@@ -16,19 +16,24 @@ using System.Runtime.InteropServices;
 
 namespace smiletray
 {
-	public class SystemHotkey : System.ComponentModel.Component,IDisposable
+
+	public class SystemHotkey : System.ComponentModel.Component, IDisposable
 	{
 		private System.ComponentModel.Container components = null;
-		protected bool isRegistered = false;
+		
 		public event System.EventHandler Pressed;
 		public event System.EventHandler KeyCapture;
-		private	int hook;
 		private keycombo hotkey;
-		private keycombo keys = new keycombo();
-		private NativeMethods.LowLevelKeyboardDelegate del;
-		public static readonly keycombo EmptyKeyCombo = new keycombo();
 		bool keycapture;
-		
+
+		protected static bool isRegistered = false;
+		private	static int hook;
+		private static keycombo keys = new keycombo();
+		private static NativeMethods.LowLevelKeyboardDelegate del;
+		public static readonly keycombo EmptyKeyCombo = new keycombo();
+		private static ArrayList hotkeys = new ArrayList();
+		private static readonly object Lock = new object();
+
 		static public string KeyComboToString(keycombo kc)
 		{
 			string s = "";
@@ -112,8 +117,11 @@ namespace smiletray
 		{
 			container.Add(this);
 			InitializeComponent();
+			lock(Lock)
+			{
+				hotkeys.Add(this);
+			}
 		}
-
 		public bool EnableKeyCapture
 		{
 			set { keycapture = value; }
@@ -123,6 +131,10 @@ namespace smiletray
 		public SystemHotkey()
 		{
 			InitializeComponent();
+			lock(Lock)
+			{
+				hotkeys.Add(this);
+			}
 		}
 
 		public keycombo GetKeys()
@@ -132,9 +144,14 @@ namespace smiletray
 
 		public new void Dispose()
 		{
-			if (isRegistered)
+			lock(Lock)
 			{
-				UnregisterHook();
+				del = null;
+				hotkeys.Remove(this);
+				if(isRegistered && hotkeys.Count == 0)
+				{
+					UnregisterHook();
+				}
 			}
 		}
 		#region Component Designer generated code
@@ -148,16 +165,9 @@ namespace smiletray
 		}
 		#endregion
 		
-		public class KeyEventArgs : EventArgs
-		{
-			public keycombo kc;
-			public KeyEventArgs(keycombo kc)
-			{
-				this.kc = kc;
-			}
-		}
 
-		private Int32 LowLevelKeyboardHandler(Int32 nCode, Int32 wParam, ref NativeMethods.KBDLLHOOKSTRUCT lParam) 
+	
+		static private Int32 LowLevelKeyboardHandler(Int32 nCode, Int32 wParam, ref NativeMethods.KBDLLHOOKSTRUCT lParam) 
 		{ 
 	
 			if (nCode == NativeMethods.HC_ACTION) 
@@ -165,42 +175,61 @@ namespace smiletray
 				if (wParam == (int)NativeMethods.Msgs.WM_KEYDOWN)
 				{
 					keys[(int)lParam.vkCode] = 1;
-					if(keycapture && KeyCapture != null)
-						KeyCapture(this, new KeyEventArgs(keys));
+					for(int i = 0; i < hotkeys.Count; i++)
+					{
+						SystemHotkey hk = (SystemHotkey)hotkeys[i];
+						if(hk.keycapture && hk.KeyCapture != null)
+							hk.KeyCapture(hk, EventArgs.Empty);
+					}
 				}
 				else if (wParam == (int)NativeMethods.Msgs.WM_KEYUP)
 					keys[(int)lParam.vkCode] = 0;
 
-				if(keys == hotkey && Pressed != null)
-					Pressed(this, EventArgs.Empty);
+				for(int i = 0; i < hotkeys.Count; i++)
+				{
+					SystemHotkey hk = (SystemHotkey)hotkeys[i];
+					if(keys == hk.hotkey && hk.Pressed != null)
+						hk.Pressed(hk, EventArgs.Empty);
+				}
 			}
 			return NativeMethods.CallNextHookEx(hook, nCode, wParam, lParam); 
 			
 		} 
 
 	
-		protected bool UnregisterHook()
+		public static bool UnregisterHook()
 		{	//unregister hotkey
-			return isRegistered = (NativeMethods.UnhookWindowsHookEx(hook) != 0);
+			lock(Lock)
+			{
+				if(hotkeys.Count == 0)
+				{
+					return isRegistered = (NativeMethods.UnhookWindowsHookEx(hook) != 0);
+				}
+			}
+			return false;
 		}
 
-		public bool RegisterHook()
+		public static bool RegisterHook()
 		{	
-			//register hotkey
-			if(isRegistered)
-				return true;
-			del = new NativeMethods.LowLevelKeyboardDelegate(LowLevelKeyboardHandler);
-			hook = NativeMethods.SetWindowsHookEx((int)NativeMethods.HookType.WH_KEYBOARD_LL, del, Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]).ToInt32(),0); 
-			if(hook != 0)
-				return isRegistered = true;
-			else
+			lock(Lock)
 			{
-				del = null;
-				return  false;
+				//register hotkey
+				if(isRegistered)
+					return true;
+				del = new NativeMethods.LowLevelKeyboardDelegate(LowLevelKeyboardHandler);
+				hook = NativeMethods.SetWindowsHookEx((int)NativeMethods.HookType.WH_KEYBOARD_LL, del, Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]).ToInt32(),0); 
+			
+				if(hook != 0)
+					return isRegistered = true;
+				else
+				{
+					del = null;
+					return  false;
+				}
 			}
 		}
 
-		public bool IsRegistered
+		public static bool IsRegistered
 		{
 			get{return isRegistered;}
 		}

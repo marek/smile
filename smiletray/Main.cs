@@ -16,9 +16,11 @@ using System.Windows.Forms;
 using System.IO;
 using System.Data;
 using System.Threading;
+using System.Xml;
 using System.Xml.Serialization;
 using System.Diagnostics;
 using System.Drawing.Imaging;
+using System.Text.RegularExpressions;
 
 namespace smiletray
 {
@@ -65,6 +67,18 @@ namespace smiletray
 		private SystemHotkey HKCaptureWindow;
 		private SystemHotkey HKCaptureActiveProfile;
 		private StreamWriter log;
+		private readonly Type [] ProfileTypes =  new Type [ ] 
+			{ 
+				typeof(CProfileCounterStrikeSource), 
+				typeof(CProfileHalfLife2Deathmatch),
+				typeof(CProfileQuakeIIIArena),
+				typeof(CProfileEnemyTerritory),
+				typeof(CProfileCounterStrike),
+				typeof(CProfileDayofDefeat),
+				typeof(CProfileDayofDefeatSource),
+				typeof(CProfileSourceDystopia),
+				typeof(CProfileJediAcademy)
+			};
 
 		// form elements
 		private System.Windows.Forms.NotifyIcon notifyIcon;
@@ -222,15 +236,6 @@ namespace smiletray
 			UpdateEncoder();
 			extlist.Add(".avi");
 
-			// Populate hotkeys
-			/*
-			for(int i = 0; i < HotKeyNames.Length; i++)
-			{
-				cbGeneral_HotKeys_CaptureDesktop.Items.Add(HotKeyNames[i]);
-				cbGeneral_HotKeys_CaptureWindow.Items.Add(HotKeyNames[i]);
-				cbGeneral_HotKeys_CaptureActiveProfile.Items.Add(HotKeyNames[i]);
-			}*/
-
 			// Create Save Queue
 			this.SaveQueue = new TSArrayList(10);
 
@@ -263,9 +268,12 @@ namespace smiletray
 			AddLogMessage("SaveQueue starting up.");
 
 			// Start key gooks
-			HKCaptureDesktop.RegisterHook();
-			HKCaptureWindow.RegisterHook();
-			HKCaptureActiveProfile.RegisterHook();
+			SystemHotkey.RegisterHook();
+			AddLogMessage("Registering system keyboard hook.");
+			DisableHotkeys = false;
+			HKCaptureWindow.Shortcut = SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKWindow);
+			HKCaptureDesktop.Shortcut = SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop);
+			HKCaptureActiveProfile.Shortcut = SystemHotkey.StringToKeyCombo(Settings.HotKeySettings.HKActiveProfile);
 
 			CheckEnabled();
 
@@ -1640,6 +1648,11 @@ namespace smiletray
 
 		private void frmMain_Closed(object sender, System.EventArgs e)
 		{
+			HKCaptureDesktop.Dispose();
+			HKCaptureWindow.Dispose();
+			HKCaptureActiveProfile.Dispose();
+			SystemHotkey.UnregisterHook();
+			AddLogMessage("Unregistering system keyboard hook.");
 			TimerSave.Dispose();
 			TimerSave = null;
 			AddLogMessage("SaveQueue shutting down.");
@@ -1825,6 +1838,93 @@ namespace smiletray
 			lblProfiles_SnapSettings_Brightness.Text = "Brightness: " + String.Format("{0:D}", tbProfiles_SnapSettings_Brightness.Value-255) + " (Min: -255 Max: 255)";
 		}
 
+		private void HKCaptureDesktop_Pressed(object sender, System.EventArgs e)
+		{
+			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
+			{
+				AddLogMessage("HotKey: capturing desktop...");
+				Image img = ScreenCapture.GetDesktopImage(true);
+				ArrayList frames = new ArrayList(1);
+				frames.Add(img);
+				AddToSaveQueue(null, frames);
+			}
+		}
+
+		private void HKCaptureWindow_Pressed(object sender, System.EventArgs e)
+		{
+			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
+			{
+				AddLogMessage("HotKey: capturing window...");
+				Image img = ScreenCapture.GetDesktopImage(false);
+				ArrayList frames = new ArrayList(1);
+				frames.Add(img);
+				AddToSaveQueue(null, frames);
+			}
+		}
+
+		private void HKCaptureActiveProfile_Pressed(object sender, System.EventArgs e)
+		{
+			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
+			{
+				lock(ProfileLock)
+				{
+					if(ActiveProfile != null)
+					{
+						AddLogMessage("HotKey: Capturing active profile...");
+						ActiveProfile.NewSnaps = true;		// Force Profile screenshot
+					}
+					else
+					{
+						AddLogMessage("HotKey: Cannot capture active profile, no profile running...");
+					}
+				}
+			}
+		}
+
+		private void txtGeneral_HotKeys_CaptureWindow_Enter(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureWindow.EnableKeyCapture = true;
+		}
+
+		private void txtGeneral_HotKeys_CaptureWindow_Leave(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureWindow.EnableKeyCapture = false;
+		}
+
+		private void txtGeneral_HotKeys_CaptureDesktop_Enter(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureDesktop.EnableKeyCapture = true;
+		}
+
+		private void txtGeneral_HotKeys_CaptureDesktop_Leave(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureDesktop.EnableKeyCapture = false;
+		}
+
+		private void txtGeneral_HotKeys_CaptureActiveProfile_Enter(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureActiveProfile.EnableKeyCapture = true;
+		}
+
+		private void txtGeneral_HotKeys_CaptureActiveProfile_Leave(object sender, System.EventArgs e)
+		{
+			DisableHotkeys = HKCaptureActiveProfile.EnableKeyCapture = false;
+		}
+
+		private void HKCaptureDesktop_KeyCapture(object sender, System.EventArgs e)
+		{
+			txtGeneral_HotKeys_CaptureDesktop.Text = HKCaptureDesktop.GetKeys().ToString();
+		}
+
+		private void HKCaptureWindow_KeyCapture(object sender, System.EventArgs e)
+		{
+			txtGeneral_HotKeys_CaptureWindow.Text = HKCaptureWindow.GetKeys().ToString();
+		}
+
+		private void HKCaptureActiveProfile_KeyCapture(object sender, System.EventArgs e)
+		{
+			txtGeneral_HotKeys_CaptureActiveProfile.Text = HKCaptureActiveProfile.GetKeys().ToString();
+		}
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		/// Notify Icon (system tray) Methods
@@ -1892,7 +1992,7 @@ namespace smiletray
 		private void TimerCheckConsoleLog_Tick(object stateInfo)
 		{
 			if(TimerCheckConsoleLog != null)
-				TimerCheckConsoleLog.Change(System.Threading.Timeout.Infinite, 10);	
+				TimerCheckConsoleLog.Change(System.Threading.Timeout.Infinite, 0);	
 
 			ExecCheckConsoleLog();
 
@@ -1905,7 +2005,7 @@ namespace smiletray
 					AddLogMessage("Scanner shutting down.");
 				}
 				else
-					TimerCheckConsoleLog.Change(0, 10);
+					TimerCheckConsoleLog.Change(10, 10);
 			}
 		}
 
@@ -2003,7 +2103,7 @@ namespace smiletray
 					{
 						if(TimerSave != null)
 						{
-							TimerSave.Change(System.Threading.Timeout.Infinite, 100);
+							TimerSave.Change(System.Threading.Timeout.Infinite, 0);
 							return;
 						}
 					}
@@ -2021,7 +2121,7 @@ namespace smiletray
 					{
 						NumSaveThreads--;
 					}
-					TimerSave.Change(1, 100);
+					TimerSave.Change(100, 100);
 				}
 			}
 		}
@@ -2222,6 +2322,99 @@ namespace smiletray
 			}
 		}
 
+		private bool CleanSettings(string file)
+		{
+			string rProfileTag = "<\\s*Profile\\s+xsi:type=\"(\\w+)\"[^>]*>(.*?)</\\s*Profile\\s*>";	
+			StreamReader sr = null;
+			StreamWriter sw = null;
+			MatchCollection mc;
+			string strFile;
+			try
+			{
+				sr = new StreamReader(file);
+				strFile = sr.ReadToEnd();
+				sr.Close();
+			}
+			catch
+			{
+				return false;
+			}
+			mc = Regex.Matches(strFile, rProfileTag, RegexOptions.Singleline);
+			foreach(Match m in mc)
+			{
+				if(m.Success)
+				{
+					string strBlock = m.Groups[0].Value;
+					bool found = false;
+					foreach(Type p in ProfileTypes)
+					{
+						string strp = p.Name;
+						string strv = m.Groups[1].Value;
+						if(String.Compare(strp, strv) == 0)
+							found = true;
+					}
+					if(!found)
+					{
+						strFile = strFile.Replace(strBlock, "");
+						AddLogMessage("Removing Profile " + m.Groups[1].ToString() + " from " + Path.GetFileName(file));
+					}
+				}
+			}
+			if(mc.Count > 0)
+			{
+				try
+				{
+					sw = new StreamWriter(file, false);
+					sw.Write(strFile);
+					sw.Close();
+				}
+				catch
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		private void LoadSettings_UnknownNode (object sender, XmlNodeEventArgs e)
+		{
+			XmlNodeType myNodeType = e.NodeType;
+			AddLogMessage(String.Format("LoadSettings->UnknownNode: " + 
+				"Name: {0} " + 
+				"LocalName: {1} " + 
+				"Namespace URI: {2}" + 
+				"Text: {3} " + 
+				"NodeType: {4} ",
+				e.Name, e.LocalName, e.NamespaceURI, e.Text, myNodeType));											
+		}
+
+		private void LoadSettings_UnknownAttribute(object sender, XmlAttributeEventArgs e)
+		{
+			AddLogMessage(String.Format("LoadSettings->UnknownAttribute: " + 
+				"Name: {0} " + 
+				"InnerXML: {1} " + 
+				"Line: {2}" + 
+				"Position: {3} ",
+				e.Attr.Name, e.Attr.InnerXml, e.LineNumber, e.LinePosition));
+		}
+
+		private void LoadSettings_UnknownElement(object sender, XmlElementEventArgs e)
+		{
+			AddLogMessage(String.Format("LoadSettings->UnknownElement: " + 
+				"Name: {0} " + 
+				"InnerXML: {1} " + 
+				"Line: {2}" + 
+				"Position: {3} ",
+				e.Element.Name, e.Element.InnerXml, e.LineNumber, e.LinePosition));
+		}
+
+		private void LoadSettings_UnreferencedObject(object sender, UnreferencedObjectEventArgs e)
+		{
+			AddLogMessage(String.Format("LoadSettings->UnreferencedObject: " + 
+				"ID: {0} " + 
+				"Object: {1} ",
+				e.UnreferencedId, e.UnreferencedObject));
+		}
+
 		// Load settings from xml
 		private bool LoadSettings()
 		{
@@ -2231,21 +2424,30 @@ namespace smiletray
 				if(File.Exists(FileName))
 				{
 					XmlSerializer serializer;
-					StreamReader reader;
+					StreamReader reader = null;
 					Smile_t Data = new Smile_t();
 
 					// Load
 					try
 					{
-						serializer =  new XmlSerializer(Data.GetType());
+						CleanSettings(FileName);
+						serializer = new XmlSerializer(Data.GetType());
+						//serializer.UnknownNode += new XmlNodeEventHandler(LoadSettings_UnknownNode);
+						//serializer.UnknownAttribute += new XmlAttributeEventHandler(LoadSettings_UnknownAttribute);
+						//serializer.UnknownElement += new XmlElementEventHandler(LoadSettings_UnknownElement);
+						//serializer.UnreferencedObject += new UnreferencedObjectEventHandler(LoadSettings_UnreferencedObject);
 						reader = new StreamReader(FileName);
 						Data = (Smile_t) serializer.Deserialize(reader);
 						reader.Close();
+						Settings = Data.Settings;
+						Profiles = Data.Profiles;
 					} 
 					catch
 					{
 						AddLogMessage("Error: Cannot parse " + FileName);
-						string NewPath = Path.GetDirectoryName(FileName)+"~"+Path.GetFileNameWithoutExtension(FileName)+".bak";
+						if(reader != null)
+							reader.Close();
+						string NewPath = Path.GetDirectoryName(FileName)+ @"\~" + Path.GetFileNameWithoutExtension(FileName)+".bak";
 						File.Move(FileName, NewPath);
 						AddLogMessage("Moved old settings to: " + NewPath);
 						
@@ -2253,9 +2455,6 @@ namespace smiletray
 						if(!File.Exists(FileName))
 							LoadSettings();
 					}
-
-					Settings = Data.Settings;
-					Profiles = Data.Profiles;
 
 					foreach(CProfile profile in Profiles)
 					{
@@ -2274,7 +2473,7 @@ namespace smiletray
 					Settings.SnapSettings.Quality = 85;
 					Settings.SnapSettings.SaveBug = false;
 					Settings.SnapSettings.Encoder = "image/jpeg";
-					Settings.SnapSettings.SaveQueueSize = 10;
+					Settings.SnapSettings.SaveQueueSize = 100;
 					Settings.SnapSettings.NextSnapDelay = 500;
 					Settings.SnapSettings.AnimOriginalDimentions = false;
 					Settings.SnapSettings.AnimUseMultiSnapDelay = true;
@@ -2348,20 +2547,6 @@ namespace smiletray
 
 		private void AddProfiles(ref CProfile [] p)
 		{
-			Type [] ProfileTypes =  new Type [ ] 
-			{ 
-				typeof(CProfileCounterStrikeSource), 
-				typeof(CProfileHalfLife2Deathmatch),
-				typeof(CProfileQuakeIIIArena),
-				typeof(CProfileQuakeIIITeamArena),
-				typeof(CProfileQ3OSP),
-				typeof(CProfileEnemyTerritory),
-				typeof(CProfileCounterStrike),
-				typeof(CProfileDayofDefeat),
-				typeof(CProfileDayofDefeatSource),
-				typeof(CProfileSourceDystopia),
-				typeof(CProfileJediAcademy)
-			};
 			int length = p == null ? 0 : p.Length;
 			bool found;
 			foreach(Type type in ProfileTypes)
@@ -2835,94 +3020,6 @@ namespace smiletray
 			CheckEnabled();
 
 			return 0;
-		}
-
-		private void HKCaptureDesktop_Pressed(object sender, System.EventArgs e)
-		{
-			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
-			{
-				AddLogMessage("HotKey: capturing desktop...");
-				Image img = ScreenCapture.GetDesktopImage(true);
-				ArrayList frames = new ArrayList(1);
-				frames.Add(img);
-				AddToSaveQueue(null, frames);
-			}
-		}
-
-		private void HKCaptureWindow_Pressed(object sender, System.EventArgs e)
-		{
-			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
-			{
-				AddLogMessage("HotKey: capturing window...");
-				Image img = ScreenCapture.GetDesktopImage(false);
-				ArrayList frames = new ArrayList(1);
-				frames.Add(img);
-				AddToSaveQueue(null, frames);
-			}
-		}
-
-		private void HKCaptureActiveProfile_Pressed(object sender, System.EventArgs e)
-		{
-			if(Settings.HotKeySettings.Enabled && !DisableHotkeys)
-			{
-				lock(ProfileLock)
-				{
-					if(ActiveProfile != null)
-					{
-						AddLogMessage("HotKey: Capturing active profile...");
-						ActiveProfile.NewSnaps = true;		// Force Profile screenshot
-					}
-					else
-					{
-						AddLogMessage("HotKey: Cannot capture active profile, no profile running...");
-					}
-				}
-			}
-		}
-
-		private void txtGeneral_HotKeys_CaptureWindow_Enter(object sender, System.EventArgs e)
-		{
-			DisableHotkeys = HKCaptureWindow.EnableKeyCapture = true;
-		}
-
-		private void txtGeneral_HotKeys_CaptureWindow_Leave(object sender, System.EventArgs e)
-		{
-			DisableHotkeys = HKCaptureWindow.EnableKeyCapture = false;
-		}
-
-		private void txtGeneral_HotKeys_CaptureDesktop_Enter(object sender, System.EventArgs e)
-		{
-			DisableHotkeys = HKCaptureDesktop.EnableKeyCapture = true;
-		}
-
-		private void txtGeneral_HotKeys_CaptureDesktop_Leave(object sender, System.EventArgs e)
-		{
-			DisableHotkeys = HKCaptureDesktop.EnableKeyCapture = false;
-		}
-
-		private void txtGeneral_HotKeys_CaptureActiveProfile_Enter(object sender, System.EventArgs e)
-		{
-			DisableHotkeys = HKCaptureActiveProfile.EnableKeyCapture = true;
-		}
-
-		private void txtGeneral_HotKeys_CaptureActiveProfile_Leave(object sender, System.EventArgs e)
-		{
-			DisableHotkeys = HKCaptureActiveProfile.EnableKeyCapture = false;
-		}
-
-		private void HKCaptureDesktop_KeyCapture(object sender, System.EventArgs e)
-		{
-			txtGeneral_HotKeys_CaptureDesktop.Text = HKCaptureDesktop.GetKeys().ToString();
-		}
-
-		private void HKCaptureWindow_KeyCapture(object sender, System.EventArgs e)
-		{
-			txtGeneral_HotKeys_CaptureWindow.Text = HKCaptureWindow.GetKeys().ToString();
-		}
-
-		private void HKCaptureActiveProfile_KeyCapture(object sender, System.EventArgs e)
-		{
-			txtGeneral_HotKeys_CaptureActiveProfile.Text = HKCaptureActiveProfile.GetKeys().ToString();
 		}
 	}
 }

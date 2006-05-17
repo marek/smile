@@ -62,6 +62,9 @@ namespace smiletray
 		[DllImport("user32")] 
 		public static extern short GetAsyncKeyState(int vkey);
 
+		[DllImport("kernel32.dll", EntryPoint="GetLastError", SetLastError=false, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+		public static extern Int32 GetLastError();
+
 		#endregion
 
 		public delegate Int32 LowLevelKeyboardDelegate(Int32 nCode, Int32 wParam, ref KBDLLHOOKSTRUCT lParam); 
