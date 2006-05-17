@@ -124,7 +124,11 @@ namespace smiletray
 		};
 		protected StreamReader log;
 		public abstract void Parse();
-		public abstract bool Open();
+		public virtual bool Open()
+		{
+			strLogBuffer = "";
+			return true;
+		}
 		public virtual bool IsOpen()
 		{
 			return this.log != null && this.log.BaseStream != null;
@@ -261,7 +265,10 @@ namespace smiletray
 							}
 							NewStats = true;
 						}
-						NewSnaps = true;
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
 						continue;
 					}
 				}
@@ -351,6 +358,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias();
@@ -688,9 +696,12 @@ namespace smiletray
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
+							NewStats = true;
 						}
-						NewSnaps = true;
-						NewStats = true;
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
 						continue;
 					}
 				}
@@ -751,6 +762,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias();
@@ -1062,6 +1074,31 @@ namespace smiletray
 
 			while ((strLine = ReadLine()) != null)
 			{
+
+				if(EnableStats)
+				{
+					// Match suicides by stuff(?)
+					match = rKilledHS.Match(strLine);
+					if(match.Success)
+					{
+						String strDeath = match.Groups[1].Value;
+						UInt32 count;
+						if(stats.death.Contains(strDeath)) 
+						{
+							count = (UInt32)stats.death[strDeath];
+							count++;
+							stats.death[strDeath] = count;
+						}
+						else  
+						{
+							count = 1;
+							stats.death.Add(strDeath, count);
+						}
+						NewStats = true;
+						continue;
+					}
+				}
+
 				// Match kills given
 				if(EnableSnaps || EnableStats)
 				{
@@ -1171,27 +1208,6 @@ namespace smiletray
 						continue;
 					}
 
-					// Match suicides by stuff(?)
-					match = rKilledHS.Match(strLine);
-					if(match.Success)
-					{
-						String strDeath = match.Groups[1].Value;
-						UInt32 count;
-						if(stats.death.Contains(strDeath)) 
-						{
-							count = (UInt32)stats.death[strDeath];
-							count++;
-							stats.death[strDeath] = count;
-						}
-						else  
-						{
-							count = 1;
-							stats.death.Add(strDeath, count);
-						}
-						NewStats = true;
-						continue;
-					}
-
 					// Match Misc Death
 					match = rDeath.Match(strLine);
 					if(match.Success)
@@ -1236,6 +1252,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias();
@@ -1643,7 +1660,10 @@ namespace smiletray
 							}
 							NewStats = true;
 						}
-						NewSnaps = true;
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
 						continue;
 					}
 				}
@@ -1775,6 +1795,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias();
@@ -2124,7 +2145,10 @@ namespace smiletray
 								}
 								NewStats = true;
 							}
-							NewSnaps = true;
+							if(EnableSnaps)
+							{
+								NewSnaps = true;
+							}
 						} 
 						// Deaths
 						else if(match.Groups[1].Value == alias && EnableStats)
@@ -2195,6 +2219,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias(@"\q3config.cfg");
@@ -2648,7 +2673,10 @@ namespace smiletray
 								}
 								NewStats = true;
 							}
-							NewSnaps = true;
+							if(EnableSnaps)
+							{
+								NewSnaps = true;
+							}
 						} 
 							// Deaths
 						else if(match.Groups[1].Value == alias && EnableStats)
@@ -2687,6 +2715,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias(@"\etmain");
@@ -3094,7 +3123,10 @@ namespace smiletray
 							}
 							NewStats = true;
 						}
-						NewSnaps = true;
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
 						continue;
 					}
 				}
@@ -3198,6 +3230,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias();
@@ -3572,9 +3605,12 @@ namespace smiletray
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
+							NewStats = true;
 						}
-						NewSnaps = true;
-						NewStats = true;
+						if(EnableSnaps)
+						{
+							NewSnaps = true;
+						}
 						continue;
 					}
 				}
@@ -3635,6 +3671,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias();
@@ -3988,7 +4025,10 @@ namespace smiletray
 								}
 								NewStats = true;
 							}
-							NewSnaps = true;
+							if(EnableSnaps)
+							{
+								NewSnaps = true;
+							}
 						} 
 							// Deaths
 						else if(match.Groups[1].Value == alias && EnableStats)
@@ -4050,6 +4090,7 @@ namespace smiletray
 		}
 		public override bool Open()
 		{
+			base.Open();
 			try 
 			{
 				this.alias = GetGameAlias(@"\GameData\base\jampconfig.cfg");

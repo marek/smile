@@ -1,0 +1,138 @@
+Various Projects I have:
+
+<br /><br /><br />
+<h3>C/C++ Applications</h3>
+<hr/>
+<div>
+<B>Tray Application Framework</B><br/>
+v1.0<br/>
+Src:<a href="/?/download/projects/trayframework 1.0.zip">trayframework 1.0.zip</a> (VC++.Net 2003)<br/><br/>
+
+Basic WinAPI framework for making tray applications. The src is a Visual Studio .Net 2003 Project. It should work 
+in any C++ IDE as long as you got the Windows Platform SDK (probably installed and you don't even know it)
+</div>
+<hr/>
+<div>
+<B>CCCTray</B><br/>
+v1.0<br/>
+Src:<a href="/?/download/projects/ccctray 1.0 src.zip">ccctray 1.0 src.zip</a> (VC++.Net 2003)<br/>
+Bin:<a href="/?/download/projects/ccctray 1.0.zip">ccctray 1.0.zip</a> (Win32)<br/><br/>
+
+A Quick Application i made using the above framework. It resets that annoying "Compress Folders" dialog that 
+comes up every 100 openings of Outlook Express. It annoys the hell out of me because I open and close 
+it about 500 times every minute (bad habit when bored). It Let's you choose to do it via time passed 
+(e.g. every month), or x amount of times instead.<br/><br/>
+
+The src is a Visual Studio .Net 2003 Project. Again should work in other IDEs.
+</div>
+<hr/>
+<div>
+<B>Extended Conio Library (xconio)</B><br/>
+v1.0<br/>
+Src+lib:<a href="/?/download/projects/xconio 1.0 src%2Blib.zip">xconio 1.0 src+lib.zip</a> (VC++.Net 2003)<br/><br/>
+
+A C++ library to extend some of the conio.h console library functions you would find in other compilers such as Borland.
+Many functions where dropped from visual studio once windows came around. You can use windows functions to mimic some of the
+lost ones. Replaced functions include:<br/><br/>
+void clrscr(void);<br/>
+void gotoxy(int x,int y);<br/>
+void clreol(void);<br/>
+int wherex(void);<br/>
+int wherey(void);
+</div>
+<hr/>
+
+
+<br /><br /><br /><br />
+<h3>C# (.NET)</h3>
+<hr/>
+<div>
+<B>Smile! (Screenshot/statistics utility)</B><br/><br/>
+v1.6<br/>
+Bin: <a href="/?/download/projects/smiletray 1.6.zip">smiletray 1.6.zip</a><br/>
+Requirements: Latest .NET framework (<a href="http://www.microsoft.com">www.microsoft.com</a>)<br/>
+Screenshots: <a href="/?/image/projects/images/smile8.jpg">smile8.jpg</a> <a href="/?/image/projects/images/smile9.jpg">smile9.jpg</a> <a href="/?/image/projects/images/smile10.jpg">smile10.jpg</a> <a href="/?/image/projects/images/smile11.jpg">smile11.jpg</a> <br/><br />
+
+Hmm. Well i never could get a good screenshot in CS:S. I was either to busy dying, or to busy sucking.
+So here it is, an app that parses console.log quickly enough to take a screenshot when you kill someone 
+and also keeps track of various statistics! <br /><br/>
+
+<I>Supported Games:</I><br/>
+------<br/>
+Counter-Strike<br/>
+Counter-Strike Source<br/>
+Day of Defeat<br/>
+Day of Defeat: Source<br/>
+Dystopia (HL2/Source Mod)<br/>
+Half-Life 2: Deatchmatch<br/>
+Jedi Academy<br/>
+Quake III Arena (and some mods)<br/>
+Wolfenstein: Enemy Territory<br/>
+</div>
+<hr/>
+<div>
+<B>Global HotKeys</B><br/><br/>
+GlobalHotKey.cs: v1.1 Example: v1.0<br/>
+Src+Example: <a href="/?/download/projects/HotKeyExample 1.0.zip">HotKeyExample 1.0.zip</a><br/>
+
+A HotKey class that uses a low level keyboard hook to capture hotkey combination. Same one as used in Smile!. It will 
+work even when other programs are in focus and have a hotkey registered. This is where the alternative WinAPI RegisterHotKey() 
+method fails. Comes with a working example. <br/><br/>
+GlobalHotKey.cs : GlobalHotKey class<br/>
+Main.cs : Example program that uses the GlobalHotKey class<br/>
+*.* : Everything else that Main.cs needs <br /><br/>
+Enjoy. <br/>
+</div>
+<hr/>
+
+
+<br /><br /><br /><br />
+<h3>ASM</h3>
+<hr/>
+<div>
+<B>Rover</B><br/>
+v1.6<br/>
+CPU: PIC16F84 (<a href="http://ww1.microchip.com/downloads/en/DeviceDoc/35007b.pdf">link</a>)<br/>
+Src: <a href="/?/download/projects/rover.asm">rover.asm</a><br/>
+Picture: <a href="/?/image/projects/images/rover.jpg">rover.jpg</a><br/><br/>
+
+Just a simple rover. It uses a PIC16F84 microcontroller. It's input is just a dual state switch. 
+One state was wired to ground, the other to a high voltage. So when the rover runs into a wall, 
+the switch is pressed and the rover navigates appopriately. It also uses stepper motors rather 
+then the conventional On/Off motor. This just provided a bigger programming challenge, and also made 
+it that both wheels turned at the exact same rate.<br><br>
+
+I will put the PCB layout on here someday.
+</div>
+<hr/>
+
+<br /><br /><br /><br />
+<h3>PHP Web Scripts</h3>
+<hr/>
+<div>
+<B>FTP Sync</B><br/>
+v1.07<br/>
+Src:<a href="/?/download/projects/sync.php">sync.php</a> (PHP4)<br/><br/>
+
+Lets you transfer a folder from one server to another via FTP. Uses a compressed checksum file to keep track of changes to minimize transfer. Just toss it in a cronjob or run it manually. Works in windows if you pass it as an argument to php.exe.
+</div>
+<hr/>
+<div>
+<B>File Functions</B><br/>
+v1.00<br/>
+Src:<a href="/?/download/projects/file_functions.php">file_functions.php</a> (PHP4)<br/><br/>
+
+Small collection of some of my file functions i use in most projects
+</div>
+<hr/>
+<div>
+<B>Simple Free Guestbook</B><br/>
+v1.0<br/>
+Src:<a href="/?/download/projects/gb 1.0.zip">gb 1.0.zip</a> (PHP4)<br/><br/>
+
+This guestbook is something I quickly whipped up for a friend, to put on his 
+wedding blog/homepage. I hope other's can have some use from it as well.
+</div>
+<hr/>
+
+

@@ -245,6 +245,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.6: Compatible
 1.5: Compatible
 1.4: Compatible
 	-- Need to update Quake III Arena Paths
@@ -257,6 +258,12 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.7**
+-Fixed Counter-Strike Profile taking screenshots when you die by killing self
+-Fixed the fix (lol) that forced closing the main form to minimizing instead, because it caused windows not to shutdown. 
+-Adjusted a few things in each profile
+
+
 **v1.6**
 -Added smiletray.manifest file into the distrubution to enable XP themes (thanks KodeK)
 -Fixed Index out of bounds error on ViewStats: Edit->Save To File->Cancel

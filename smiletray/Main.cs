@@ -73,6 +73,7 @@ namespace smiletray
 		private VersionCheck vc;
 		private long lastVersionCheck = 0;
 		private long versionCheckDelay = 0;
+		private const int WM_QUERYENDSESSION = 0x11;
 
 		private readonly Type [] ProfileTypes =  new Type [ ] 
 			{ 
@@ -2241,7 +2242,6 @@ namespace smiletray
 		{
 			lock(SaveThreadCountLock)
 			{
-				
 				if(NumSaveThreads >= 3)
 				{
 					lock(QueueLock)
@@ -2270,7 +2270,12 @@ namespace smiletray
 				}
 			}
 		}
-
+		protected override void WndProc(ref Message m)
+		{
+			if (m.Msg == WM_QUERYENDSESSION)
+				closing = true;
+			base.WndProc(ref m);
+		}
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		/// Helper Methods
