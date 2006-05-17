@@ -400,10 +400,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
 			return result;
 		}
@@ -810,10 +807,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}
@@ -1306,10 +1300,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
 			return result;
 		}
@@ -1631,10 +1622,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}
@@ -2297,7 +2285,7 @@ namespace smiletray
         }
         public override bool CheckActive()
         {
-            return NativeMethods.FindWindow("Valve001", "Team Fortress Classic") != 0;
+            return NativeMethods.FindWindow("Valve001", "Team Fortress") != 0;
         }
         public override String GetDefaultPath()
         {
@@ -2319,10 +2307,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
         }
@@ -2815,10 +2800,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}
@@ -3318,10 +3300,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}
@@ -3834,10 +3813,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}
@@ -4281,10 +4257,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}
@@ -4713,10 +4686,7 @@ namespace smiletray
             finally
             {
                 if (search != null)
-                {
                     search.Close();
-                    search.Dispose();
-                }
             }
             return result;
 		}

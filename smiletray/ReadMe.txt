@@ -262,6 +262,16 @@ Version Compatiblity:
 1.0: NOT Compatible
 
 
+Trouble shooting:
+------------------------
+Q: I get an error starting the program.
+A: Get the latest .NET framework ( http://msdn.microsoft.com/netframework/downloads/updates/default.aspx )
+
+Q: I get an error in the log window: Error Starting Session For: <some game>
+A: -Did you add -condebug into the launch parameters for steam games, or "+set logfile 2" into the shortcut of quake based games? 
+-Did you setup the game's path in smile!? Try autodetect under the right profile first.
+-If using steam, did you make sure the path has the right account name for the current user you are logged in as (Otherwise it won't find the log)
+
 
 Changelog:
 ------------------------
@@ -274,7 +284,7 @@ Changelog:
 -Fixed version checker
 -Removed smiletray.exe.manifest file, instead it's now embeded into the program.
 -Fixed path auto-detect for the Quake III Arena profile
--Modified auto-detect's search dialog for all profiles so if a supressed exception occurs it does not remain shown.
+-Slowly altering code to follow .NET coding standards and guidelines (gah, no end in sight!)
 
 
 **v1.6.2**

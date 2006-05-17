@@ -1,7 +1,8 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// Smile! -- Screenshot and Statistics Utility
-// Copyright (c) 2005 Marek Kudlacz
+// HotKeys.cs --  Global HotKey Hook with C# and .NET
+// v1.2
+// Copyright (c) 2005-2006 Marek Kudlacz
 //
 // http://kudlacz.com
 //
@@ -22,14 +23,14 @@ namespace Kudlacz.Hooks
 		
 		public event System.EventHandler Pressed;
 		public event System.EventHandler KeyCapture;
-		public bool keycapture;
+		public bool capture;
 		
 		protected static int hook;
 		protected static keycombo keys = new keycombo();
 		protected static LowLevelKeyboardDelegate del;
 		protected static ArrayList hotkeys = new ArrayList();
 		protected static readonly object Lock = new object();
-		protected static bool isRegistered = false;
+		protected static bool registered;
 	
 		public static readonly keycombo EmptyKeyCombo = new keycombo();
 		
@@ -144,6 +145,8 @@ namespace Kudlacz.Hooks
 		// --------------- Constructors / Destructors --------------- //
 		public GlobalHotKey(System.ComponentModel.IContainer container)
 		{
+            if (container == null)
+                return;
 			container.Add(this);
 			InitializeComponent();
 			lock(Lock)
@@ -172,7 +175,7 @@ namespace Kudlacz.Hooks
 			{
 				del = null;
 				hotkeys.Remove(this);
-				if(isRegistered && hotkeys.Count == 0)
+				if(registered && hotkeys.Count == 0)
 				{
 					UnregisterHook();
 				}
@@ -205,7 +208,7 @@ namespace Kudlacz.Hooks
 					for(int i = 0; i < hotkeys.Count; i++)
 					{
 						GlobalHotKey hk = (GlobalHotKey)hotkeys[i];
-						if(hk.keycapture && hk.KeyCapture != null)
+						if(hk.capture && hk.KeyCapture != null)
 							hk.KeyCapture(hk, EventArgs.Empty);
 					}
 
@@ -228,8 +231,8 @@ namespace Kudlacz.Hooks
 		// Functions & getters and setters
 		public bool EnableKeyCapture
 		{
-			set { keycapture = value; }
-			get { return keycapture; }
+			set { capture = value; }
+			get { return capture; }
 		}
 
 
@@ -241,7 +244,7 @@ namespace Kudlacz.Hooks
 				
 		public static bool IsRegistered
 		{
-			get{return isRegistered;}
+			get{return registered;}
 		}
 		
 		public static bool RegisterHook()
@@ -249,13 +252,13 @@ namespace Kudlacz.Hooks
 			lock(Lock)
 			{
 				// register hotkey
-				if(isRegistered)
+				if(registered)
 					return true;
 				del = new LowLevelKeyboardDelegate(LowLevelKeyboardHandler);
 				hook = SetWindowsHookEx(WH_KEYBOARD_LL, del, Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]).ToInt32(),0); 
 			
 				if(hook != 0)
-					return isRegistered = true;
+					return registered = true;
 				else
 				{
 					del = null;
@@ -270,7 +273,7 @@ namespace Kudlacz.Hooks
 			{
 				if(hotkeys.Count == 0)
 				{
-					return isRegistered = (UnhookWindowsHookEx(hook) != 0);
+					return registered = (UnhookWindowsHookEx(hook) != 0);
 				}
 			}
 			return false;
