@@ -19,6 +19,7 @@ using System.Threading;
 using System.Xml.Serialization;
 using System.Diagnostics;
 using System.Drawing.Imaging;
+using  ImageManipulation;
 
 namespace smiletray
 {
@@ -149,6 +150,7 @@ namespace smiletray
 		private System.Windows.Forms.Label lblGeneral_SnapSettings_SaveDelay;
 		private System.Windows.Forms.Label lblGeneral_SnapSettings_SnapDelay;
 		private System.Windows.Forms.Label lblProfiles_SnapSettings_Save;
+		private System.Windows.Forms.Button button1;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,6 +345,7 @@ namespace smiletray
 			this.tabLog = new System.Windows.Forms.TabPage();
 			this.rtxtLog = new System.Windows.Forms.RichTextBox();
 			this.TimerMsg = new System.Windows.Forms.Timer(this.components);
+			this.button1 = new System.Windows.Forms.Button();
 			this.tabOptions.SuspendLayout();
 			this.tabGeneral.SuspendLayout();
 			this.tabGeneralOptions.SuspendLayout();
@@ -530,6 +533,7 @@ namespace smiletray
 			// tabGeneral_GlobalSnapSettings
 			// 
 			this.tabGeneral_GlobalSnapSettings.AutoScroll = true;
+			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.button1);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_AnimationSettings);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_SaveBug);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ImageFormat);
@@ -1317,6 +1321,15 @@ namespace smiletray
 			this.TimerMsg.Enabled = true;
 			this.TimerMsg.Interval = 500;
 			this.TimerMsg.Tick += new System.EventHandler(this.TimerMsg_Tick);
+			// 
+			// button1
+			// 
+			this.button1.Location = new System.Drawing.Point(280, 16);
+			this.button1.Name = "button1";
+			this.button1.Size = new System.Drawing.Size(56, 32);
+			this.button1.TabIndex = 26;
+			this.button1.Text = "button1";
+			this.button1.Click += new System.EventHandler(this.button1_Click);
 			// 
 			// frmMain
 			// 
@@ -2280,6 +2293,18 @@ namespace smiletray
 					this.SaveDelay = ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.SaveDelay : ActiveProfile.SnapSettings.SaveDelay;
 				}
 			}
+		}
+
+		private void button1_Click(object sender, System.EventArgs e)
+		{
+			Image img = ScreenCapture.GetDesktopImage(false);
+			ArrayList lst = new ArrayList(1);
+			lst.Add(img);
+			CGifFile.SaveAnimation(DateTime.Now.Ticks.ToString() + ".gif", lst, 35);
+			img = null;
+			lst.Clear();
+			lst.TrimToSize();
+			lst = null;
 		}
 
 	}

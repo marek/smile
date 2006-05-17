@@ -29,7 +29,8 @@ Enjoy!
 
 Requirements:
 ------------------------
-• Counter Strike: Source
+• Any of the Supported Games listed
+• AMD 2000+ or Intel 2Ghz equivalent
 • Latest .NET runtime files (www.microsoft.com or windowsupdate.microsoft.com)  ********<-----IMPORTANT*******
 • food
 • i guess a mouse helps too

@@ -46,16 +46,18 @@ namespace smiletray
 				desktopWindowGraphics.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
 				NativeMethods.BitBlt(pDesktop, 0, 0, screen.Width, screen.Height, pWindowDC, screen.X, screen.Y, SRCCOPY);
 
-				//Release device contexts
+				// Release device contexts
 				NativeMethods.ReleaseDC(pDesktopWindow, pWindowDC);
 				desktopGraphics.ReleaseHdc(pDesktop);
 
-				//Set pointers to zero.
+				// Set pointers to zero.
 				desktopWindowGraphics.Dispose();
 				pDesktop = IntPtr.Zero;
 				pDesktopWindow = IntPtr.Zero;
 				pWindowDC = IntPtr.Zero;
 			}
+			desktopGraphics.Dispose();
+			desktopWindowGraphics.Dispose();
 			return desktopImage;
 		}
 

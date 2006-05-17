@@ -76,6 +76,7 @@ namespace ImageManipulation
 		/// </summary>
 		/// <param name="original">Any old palette, this is overrwritten</param>
 		/// <returns>The new color palette</returns>
+		ColorPalette [] newpalette = new ColorPalette[255];
 		protected override ColorPalette GetPalette ( ColorPalette original )
 		{
 			// First off convert the octree to _maxColors colors
