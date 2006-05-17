@@ -202,7 +202,6 @@ Source code is available from http://www.kudlacz.com
 
 
 
-
 ShoutOuts:
 ------------------------
 BUNG: Especially Adam for help in one thing, and pix & i[e for testing.
@@ -245,6 +244,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.6.1: Compatible
 1.6: Compatible
 1.5: Compatible
 1.4: Compatible
@@ -258,6 +258,11 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.6.2**
+-Application will now come to foreground if another instance tries to start
+-Fixed a bug with Enabling/Disabling Snaps/Stats
+
+
 **v1.6.1**
 -Fixed Counter-Strike Profile taking screenshots when you die by killing self
 -Fixed the fix (lol) that forced closing the main form to minimizing instead, because it caused windows not to shutdown. 

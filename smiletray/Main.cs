@@ -29,9 +29,8 @@ namespace smiletray
 	// Main Options Form
 	public class frmMain : System.Windows.Forms.Form
 	{
-		// Volitile State	
-
 		// private stuff for this form
+		static private int MessageId;
 		private Settings_t Settings;
 		private bool EnableStats;	// Volitile State
 		private bool EnableSnaps;	// Volitile State
@@ -1717,12 +1716,24 @@ namespace smiletray
 		[STAThread]
 		static void Main() 
 		{
-			using(SingleProgramInstance spi = new SingleProgramInstance("smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}"))
+			string indentifier = "smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}";
+			MessageId = NativeMethods.RegisterWindowMessage(indentifier);
+			using(SingleProgramInstance spi = new SingleProgramInstance(indentifier))
 			{
 				if (spi.IsSingleInstance)
 				{
 					// Start Main Form
 					Application.Run(new frmMain());
+				} 
+				else 
+				{
+					//Cause the current form to show
+					//Now brodcast a message to cause the first instance to show up
+					Int32 BSMRecipients = NativeMethods.BSM_APPLICATIONS ; //Only go to applications
+
+					//Ignore current app & Post the windows message
+					int ret = NativeMethods.BroadcastSystemMessage(NativeMethods.BSF_POSTMESSAGE |NativeMethods.BSF_IGNORECURRENTTASK, ref BSMRecipients, 
+						MessageId, 0, 0);
 				}
 			}
 
@@ -2053,8 +2064,7 @@ namespace smiletray
 		private void mnuEnableStats_Click(object sender, System.EventArgs e)
 		{
 			mnuEnableStats.Checked = !mnuEnableStats.Checked;
-			EnableStats = mnuEnableStats.Checked;
-			CheckEnabled();
+			UpdateMenuEnabled();
 		}
 
 		private void mnuOpenSnapDir_Click(object sender, System.EventArgs e)
@@ -2078,8 +2088,7 @@ namespace smiletray
 		private void mnuEnableSnaps_Click(object sender, System.EventArgs e)
 		{
 			mnuEnableSnaps.Checked = !mnuEnableSnaps.Checked;
-			EnableSnaps = mnuEnableSnaps.Checked;
-			CheckEnabled();
+			UpdateMenuEnabled();
 		}
 
 		private void notifyIcon_DoubleClick(object sender, System.EventArgs e)
@@ -2176,11 +2185,6 @@ namespace smiletray
 						ActiveProfile.NewStats = false;
 					}
 				}	
-
-				if(!ActiveProfile.StatsSettings.Enabled)
-					mnuEnableStats.Checked = EnableStats = false;
-				if(!ActiveProfile.SnapSettings.Enabled)
-					mnuEnableSnaps.Checked = EnableSnaps = false;
 			}
 			else
 			{
@@ -2274,6 +2278,20 @@ namespace smiletray
 		{
 			if (m.Msg == WM_QUERYENDSESSION)
 				closing = true;
+			else if (m.Msg == MessageId) // If we found our message then activate
+			{
+				// Set the WindowState to normal if the form is minimized.
+				if (!this.Visible || this.WindowState == FormWindowState.Minimized) 
+				{
+					this.Show();
+					this.WindowState = FormWindowState.Normal;
+				}
+
+				// Activate the form.
+				this.Activate();
+				this.Focus();
+			}
+
 			base.WndProc(ref m);
 		}
 
@@ -2416,20 +2434,28 @@ namespace smiletray
 				return;
 
 			// Check Snaps Enabled
-			if(ActiveProfile.SnapSettings.UseGlobal && !Settings.SnapSettings.Enabled) 
-				mnuEnableSnaps.Checked  = ActiveProfile.EnableSnaps = EnableSnaps = false;
-			else if(!ActiveProfile.SnapSettings.Enabled)
-				mnuEnableSnaps.Checked  = ActiveProfile.EnableSnaps = EnableSnaps = false;
+			if(ActiveProfile.SnapSettings.UseGlobal) 
+				mnuEnableSnaps.Checked  = ActiveProfile.EnableSnaps = EnableSnaps = Settings.SnapSettings.Enabled;
 			else
-				ActiveProfile.EnableSnaps = EnableSnaps;
+				mnuEnableSnaps.Checked  = ActiveProfile.EnableSnaps = EnableSnaps = ActiveProfile.SnapSettings.Enabled;
 
-			// Check StatsEnabled
-			if(ActiveProfile.StatsSettings.UseGlobal && !Settings.StatsSettings.Enabled) 
-				mnuEnableStats.Checked  = ActiveProfile.EnableStats = EnableStats = false;
-			else if(!ActiveProfile.StatsSettings.Enabled)
-				mnuEnableStats.Checked  = ActiveProfile.EnableStats = EnableStats = false;
+			// Check Stats Enabled
+			if(ActiveProfile.StatsSettings.UseGlobal) 
+				mnuEnableStats.Checked  = ActiveProfile.EnableStats = EnableStats = Settings.StatsSettings.Enabled;
 			else
-				ActiveProfile.EnableStats = EnableStats;
+				mnuEnableStats.Checked  = ActiveProfile.EnableStats = EnableStats = ActiveProfile.StatsSettings.Enabled;
+		}
+
+		private void UpdateMenuEnabled()
+		{
+			if(ActiveProfile == null)
+				return;
+
+			// Force Snaps Enabled
+			ActiveProfile.EnableSnaps = EnableSnaps = mnuEnableSnaps.Checked;
+
+			// Force Stats Enabled
+			ActiveProfile.EnableStats = EnableStats = mnuEnableStats.Checked;
 		}
 
 		private void CopyProfile(CProfile a, CProfile b)

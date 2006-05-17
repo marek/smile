@@ -36,6 +36,8 @@ namespace smiletray
 			get {return	_owned;}
 		}
 
+
+
 		private void Release()
 		{
 			if (_owned)

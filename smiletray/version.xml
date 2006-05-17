@@ -3,17 +3,21 @@
 	<Smile>
 		<name>Smile!</name>
 		<description>Screenshot and Statistics Utility</description>
-		<version>1.6.1</version>
-		<intversion>1.6.1</intversion>
-		<date>12/06/2005</date>
-		<time>00:29:24</time>
+		<version>1.6.2</version>
+		<intversion>1.6.2</intversion>
+		<date>11/01/2006</date>
+		<time>01:13:17</time>
 		<page>http://www.kudlacz.com/?/section/projects</page>
-		<downloadurl>http://www.kudlacz.com/?/download/projects/smiletray%201.6.1.zip</downloadurl>
-		<fileurl>http://www.kudlacz.com/?/fetch/projects/smiletray%201.6.1.zip</fileurl>
+		<downloadurl>http://www.kudlacz.com/?/download/projects/smiletray%201.6.2.zip</downloadurl>
+		<fileurl>http://www.kudlacz.com/?/fetch/projects/smiletray%201.6.2.zip</fileurl>
 		<hash></hash>
 		<comments>
 Changelog:
 ------------------------
+**v1.6.2**
+-Application will now come to foreground if another instance tries to start
+-Fixed a bug with Enabling/Disabling Snaps/Stats
+
 **v1.6.1**
 -Fixed Counter-Strike Profile taking screenshots when you die by killing self
 -Fixed the fix (lol) that forced closing the main form to minimizing instead, because it caused windows not to shutdown. 

@@ -45,7 +45,21 @@ namespace smiletray
 		[DllImport("user32.dll")]
 		public static extern IntPtr GetWindowRect(IntPtr hWnd,ref RECT rect);
 
+		[DllImport("USER32.DLL", EntryPoint="BroadcastSystemMessageA",  SetLastError=true,
+			 CharSet=CharSet.Unicode, ExactSpelling=true,
+			 CallingConvention=CallingConvention.StdCall)]
+		public static extern int BroadcastSystemMessage(Int32 dwFlags, ref Int32 pdwRecipients, int uiMessage, int wParam, int lParam);
+
+		[DllImport("USER32.DLL", EntryPoint="RegisterWindowMessageA",  SetLastError=true,
+			 CharSet=CharSet.Unicode, ExactSpelling=true,
+			 CallingConvention=CallingConvention.StdCall)]
+		public static extern int RegisterWindowMessage(String pString);
+		
 		#endregion
+
+		public const Byte BSF_IGNORECURRENTTASK = 2; //this ignores the current app Hex 2
+		public const Byte BSF_POSTMESSAGE = 16;  //This posts the message Hex 10
+		public const Byte BSM_APPLICATIONS = 8;  //This tells the windows message to just go to applications Hex 8
 
 		[StructLayout(LayoutKind.Sequential)]
 			public struct RECT
