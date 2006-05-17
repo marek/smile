@@ -18,8 +18,8 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.7";
-		public static readonly String intversion = "1.7.0";
+		public static readonly String version = "1.7.1";
+		public static readonly String intversion = "1.7.1";
 		public static readonly String copyrightdate = "©2005-2006";
 	}
 
@@ -64,9 +64,12 @@ namespace smiletray
 		public Int32 Delay;
 		public Int32 SaveQueueSize;
 		public Int32 NextSnapDelay;
+        public Int32 NumSaveThreads;
 		public String SnapDir;
 		public String Encoder;
 		public Int32 Quality;
+        public System.Threading.ThreadPriority SavePriority;
+        public System.Threading.ThreadPriority CapturePriority;
 
 		public SnapSettings_t()
 		{
@@ -81,6 +84,9 @@ namespace smiletray
 			Delay = new Int32();
 			SaveQueueSize = new Int32();
 			NextSnapDelay = new Int32();
+            NumSaveThreads = 3;
+            SavePriority = System.Threading.ThreadPriority.Lowest;
+            CapturePriority = System.Threading.ThreadPriority.Normal;
 			Quality = new Int32();
 		}
 	}

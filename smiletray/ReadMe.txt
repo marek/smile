@@ -138,7 +138,6 @@ Right Click on the smile icon, click open. See settings.
 Options that are globally used by default.
 	[Global Snap Settings]
 	• Enabled: Enable or disable the snap settings (if you just want to do stats) for all games by default
-	• Save Bug: Allow the program to retry saving multiple times if a file does not seem to save the first time (AntiVirus conflict)
 	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
 	I have yet to find a good value myself. A delay of 0, is too fast, so the screenshot is 
 	taken to early and the player will just look like it's twitching. Good values are 
@@ -148,6 +147,13 @@ Options that are globally used by default.
 	• Snap Directory: Where to save your screenshots
 	• Image Output Type: Let's you select between image formats (such as bitmap, jpeg, etc..)
 	• Quality: If the selected image format supports compression, use this quality setting.
+	• Save Bug: Allow the program to retry saving multiple times if a file does not seem to save the first time (AntiVirus conflict)
+	• Save Threads:How many worker threads the save queue should have. Between 0 and 10. Default 3. The higher 
+	this number is, the higher the cpu usage is, but at the same time more images will be saved to disk at once.
+	• Save Priority: What CPU Level should be assigned to the worker queues for the save queue. The higher, the 
+	slower your game may be, but the faster things will save.
+	• Capture Priority: What CPU Level should be assigned to screen capturing. The higher this level is, the faster the screenshot will be put
+	into the save queue for processing, but it may reduce game performance.
 	• Use Optimized Palette: Use an Optimized Octree algorithm for saving gif animations (slower + bigger file size), 
 	otherwise used a fixed palette.
 	• Use Original Dimentions: Whether to keep or resize the image when saving a sequence to an animation
@@ -227,6 +233,7 @@ Leo for suggestions
 `star from #counter-strike
 KodeK for .manifest file and bug reports/suggestions
 Flank for team fortress classic support
+eram for priority testing.
 Everyone who has sent me a "thanks"
 
 
@@ -250,6 +257,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.7: Compatible
 1.6.2: Compatible
 1.6.1: Compatible
 1.6: Compatible
@@ -262,19 +270,14 @@ Version Compatiblity:
 1.0: NOT Compatible
 
 
-Trouble shooting:
-------------------------
-Q: I get an error starting the program.
-A: Get the latest .NET framework ( http://msdn.microsoft.com/netframework/downloads/updates/default.aspx )
-
-Q: I get an error in the log window: Error Starting Session For: <some game>
-A: -Did you add -condebug into the launch parameters for steam games, or "+set logfile 2" into the shortcut of quake based games? 
--Did you setup the game's path in smile!? Try autodetect under the right profile first.
--If using steam, did you make sure the path has the right account name for the current user you are logged in as (Otherwise it won't find the log)
-
 
 Changelog:
 ------------------------
+**v1.7.1**
+-Added the ability to adjust priority thanks to feedback (Thanks eram)
+-Improved Cross platform compatability.
+
+
 **v1.7**
 -Converted to .NET Framework v2.0 using Visual Studio 2005
 -Removed depricated code

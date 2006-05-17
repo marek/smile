@@ -32,18 +32,18 @@ namespace smiletray
 		public static extern IntPtr GetWindowDC(IntPtr hwnd);
 
 		[DllImport("user32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
-		public static extern int ReleaseDC(IntPtr hwnd, IntPtr dc);
+        public static extern Int32 ReleaseDC(IntPtr hwnd, IntPtr dc);
 
 		[DllImport("gdi32.dll", CharSet=CharSet.Ansi, ExactSpelling=true, SetLastError=false)]
-		public static extern UInt64 BitBlt
-			(IntPtr hDestDC, int x, int y, int nWidth, int nHeight,
-			IntPtr hSrcDC, int xSrc, int ySrc, Int32 dwRop);
+		public static extern Int32 BitBlt
+            (IntPtr hDestDC, Int32 x, Int32 y, Int32 nWidth, Int32 nHeight,
+            IntPtr hSrcDC, Int32 xSrc, Int32 ySrc, Int32 dwRop);
 		
 		[DllImport("user32.dll",EntryPoint="FindWindow",CharSet=CharSet.Unicode)]
-		public static extern int FindWindow(string ClassName, string WindowName);
+		public static extern IntPtr FindWindow(string ClassName, string WindowName);
 
 		[DllImport("user32.dll")]
-		public static extern IntPtr GetWindowRect(IntPtr hWnd,ref RECT rect);
+		public static extern Int32 GetWindowRect(IntPtr hWnd,ref RECT rect);
 
 		[DllImport("USER32.DLL", EntryPoint="BroadcastSystemMessageA",  SetLastError=true,
 			 CharSet=CharSet.Unicode, ExactSpelling=true,

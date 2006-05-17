@@ -50,7 +50,7 @@ namespace smiletray
 		private readonly object FrameLock = new object();
 		private readonly object SaveThreadCountLock = new object();
 		private readonly object FileSaveLock = new object();
-		private int NumSaveThreads;
+		private int CurrentNumSaveThreads;
 		private TSArrayList SaveQueue;
 		private TSArrayList MsgQueue;
 		private long LastSnapTime;
@@ -150,8 +150,7 @@ namespace smiletray
 		private System.Windows.Forms.Button cmdProfiles_StatsSettings_Reset;
 		private System.Windows.Forms.Label lblProfiles_ActiveProfile;
 		private System.Windows.Forms.TabPage tabLog;
-		private System.Windows.Forms.RichTextBox rtxtLog;
-		private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_SaveBug;
+        private System.Windows.Forms.RichTextBox rtxtLog;
 		private System.Windows.Forms.Label lblProfiles_SnapSettings_SnapDelay;
 		private System.Windows.Forms.Label lblProfiles_SnapSettings_NextSnapDelay;
 		private System.Windows.Forms.NumericUpDown udProfiles_SnapSettings_NextSnapDelay;
@@ -199,6 +198,14 @@ namespace smiletray
 		private System.Windows.Forms.GroupBox grpGeneral_Misc_Updates;
 		private System.Windows.Forms.ComboBox cbGeneral_Misc_CheckUpdates;
 		private System.Windows.Forms.Label lblGeneral_Misc_CheckUpdates;
+        private System.Windows.Forms.GroupBox grpGeneral_SnapSettings_ProcessingSettings;
+        private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_SaveBug;
+        private System.Windows.Forms.NumericUpDown udGeneral_SnapSettings_SaveThreads;
+        private System.Windows.Forms.Label lblGeneral_SnapSettings_SaveThreads;
+        private System.Windows.Forms.Label lblGeneral_SnapSettings_CapturePriority;
+        private System.Windows.Forms.ComboBox cbGeneral_SnapSettings_CapturePriority;
+        private System.Windows.Forms.Label lblGeneral_SnapSettings_SavePriority;
+        private System.Windows.Forms.ComboBox cbGeneral_SnapSettings_SavePriority;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,6 +262,16 @@ namespace smiletray
 			UpdateEncoder();
 			extlist.Add(".avi");
 
+            // Priority
+            {
+                Array levels = Enum.GetValues(typeof(System.Threading.ThreadPriority));
+                for (int i = 0; i < levels.Length; i++)
+                {
+                    cbGeneral_SnapSettings_CapturePriority.Items.Add(levels.GetValue(i));
+                    cbGeneral_SnapSettings_SavePriority.Items.Add(levels.GetValue(i));
+                }
+
+            }
 			// Create Save Queue
 			this.SaveQueue = new TSArrayList(10);
 
@@ -281,7 +298,7 @@ namespace smiletray
 			rtxtAbout.SelectionStart = 0 ;
 			
 			// Save queue starts here because now we can take screenshots at any moment
-			NumSaveThreads = 0;
+			CurrentNumSaveThreads = 0;
 			TimerSaveDelegate = new TimerCallback(TimerSave_Tick);
 			TimerSave = new System.Threading.Timer(TimerSaveDelegate, null, 10, 100);
 			AddLogMessage("SaveQueue starting up.");
@@ -339,1376 +356,1475 @@ namespace smiletray
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.components = new System.ComponentModel.Container();
-			System.Resources.ResourceManager resources = new System.Resources.ResourceManager(typeof(frmMain));
-			this.HKCaptureDesktop = new GlobalHotKey(this.components);
-			this.HKCaptureWindow = new GlobalHotKey(this.components);
-			this.HKCaptureActiveProfile = new GlobalHotKey(this.components);
-			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
-			this.contextMenu = new System.Windows.Forms.ContextMenu();
-			this.mnuEnableSnaps = new System.Windows.Forms.MenuItem();
-			this.mnuEnableStats = new System.Windows.Forms.MenuItem();
-			this.menuItem6 = new System.Windows.Forms.MenuItem();
-			this.mnuViewStats = new System.Windows.Forms.MenuItem();
-			this.mnuOpenSnapDir = new System.Windows.Forms.MenuItem();
-			this.menuItem4 = new System.Windows.Forms.MenuItem();
-			this.menuOpen = new System.Windows.Forms.MenuItem();
-			this.mnuAbout = new System.Windows.Forms.MenuItem();
-			this.menuItem1 = new System.Windows.Forms.MenuItem();
-			this.mnuExit = new System.Windows.Forms.MenuItem();
-			this.dlgBrowseDir = new System.Windows.Forms.FolderBrowserDialog();
-			this.TimerMisc = new System.Windows.Forms.Timer(this.components);
-			this.cmdOK = new System.Windows.Forms.Button();
-			this.cmdCancel = new System.Windows.Forms.Button();
-			this.lstProfiles_Games = new System.Windows.Forms.ListView();
-			this.tabOptions = new System.Windows.Forms.TabControl();
-			this.tabGeneral = new System.Windows.Forms.TabPage();
-			this.tabGeneralOptions = new System.Windows.Forms.TabControl();
-			this.tabGeneral_GlobalSnapSettings = new System.Windows.Forms.TabPage();
-			this.grpGeneral_SnapSettings_AnimationSettings = new System.Windows.Forms.GroupBox();
-			this.chkGeneral_SnapSettings_AnimOptimizePalette = new System.Windows.Forms.CheckBox();
-			this.udGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.NumericUpDown();
-			this.lblGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.Label();
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay = new System.Windows.Forms.CheckBox();
-			this.udGeneral_SnapSettings_AnimHeight = new System.Windows.Forms.NumericUpDown();
-			this.lblGeneral_SnapSettings_AnimHeight = new System.Windows.Forms.Label();
-			this.udGeneral_SnapSettings_AnimWidth = new System.Windows.Forms.NumericUpDown();
-			this.lblGeneral_SnapSettings_AnimWidth = new System.Windows.Forms.Label();
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions = new System.Windows.Forms.CheckBox();
-			this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
-			this.grpGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.GroupBox();
-			this.lblGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.Label();
-			this.cbGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.ComboBox();
-			this.lblGeneral_SnapSettings_Quality = new System.Windows.Forms.Label();
-			this.tbGeneral_SnapSettings_Quality = new System.Windows.Forms.TrackBar();
-			this.grpGeneral_SnapSettings_SnapDir = new System.Windows.Forms.GroupBox();
-			this.txtGeneral_SnapSettings_SnapDir = new System.Windows.Forms.TextBox();
-			this.cmdGeneral_SnapSettings_BrowseSnapDir = new System.Windows.Forms.Button();
-			this.grpGeneral_SnapSettings_TimingAndParameters = new System.Windows.Forms.GroupBox();
-			this.udGeneral_SnapSettings_NextSnapDelay = new System.Windows.Forms.NumericUpDown();
-			this.udGeneral_SnapSettings_SaveQueueSize = new System.Windows.Forms.NumericUpDown();
-			this.udGeneral_SnapSettings_Delay = new System.Windows.Forms.NumericUpDown();
-			this.lblGeneral_SnapSettings_NextSnapDelay = new System.Windows.Forms.Label();
-			this.lblGeneral_SnapSettings_SaveQueueSize = new System.Windows.Forms.Label();
-			this.lblGeneral_SnapSettings_SnapDelay = new System.Windows.Forms.Label();
-			this.chkGeneral_SnapSettings_Enabled = new System.Windows.Forms.CheckBox();
-			this.tabGeneral_GlobalStatsSettings = new System.Windows.Forms.TabPage();
-			this.cmdGeneral_StatsSettings_ViewStats = new System.Windows.Forms.Button();
-			this.cmdGeneral_StatsSettings_Reset = new System.Windows.Forms.Button();
-			this.chkGeneral_StatsSettings_Enabled = new System.Windows.Forms.CheckBox();
-			this.tabGeneral_HotKeys = new System.Windows.Forms.TabPage();
-			this.txtGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.TextBox();
-			this.txtGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.TextBox();
-			this.txtGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.TextBox();
-			this.lblGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.Label();
-			this.lblGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.Label();
-			this.lblGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.Label();
-			this.chkGeneral_HotKeys_Enabled = new System.Windows.Forms.CheckBox();
-			this.tabGeneral_Misc = new System.Windows.Forms.TabPage();
-			this.grpGeneral_Misc_Updates = new System.Windows.Forms.GroupBox();
-			this.lblGeneral_Misc_CheckUpdates = new System.Windows.Forms.Label();
-			this.cbGeneral_Misc_CheckUpdates = new System.Windows.Forms.ComboBox();
-			this.tabProfiles = new System.Windows.Forms.TabPage();
-			this.lblProfiles_ActiveProfile = new System.Windows.Forms.Label();
-			this.tabProfileOptions = new System.Windows.Forms.TabControl();
-			this.tabProfiles_GameSettings = new System.Windows.Forms.TabPage();
-			this.grpProfiles_GameSettings_Path = new System.Windows.Forms.GroupBox();
-			this.cmdProfiles_GameSettings_AutoDetect = new System.Windows.Forms.Button();
-			this.cmdProfiles_GameSettings_BrowseGamePath = new System.Windows.Forms.Button();
-			this.txtProfiles_GameSettings_Path = new System.Windows.Forms.TextBox();
-			this.tabProfiles_SnapSettings = new System.Windows.Forms.TabPage();
-			this.chkProfiles_SnapSettings_UseGlobal = new System.Windows.Forms.CheckBox();
-			this.grpProfiles_SnapSettingsSub = new System.Windows.Forms.GroupBox();
-			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.lblProfiles_SnapSettings_Brightness = new System.Windows.Forms.Label();
-			this.tbProfiles_SnapSettings_Brightness = new System.Windows.Forms.TrackBar();
-			this.lblProfiles_SnapSettings_Contrast = new System.Windows.Forms.Label();
-			this.tbProfiles_SnapSettings_Contrast = new System.Windows.Forms.TrackBar();
-			this.lblProfiles_SnapSettings_Gamma = new System.Windows.Forms.Label();
-			this.tbProfiles_SnapSettings_Gamma = new System.Windows.Forms.TrackBar();
-			this.lblProfiles_SnapSettings_Save = new System.Windows.Forms.Label();
-			this.cbProfiles_SnapSettings_SaveType = new System.Windows.Forms.ComboBox();
-			this.grpProfiles_SnapSettings_SnapDir = new System.Windows.Forms.GroupBox();
-			this.txtProfiles_SnapSettings_SnapDir = new System.Windows.Forms.TextBox();
-			this.cmdProfiles_BrowseSnapDir = new System.Windows.Forms.Button();
-			this.grpProfiles_SnapSettings_TimingAndParameters = new System.Windows.Forms.GroupBox();
-			this.lblProfiles_SnapSettings_MultiSnapDelay = new System.Windows.Forms.Label();
-			this.udProfiles_SnapSettings_MultiSnapDelay = new System.Windows.Forms.NumericUpDown();
-			this.lblProfiles_SnapSettings_SnapCount = new System.Windows.Forms.Label();
-			this.udProfiles_SnapSettings_SnapCount = new System.Windows.Forms.NumericUpDown();
-			this.lblProfiles_SnapSettings_NextSnapDelay = new System.Windows.Forms.Label();
-			this.udProfiles_SnapSettings_NextSnapDelay = new System.Windows.Forms.NumericUpDown();
-			this.lblProfiles_SnapSettings_SnapDelay = new System.Windows.Forms.Label();
-			this.udProfiles_SnapSettings_Delay = new System.Windows.Forms.NumericUpDown();
-			this.chkProfiles_SnapSettings_Enabled = new System.Windows.Forms.CheckBox();
-			this.tabProfiles_StatsSettings = new System.Windows.Forms.TabPage();
-			this.chkProfiles_StatsSettings_UseGlobal = new System.Windows.Forms.CheckBox();
-			this.grpProfiles_StatsSettingsSub = new System.Windows.Forms.GroupBox();
-			this.chkProfiles_StatsSettings_Enabled = new System.Windows.Forms.CheckBox();
-			this.cmdProfiles_StatsSettings_View = new System.Windows.Forms.Button();
-			this.cmdProfiles_StatsSettings_Reset = new System.Windows.Forms.Button();
-			this.tabLog = new System.Windows.Forms.TabPage();
-			this.rtxtLog = new System.Windows.Forms.RichTextBox();
-			this.tabAbout = new System.Windows.Forms.TabPage();
-			this.rtxtAbout = new System.Windows.Forms.RichTextBox();
-			this.picAboutIcon = new System.Windows.Forms.PictureBox();
-			this.TimerMsg = new System.Windows.Forms.Timer(this.components);
-			this.cmdApply = new System.Windows.Forms.Button();
-			this.tabOptions.SuspendLayout();
-			this.tabGeneral.SuspendLayout();
-			this.tabGeneralOptions.SuspendLayout();
-			this.tabGeneral_GlobalSnapSettings.SuspendLayout();
-			this.grpGeneral_SnapSettings_AnimationSettings.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimWidth)).BeginInit();
-			this.grpGeneral_SnapSettings_ImageFormat.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.tbGeneral_SnapSettings_Quality)).BeginInit();
-			this.grpGeneral_SnapSettings_SnapDir.SuspendLayout();
-			this.grpGeneral_SnapSettings_TimingAndParameters.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_NextSnapDelay)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveQueueSize)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).BeginInit();
-			this.tabGeneral_GlobalStatsSettings.SuspendLayout();
-			this.tabGeneral_HotKeys.SuspendLayout();
-			this.tabGeneral_Misc.SuspendLayout();
-			this.grpGeneral_Misc_Updates.SuspendLayout();
-			this.tabProfiles.SuspendLayout();
-			this.tabProfileOptions.SuspendLayout();
-			this.tabProfiles_GameSettings.SuspendLayout();
-			this.grpProfiles_GameSettings_Path.SuspendLayout();
-			this.tabProfiles_SnapSettings.SuspendLayout();
-			this.grpProfiles_SnapSettingsSub.SuspendLayout();
-			this.groupBox1.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Brightness)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Contrast)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Gamma)).BeginInit();
-			this.grpProfiles_SnapSettings_SnapDir.SuspendLayout();
-			this.grpProfiles_SnapSettings_TimingAndParameters.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_MultiSnapDelay)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SnapCount)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_NextSnapDelay)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_Delay)).BeginInit();
-			this.tabProfiles_StatsSettings.SuspendLayout();
-			this.grpProfiles_StatsSettingsSub.SuspendLayout();
-			this.tabLog.SuspendLayout();
-			this.tabAbout.SuspendLayout();
-			this.SuspendLayout();
-			// 
-			// HKCaptureDesktop
-			// 
-			this.HKCaptureDesktop.EnableKeyCapture = false;
-			this.HKCaptureDesktop.HotKey = null;
-			this.HKCaptureDesktop.Pressed += new System.EventHandler(this.HKCaptureDesktop_Pressed);
-			this.HKCaptureDesktop.KeyCapture += new System.EventHandler(this.HKCaptureDesktop_KeyCapture);
-			// 
-			// HKCaptureWindow
-			// 
-			this.HKCaptureWindow.EnableKeyCapture = false;
-			this.HKCaptureWindow.HotKey = null;
-			this.HKCaptureWindow.Pressed += new System.EventHandler(this.HKCaptureWindow_Pressed);
-			this.HKCaptureWindow.KeyCapture += new System.EventHandler(this.HKCaptureWindow_KeyCapture);
-			// 
-			// HKCaptureActiveProfile
-			// 
-			this.HKCaptureActiveProfile.EnableKeyCapture = false;
-			this.HKCaptureActiveProfile.HotKey = null;
-			this.HKCaptureActiveProfile.Pressed += new System.EventHandler(this.HKCaptureActiveProfile_Pressed);
-			this.HKCaptureActiveProfile.KeyCapture += new System.EventHandler(this.HKCaptureActiveProfile_KeyCapture);
-			// 
-			// notifyIcon
-			// 
-			this.notifyIcon.ContextMenu = this.contextMenu;
-			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
-			this.notifyIcon.Text = "Smile!";
-			this.notifyIcon.Visible = true;
-			this.notifyIcon.DoubleClick += new System.EventHandler(this.notifyIcon_DoubleClick);
-			// 
-			// contextMenu
-			// 
-			this.contextMenu.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
-																						this.mnuEnableSnaps,
-																						this.mnuEnableStats,
-																						this.menuItem6,
-																						this.mnuViewStats,
-																						this.mnuOpenSnapDir,
-																						this.menuItem4,
-																						this.menuOpen,
-																						this.mnuAbout,
-																						this.menuItem1,
-																						this.mnuExit});
-			// 
-			// mnuEnableSnaps
-			// 
-			this.mnuEnableSnaps.Checked = true;
-			this.mnuEnableSnaps.Index = 0;
-			this.mnuEnableSnaps.Text = "Enable Snaps";
-			this.mnuEnableSnaps.Click += new System.EventHandler(this.mnuEnableSnaps_Click);
-			// 
-			// mnuEnableStats
-			// 
-			this.mnuEnableStats.Checked = true;
-			this.mnuEnableStats.Index = 1;
-			this.mnuEnableStats.Text = "Enable Stats";
-			this.mnuEnableStats.Click += new System.EventHandler(this.mnuEnableStats_Click);
-			// 
-			// menuItem6
-			// 
-			this.menuItem6.Index = 2;
-			this.menuItem6.Text = "-";
-			// 
-			// mnuViewStats
-			// 
-			this.mnuViewStats.Index = 3;
-			this.mnuViewStats.Text = "View Stats";
-			this.mnuViewStats.Click += new System.EventHandler(this.mnuViewStats_Click);
-			// 
-			// mnuOpenSnapDir
-			// 
-			this.mnuOpenSnapDir.Index = 4;
-			this.mnuOpenSnapDir.Text = "Open Snap Folder";
-			this.mnuOpenSnapDir.Click += new System.EventHandler(this.mnuOpenSnapDir_Click);
-			// 
-			// menuItem4
-			// 
-			this.menuItem4.Index = 5;
-			this.menuItem4.Text = "-";
-			// 
-			// menuOpen
-			// 
-			this.menuOpen.Index = 6;
-			this.menuOpen.Text = "Open";
-			this.menuOpen.Click += new System.EventHandler(this.mnuOpen_Click);
-			// 
-			// mnuAbout
-			// 
-			this.mnuAbout.Index = 7;
-			this.mnuAbout.Text = "About";
-			this.mnuAbout.Click += new System.EventHandler(this.mnuAbout_Click);
-			// 
-			// menuItem1
-			// 
-			this.menuItem1.Index = 8;
-			this.menuItem1.Text = "-";
-			// 
-			// mnuExit
-			// 
-			this.mnuExit.Index = 9;
-			this.mnuExit.Text = "Exit";
-			this.mnuExit.Click += new System.EventHandler(this.mnuExit_Click);
-			// 
-			// TimerMisc
-			// 
-			this.TimerMisc.Interval = 5000;
-			this.TimerMisc.Tick += new System.EventHandler(this.TimerMisc_Tick);
-			// 
-			// cmdOK
-			// 
-			this.cmdOK.Location = new System.Drawing.Point(8, 416);
-			this.cmdOK.Name = "cmdOK";
-			this.cmdOK.Size = new System.Drawing.Size(64, 24);
-			this.cmdOK.TabIndex = 5;
-			this.cmdOK.Text = "OK";
-			this.cmdOK.Click += new System.EventHandler(this.cmdOK_Click);
-			// 
-			// cmdCancel
-			// 
-			this.cmdCancel.Location = new System.Drawing.Point(136, 416);
-			this.cmdCancel.Name = "cmdCancel";
-			this.cmdCancel.Size = new System.Drawing.Size(64, 24);
-			this.cmdCancel.TabIndex = 6;
-			this.cmdCancel.Text = "Cancel";
-			this.cmdCancel.Click += new System.EventHandler(this.cmdCancel_Click);
-			// 
-			// lstProfiles_Games
-			// 
-			this.lstProfiles_Games.FullRowSelect = true;
-			this.lstProfiles_Games.Location = new System.Drawing.Point(8, 8);
-			this.lstProfiles_Games.MultiSelect = false;
-			this.lstProfiles_Games.Name = "lstProfiles_Games";
-			this.lstProfiles_Games.Size = new System.Drawing.Size(136, 360);
-			this.lstProfiles_Games.Sorting = System.Windows.Forms.SortOrder.Ascending;
-			this.lstProfiles_Games.TabIndex = 8;
-			this.lstProfiles_Games.View = System.Windows.Forms.View.List;
-			this.lstProfiles_Games.SelectedIndexChanged += new System.EventHandler(this.lstProfiles_Games_SelectedIndexChanged);
-			// 
-			// tabOptions
-			// 
-			this.tabOptions.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
-			this.tabOptions.Controls.Add(this.tabGeneral);
-			this.tabOptions.Controls.Add(this.tabProfiles);
-			this.tabOptions.Controls.Add(this.tabLog);
-			this.tabOptions.Controls.Add(this.tabAbout);
-			this.tabOptions.ItemSize = new System.Drawing.Size(49, 21);
-			this.tabOptions.Location = new System.Drawing.Point(0, 8);
-			this.tabOptions.Name = "tabOptions";
-			this.tabOptions.SelectedIndex = 0;
-			this.tabOptions.Size = new System.Drawing.Size(448, 408);
-			this.tabOptions.TabIndex = 9;
-			// 
-			// tabGeneral
-			// 
-			this.tabGeneral.Controls.Add(this.tabGeneralOptions);
-			this.tabGeneral.Location = new System.Drawing.Point(4, 25);
-			this.tabGeneral.Name = "tabGeneral";
-			this.tabGeneral.Size = new System.Drawing.Size(440, 379);
-			this.tabGeneral.TabIndex = 0;
-			this.tabGeneral.Text = "General";
-			// 
-			// tabGeneralOptions
-			// 
-			this.tabGeneralOptions.Controls.Add(this.tabGeneral_GlobalSnapSettings);
-			this.tabGeneralOptions.Controls.Add(this.tabGeneral_GlobalStatsSettings);
-			this.tabGeneralOptions.Controls.Add(this.tabGeneral_HotKeys);
-			this.tabGeneralOptions.Controls.Add(this.tabGeneral_Misc);
-			this.tabGeneralOptions.Location = new System.Drawing.Point(8, 8);
-			this.tabGeneralOptions.Name = "tabGeneralOptions";
-			this.tabGeneralOptions.SelectedIndex = 0;
-			this.tabGeneralOptions.Size = new System.Drawing.Size(424, 368);
-			this.tabGeneralOptions.TabIndex = 4;
-			// 
-			// tabGeneral_GlobalSnapSettings
-			// 
-			this.tabGeneral_GlobalSnapSettings.AutoScroll = true;
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_AnimationSettings);
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_SaveBug);
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ImageFormat);
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_SnapDir);
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_TimingAndParameters);
-			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_Enabled);
-			this.tabGeneral_GlobalSnapSettings.Location = new System.Drawing.Point(4, 22);
-			this.tabGeneral_GlobalSnapSettings.Name = "tabGeneral_GlobalSnapSettings";
-			this.tabGeneral_GlobalSnapSettings.Size = new System.Drawing.Size(416, 342);
-			this.tabGeneral_GlobalSnapSettings.TabIndex = 0;
-			this.tabGeneral_GlobalSnapSettings.Text = "Global Snap Settings";
-			// 
-			// grpGeneral_SnapSettings_AnimationSettings
-			// 
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimOptimizePalette);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimFrameDelay);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimFrameDelay);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimHeight);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimHeight);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimWidth);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimWidth);
-			this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimOriginalDimentions);
-			this.grpGeneral_SnapSettings_AnimationSettings.Location = new System.Drawing.Point(8, 328);
-			this.grpGeneral_SnapSettings_AnimationSettings.Name = "grpGeneral_SnapSettings_AnimationSettings";
-			this.grpGeneral_SnapSettings_AnimationSettings.Size = new System.Drawing.Size(384, 176);
-			this.grpGeneral_SnapSettings_AnimationSettings.TabIndex = 25;
-			this.grpGeneral_SnapSettings_AnimationSettings.TabStop = false;
-			this.grpGeneral_SnapSettings_AnimationSettings.Text = "Animation Settings";
-			// 
-			// chkGeneral_SnapSettings_AnimOptimizePalette
-			// 
-			this.chkGeneral_SnapSettings_AnimOptimizePalette.Location = new System.Drawing.Point(8, 16);
-			this.chkGeneral_SnapSettings_AnimOptimizePalette.Name = "chkGeneral_SnapSettings_AnimOptimizePalette";
-			this.chkGeneral_SnapSettings_AnimOptimizePalette.Size = new System.Drawing.Size(136, 24);
-			this.chkGeneral_SnapSettings_AnimOptimizePalette.TabIndex = 36;
-			this.chkGeneral_SnapSettings_AnimOptimizePalette.Text = "Use Optimized Palette";
-			// 
-			// udGeneral_SnapSettings_AnimFrameDelay
-			// 
-			this.udGeneral_SnapSettings_AnimFrameDelay.Location = new System.Drawing.Point(88, 152);
-			this.udGeneral_SnapSettings_AnimFrameDelay.Maximum = new System.Decimal(new int[] {
-																								  10000,
-																								  0,
-																								  0,
-																								  0});
-			this.udGeneral_SnapSettings_AnimFrameDelay.Minimum = new System.Decimal(new int[] {
-																								  1,
-																								  0,
-																								  0,
-																								  0});
-			this.udGeneral_SnapSettings_AnimFrameDelay.Name = "udGeneral_SnapSettings_AnimFrameDelay";
-			this.udGeneral_SnapSettings_AnimFrameDelay.Size = new System.Drawing.Size(288, 20);
-			this.udGeneral_SnapSettings_AnimFrameDelay.TabIndex = 34;
-			this.udGeneral_SnapSettings_AnimFrameDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			this.udGeneral_SnapSettings_AnimFrameDelay.Value = new System.Decimal(new int[] {
-																								1,
-																								0,
-																								0,
-																								0});
-			// 
-			// lblGeneral_SnapSettings_AnimFrameDelay
-			// 
-			this.lblGeneral_SnapSettings_AnimFrameDelay.Location = new System.Drawing.Point(8, 152);
-			this.lblGeneral_SnapSettings_AnimFrameDelay.Name = "lblGeneral_SnapSettings_AnimFrameDelay";
-			this.lblGeneral_SnapSettings_AnimFrameDelay.Size = new System.Drawing.Size(72, 16);
-			this.lblGeneral_SnapSettings_AnimFrameDelay.TabIndex = 35;
-			this.lblGeneral_SnapSettings_AnimFrameDelay.Text = "Frame Delay:";
-			this.lblGeneral_SnapSettings_AnimFrameDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// chkGeneral_SnapSettings_AnimUseMultiSnapDelay
-			// 
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Location = new System.Drawing.Point(8, 128);
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Name = "chkGeneral_SnapSettings_AnimUseMultiSnapDelay";
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Size = new System.Drawing.Size(144, 16);
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.TabIndex = 33;
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Text = "Use MultiSnap Delay";
-			this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.CheckedChanged += new System.EventHandler(this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay_CheckedChanged);
-			// 
-			// udGeneral_SnapSettings_AnimHeight
-			// 
-			this.udGeneral_SnapSettings_AnimHeight.Location = new System.Drawing.Point(88, 96);
-			this.udGeneral_SnapSettings_AnimHeight.Maximum = new System.Decimal(new int[] {
-																							  5000,
-																							  0,
-																							  0,
-																							  0});
-			this.udGeneral_SnapSettings_AnimHeight.Name = "udGeneral_SnapSettings_AnimHeight";
-			this.udGeneral_SnapSettings_AnimHeight.Size = new System.Drawing.Size(288, 20);
-			this.udGeneral_SnapSettings_AnimHeight.TabIndex = 31;
-			this.udGeneral_SnapSettings_AnimHeight.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			// 
-			// lblGeneral_SnapSettings_AnimHeight
-			// 
-			this.lblGeneral_SnapSettings_AnimHeight.Location = new System.Drawing.Point(8, 96);
-			this.lblGeneral_SnapSettings_AnimHeight.Name = "lblGeneral_SnapSettings_AnimHeight";
-			this.lblGeneral_SnapSettings_AnimHeight.Size = new System.Drawing.Size(72, 16);
-			this.lblGeneral_SnapSettings_AnimHeight.TabIndex = 32;
-			this.lblGeneral_SnapSettings_AnimHeight.Text = "Height:";
-			this.lblGeneral_SnapSettings_AnimHeight.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// udGeneral_SnapSettings_AnimWidth
-			// 
-			this.udGeneral_SnapSettings_AnimWidth.Location = new System.Drawing.Point(88, 72);
-			this.udGeneral_SnapSettings_AnimWidth.Maximum = new System.Decimal(new int[] {
-																							 5000,
-																							 0,
-																							 0,
-																							 0});
-			this.udGeneral_SnapSettings_AnimWidth.Name = "udGeneral_SnapSettings_AnimWidth";
-			this.udGeneral_SnapSettings_AnimWidth.Size = new System.Drawing.Size(288, 20);
-			this.udGeneral_SnapSettings_AnimWidth.TabIndex = 29;
-			this.udGeneral_SnapSettings_AnimWidth.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			// 
-			// lblGeneral_SnapSettings_AnimWidth
-			// 
-			this.lblGeneral_SnapSettings_AnimWidth.Location = new System.Drawing.Point(8, 72);
-			this.lblGeneral_SnapSettings_AnimWidth.Name = "lblGeneral_SnapSettings_AnimWidth";
-			this.lblGeneral_SnapSettings_AnimWidth.Size = new System.Drawing.Size(72, 16);
-			this.lblGeneral_SnapSettings_AnimWidth.TabIndex = 30;
-			this.lblGeneral_SnapSettings_AnimWidth.Text = "Width:";
-			this.lblGeneral_SnapSettings_AnimWidth.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// chkGeneral_SnapSettings_AnimOriginalDimentions
-			// 
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Location = new System.Drawing.Point(8, 48);
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Name = "chkGeneral_SnapSettings_AnimOriginalDimentions";
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Size = new System.Drawing.Size(160, 24);
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions.TabIndex = 26;
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions.Text = "Use Original Dimentions";
-			this.chkGeneral_SnapSettings_AnimOriginalDimentions.CheckedChanged += new System.EventHandler(this.chkGeneral_SnapSettings_AnimOriginalDimentions_CheckedChanged);
-			// 
-			// chkGeneral_SnapSettings_SaveBug
-			// 
-			this.chkGeneral_SnapSettings_SaveBug.Location = new System.Drawing.Point(128, 8);
-			this.chkGeneral_SnapSettings_SaveBug.Name = "chkGeneral_SnapSettings_SaveBug";
-			this.chkGeneral_SnapSettings_SaveBug.Size = new System.Drawing.Size(80, 24);
-			this.chkGeneral_SnapSettings_SaveBug.TabIndex = 24;
-			this.chkGeneral_SnapSettings_SaveBug.Text = "Save Bug";
-			// 
-			// grpGeneral_SnapSettings_ImageFormat
-			// 
-			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.lblGeneral_SnapSettings_ImageFormat);
-			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.cbGeneral_SnapSettings_ImageFormat);
-			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.lblGeneral_SnapSettings_Quality);
-			this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.tbGeneral_SnapSettings_Quality);
-			this.grpGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(8, 192);
-			this.grpGeneral_SnapSettings_ImageFormat.Name = "grpGeneral_SnapSettings_ImageFormat";
-			this.grpGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(384, 120);
-			this.grpGeneral_SnapSettings_ImageFormat.TabIndex = 23;
-			this.grpGeneral_SnapSettings_ImageFormat.TabStop = false;
-			this.grpGeneral_SnapSettings_ImageFormat.Text = "Image Format";
-			// 
-			// lblGeneral_SnapSettings_ImageFormat
-			// 
-			this.lblGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(16, 24);
-			this.lblGeneral_SnapSettings_ImageFormat.Name = "lblGeneral_SnapSettings_ImageFormat";
-			this.lblGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(104, 16);
-			this.lblGeneral_SnapSettings_ImageFormat.TabIndex = 21;
-			this.lblGeneral_SnapSettings_ImageFormat.Text = "Image Output Type:";
-			this.lblGeneral_SnapSettings_ImageFormat.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// cbGeneral_SnapSettings_ImageFormat
-			// 
-			this.cbGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(120, 24);
-			this.cbGeneral_SnapSettings_ImageFormat.Name = "cbGeneral_SnapSettings_ImageFormat";
-			this.cbGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(256, 21);
-			this.cbGeneral_SnapSettings_ImageFormat.TabIndex = 20;
-			this.cbGeneral_SnapSettings_ImageFormat.Text = "Image Encoders";
-			// 
-			// lblGeneral_SnapSettings_Quality
-			// 
-			this.lblGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(16, 56);
-			this.lblGeneral_SnapSettings_Quality.Name = "lblGeneral_SnapSettings_Quality";
-			this.lblGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(176, 16);
-			this.lblGeneral_SnapSettings_Quality.TabIndex = 19;
-			this.lblGeneral_SnapSettings_Quality.Text = "Quality x% (100% = Clearest):";
-			// 
-			// tbGeneral_SnapSettings_Quality
-			// 
-			this.tbGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(8, 72);
-			this.tbGeneral_SnapSettings_Quality.Maximum = 100;
-			this.tbGeneral_SnapSettings_Quality.Name = "tbGeneral_SnapSettings_Quality";
-			this.tbGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(368, 40);
-			this.tbGeneral_SnapSettings_Quality.TabIndex = 18;
-			this.tbGeneral_SnapSettings_Quality.Value = 100;
-			this.tbGeneral_SnapSettings_Quality.Scroll += new System.EventHandler(this.tbGeneral_SnapSettings_Quality_Scroll);
-			// 
-			// grpGeneral_SnapSettings_SnapDir
-			// 
-			this.grpGeneral_SnapSettings_SnapDir.Controls.Add(this.txtGeneral_SnapSettings_SnapDir);
-			this.grpGeneral_SnapSettings_SnapDir.Controls.Add(this.cmdGeneral_SnapSettings_BrowseSnapDir);
-			this.grpGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 136);
-			this.grpGeneral_SnapSettings_SnapDir.Name = "grpGeneral_SnapSettings_SnapDir";
-			this.grpGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(384, 48);
-			this.grpGeneral_SnapSettings_SnapDir.TabIndex = 22;
-			this.grpGeneral_SnapSettings_SnapDir.TabStop = false;
-			this.grpGeneral_SnapSettings_SnapDir.Text = "Snap Directory";
-			// 
-			// txtGeneral_SnapSettings_SnapDir
-			// 
-			this.txtGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 16);
-			this.txtGeneral_SnapSettings_SnapDir.Name = "txtGeneral_SnapSettings_SnapDir";
-			this.txtGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(304, 20);
-			this.txtGeneral_SnapSettings_SnapDir.TabIndex = 5;
-			this.txtGeneral_SnapSettings_SnapDir.Text = "";
-			// 
-			// cmdGeneral_SnapSettings_BrowseSnapDir
-			// 
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.Location = new System.Drawing.Point(320, 16);
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.Name = "cmdGeneral_SnapSettings_BrowseSnapDir";
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.Size = new System.Drawing.Size(56, 24);
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.TabIndex = 6;
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.Text = "Browse";
-			this.cmdGeneral_SnapSettings_BrowseSnapDir.Click += new System.EventHandler(this.cmdGeneral_SnapSettings_BrowseSnapDir_Click);
-			// 
-			// grpGeneral_SnapSettings_TimingAndParameters
-			// 
-			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_NextSnapDelay);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_SaveQueueSize);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_Delay);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.lblGeneral_SnapSettings_NextSnapDelay);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.lblGeneral_SnapSettings_SaveQueueSize);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.lblGeneral_SnapSettings_SnapDelay);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Location = new System.Drawing.Point(8, 32);
-			this.grpGeneral_SnapSettings_TimingAndParameters.Name = "grpGeneral_SnapSettings_TimingAndParameters";
-			this.grpGeneral_SnapSettings_TimingAndParameters.Size = new System.Drawing.Size(384, 96);
-			this.grpGeneral_SnapSettings_TimingAndParameters.TabIndex = 21;
-			this.grpGeneral_SnapSettings_TimingAndParameters.TabStop = false;
-			this.grpGeneral_SnapSettings_TimingAndParameters.Text = "Timing && Parameters";
-			// 
-			// udGeneral_SnapSettings_NextSnapDelay
-			// 
-			this.udGeneral_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(128, 40);
-			this.udGeneral_SnapSettings_NextSnapDelay.Maximum = new System.Decimal(new int[] {
-																								 10000,
-																								 0,
-																								 0,
-																								 0});
-			this.udGeneral_SnapSettings_NextSnapDelay.Name = "udGeneral_SnapSettings_NextSnapDelay";
-			this.udGeneral_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(248, 20);
-			this.udGeneral_SnapSettings_NextSnapDelay.TabIndex = 32;
-			this.udGeneral_SnapSettings_NextSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			// 
-			// udGeneral_SnapSettings_SaveQueueSize
-			// 
-			this.udGeneral_SnapSettings_SaveQueueSize.Location = new System.Drawing.Point(128, 64);
-			this.udGeneral_SnapSettings_SaveQueueSize.Maximum = new System.Decimal(new int[] {
-																								 500,
-																								 0,
-																								 0,
-																								 0});
-			this.udGeneral_SnapSettings_SaveQueueSize.Minimum = new System.Decimal(new int[] {
-																								 10,
-																								 0,
-																								 0,
-																								 0});
-			this.udGeneral_SnapSettings_SaveQueueSize.Name = "udGeneral_SnapSettings_SaveQueueSize";
-			this.udGeneral_SnapSettings_SaveQueueSize.Size = new System.Drawing.Size(248, 20);
-			this.udGeneral_SnapSettings_SaveQueueSize.TabIndex = 31;
-			this.udGeneral_SnapSettings_SaveQueueSize.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			this.udGeneral_SnapSettings_SaveQueueSize.Value = new System.Decimal(new int[] {
-																							   10,
-																							   0,
-																							   0,
-																							   0});
-			// 
-			// udGeneral_SnapSettings_Delay
-			// 
-			this.udGeneral_SnapSettings_Delay.Location = new System.Drawing.Point(128, 16);
-			this.udGeneral_SnapSettings_Delay.Maximum = new System.Decimal(new int[] {
-																						 10000,
-																						 0,
-																						 0,
-																						 0});
-			this.udGeneral_SnapSettings_Delay.Name = "udGeneral_SnapSettings_Delay";
-			this.udGeneral_SnapSettings_Delay.Size = new System.Drawing.Size(248, 20);
-			this.udGeneral_SnapSettings_Delay.TabIndex = 21;
-			this.udGeneral_SnapSettings_Delay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			// 
-			// lblGeneral_SnapSettings_NextSnapDelay
-			// 
-			this.lblGeneral_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(16, 40);
-			this.lblGeneral_SnapSettings_NextSnapDelay.Name = "lblGeneral_SnapSettings_NextSnapDelay";
-			this.lblGeneral_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(96, 16);
-			this.lblGeneral_SnapSettings_NextSnapDelay.TabIndex = 30;
-			this.lblGeneral_SnapSettings_NextSnapDelay.Text = "Next Snap Delay:";
-			this.lblGeneral_SnapSettings_NextSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// lblGeneral_SnapSettings_SaveQueueSize
-			// 
-			this.lblGeneral_SnapSettings_SaveQueueSize.Location = new System.Drawing.Point(16, 64);
-			this.lblGeneral_SnapSettings_SaveQueueSize.Name = "lblGeneral_SnapSettings_SaveQueueSize";
-			this.lblGeneral_SnapSettings_SaveQueueSize.Size = new System.Drawing.Size(96, 16);
-			this.lblGeneral_SnapSettings_SaveQueueSize.TabIndex = 29;
-			this.lblGeneral_SnapSettings_SaveQueueSize.Text = "SaveQueue Size:";
-			this.lblGeneral_SnapSettings_SaveQueueSize.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// lblGeneral_SnapSettings_SnapDelay
-			// 
-			this.lblGeneral_SnapSettings_SnapDelay.Location = new System.Drawing.Point(16, 16);
-			this.lblGeneral_SnapSettings_SnapDelay.Name = "lblGeneral_SnapSettings_SnapDelay";
-			this.lblGeneral_SnapSettings_SnapDelay.Size = new System.Drawing.Size(72, 16);
-			this.lblGeneral_SnapSettings_SnapDelay.TabIndex = 28;
-			this.lblGeneral_SnapSettings_SnapDelay.Text = "Snap Delay:";
-			this.lblGeneral_SnapSettings_SnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// chkGeneral_SnapSettings_Enabled
-			// 
-			this.chkGeneral_SnapSettings_Enabled.Location = new System.Drawing.Point(8, 8);
-			this.chkGeneral_SnapSettings_Enabled.Name = "chkGeneral_SnapSettings_Enabled";
-			this.chkGeneral_SnapSettings_Enabled.Size = new System.Drawing.Size(80, 24);
-			this.chkGeneral_SnapSettings_Enabled.TabIndex = 11;
-			this.chkGeneral_SnapSettings_Enabled.Text = "Enabled";
-			// 
-			// tabGeneral_GlobalStatsSettings
-			// 
-			this.tabGeneral_GlobalStatsSettings.Controls.Add(this.cmdGeneral_StatsSettings_ViewStats);
-			this.tabGeneral_GlobalStatsSettings.Controls.Add(this.cmdGeneral_StatsSettings_Reset);
-			this.tabGeneral_GlobalStatsSettings.Controls.Add(this.chkGeneral_StatsSettings_Enabled);
-			this.tabGeneral_GlobalStatsSettings.Location = new System.Drawing.Point(4, 22);
-			this.tabGeneral_GlobalStatsSettings.Name = "tabGeneral_GlobalStatsSettings";
-			this.tabGeneral_GlobalStatsSettings.Size = new System.Drawing.Size(416, 342);
-			this.tabGeneral_GlobalStatsSettings.TabIndex = 1;
-			this.tabGeneral_GlobalStatsSettings.Text = "Global Stats Settings";
-			// 
-			// cmdGeneral_StatsSettings_ViewStats
-			// 
-			this.cmdGeneral_StatsSettings_ViewStats.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdGeneral_StatsSettings_ViewStats.Location = new System.Drawing.Point(264, 8);
-			this.cmdGeneral_StatsSettings_ViewStats.Name = "cmdGeneral_StatsSettings_ViewStats";
-			this.cmdGeneral_StatsSettings_ViewStats.Size = new System.Drawing.Size(72, 24);
-			this.cmdGeneral_StatsSettings_ViewStats.TabIndex = 8;
-			this.cmdGeneral_StatsSettings_ViewStats.Text = "View";
-			this.cmdGeneral_StatsSettings_ViewStats.Click += new System.EventHandler(this.cmdGeneral_StatsSettings_ViewStats_Click);
-			// 
-			// cmdGeneral_StatsSettings_Reset
-			// 
-			this.cmdGeneral_StatsSettings_Reset.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdGeneral_StatsSettings_Reset.Location = new System.Drawing.Point(336, 8);
-			this.cmdGeneral_StatsSettings_Reset.Name = "cmdGeneral_StatsSettings_Reset";
-			this.cmdGeneral_StatsSettings_Reset.Size = new System.Drawing.Size(72, 24);
-			this.cmdGeneral_StatsSettings_Reset.TabIndex = 7;
-			this.cmdGeneral_StatsSettings_Reset.Text = "Reset";
-			this.cmdGeneral_StatsSettings_Reset.Click += new System.EventHandler(this.cmdGeneral_StatsSettings_Reset_Click);
-			// 
-			// chkGeneral_StatsSettings_Enabled
-			// 
-			this.chkGeneral_StatsSettings_Enabled.Location = new System.Drawing.Point(8, 8);
-			this.chkGeneral_StatsSettings_Enabled.Name = "chkGeneral_StatsSettings_Enabled";
-			this.chkGeneral_StatsSettings_Enabled.Size = new System.Drawing.Size(80, 24);
-			this.chkGeneral_StatsSettings_Enabled.TabIndex = 6;
-			this.chkGeneral_StatsSettings_Enabled.Text = "Enabled";
-			// 
-			// tabGeneral_HotKeys
-			// 
-			this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureActiveProfile);
-			this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureDesktop);
-			this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureWindow);
-			this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureActiveProfile);
-			this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureWindow);
-			this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureDesktop);
-			this.tabGeneral_HotKeys.Controls.Add(this.chkGeneral_HotKeys_Enabled);
-			this.tabGeneral_HotKeys.Location = new System.Drawing.Point(4, 22);
-			this.tabGeneral_HotKeys.Name = "tabGeneral_HotKeys";
-			this.tabGeneral_HotKeys.Size = new System.Drawing.Size(416, 342);
-			this.tabGeneral_HotKeys.TabIndex = 2;
-			this.tabGeneral_HotKeys.Text = "Hot Keys";
-			// 
-			// txtGeneral_HotKeys_CaptureActiveProfile
-			// 
-			this.txtGeneral_HotKeys_CaptureActiveProfile.Location = new System.Drawing.Point(160, 112);
-			this.txtGeneral_HotKeys_CaptureActiveProfile.Name = "txtGeneral_HotKeys_CaptureActiveProfile";
-			this.txtGeneral_HotKeys_CaptureActiveProfile.ReadOnly = true;
-			this.txtGeneral_HotKeys_CaptureActiveProfile.Size = new System.Drawing.Size(248, 20);
-			this.txtGeneral_HotKeys_CaptureActiveProfile.TabIndex = 10;
-			this.txtGeneral_HotKeys_CaptureActiveProfile.Text = "Capture Active Profile";
-			this.txtGeneral_HotKeys_CaptureActiveProfile.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureActiveProfile_Leave);
-			this.txtGeneral_HotKeys_CaptureActiveProfile.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureActiveProfile_Enter);
-			// 
-			// txtGeneral_HotKeys_CaptureDesktop
-			// 
-			this.txtGeneral_HotKeys_CaptureDesktop.Location = new System.Drawing.Point(160, 88);
-			this.txtGeneral_HotKeys_CaptureDesktop.Name = "txtGeneral_HotKeys_CaptureDesktop";
-			this.txtGeneral_HotKeys_CaptureDesktop.ReadOnly = true;
-			this.txtGeneral_HotKeys_CaptureDesktop.Size = new System.Drawing.Size(248, 20);
-			this.txtGeneral_HotKeys_CaptureDesktop.TabIndex = 9;
-			this.txtGeneral_HotKeys_CaptureDesktop.Text = "Capture Desktop";
-			this.txtGeneral_HotKeys_CaptureDesktop.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureDesktop_Leave);
-			this.txtGeneral_HotKeys_CaptureDesktop.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureDesktop_Enter);
-			// 
-			// txtGeneral_HotKeys_CaptureWindow
-			// 
-			this.txtGeneral_HotKeys_CaptureWindow.Location = new System.Drawing.Point(160, 64);
-			this.txtGeneral_HotKeys_CaptureWindow.Name = "txtGeneral_HotKeys_CaptureWindow";
-			this.txtGeneral_HotKeys_CaptureWindow.ReadOnly = true;
-			this.txtGeneral_HotKeys_CaptureWindow.Size = new System.Drawing.Size(248, 20);
-			this.txtGeneral_HotKeys_CaptureWindow.TabIndex = 8;
-			this.txtGeneral_HotKeys_CaptureWindow.Text = "Capture Window";
-			this.txtGeneral_HotKeys_CaptureWindow.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureWindow_Leave);
-			this.txtGeneral_HotKeys_CaptureWindow.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureWindow_Enter);
-			// 
-			// lblGeneral_HotKeys_CaptureActiveProfile
-			// 
-			this.lblGeneral_HotKeys_CaptureActiveProfile.Location = new System.Drawing.Point(16, 112);
-			this.lblGeneral_HotKeys_CaptureActiveProfile.Name = "lblGeneral_HotKeys_CaptureActiveProfile";
-			this.lblGeneral_HotKeys_CaptureActiveProfile.Size = new System.Drawing.Size(128, 24);
-			this.lblGeneral_HotKeys_CaptureActiveProfile.TabIndex = 4;
-			this.lblGeneral_HotKeys_CaptureActiveProfile.Text = "Capture Active Profile:";
-			this.lblGeneral_HotKeys_CaptureActiveProfile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// lblGeneral_HotKeys_CaptureWindow
-			// 
-			this.lblGeneral_HotKeys_CaptureWindow.Location = new System.Drawing.Point(16, 64);
-			this.lblGeneral_HotKeys_CaptureWindow.Name = "lblGeneral_HotKeys_CaptureWindow";
-			this.lblGeneral_HotKeys_CaptureWindow.Size = new System.Drawing.Size(128, 24);
-			this.lblGeneral_HotKeys_CaptureWindow.TabIndex = 3;
-			this.lblGeneral_HotKeys_CaptureWindow.Text = "Capture Window:";
-			this.lblGeneral_HotKeys_CaptureWindow.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// lblGeneral_HotKeys_CaptureDesktop
-			// 
-			this.lblGeneral_HotKeys_CaptureDesktop.Location = new System.Drawing.Point(16, 88);
-			this.lblGeneral_HotKeys_CaptureDesktop.Name = "lblGeneral_HotKeys_CaptureDesktop";
-			this.lblGeneral_HotKeys_CaptureDesktop.Size = new System.Drawing.Size(128, 24);
-			this.lblGeneral_HotKeys_CaptureDesktop.TabIndex = 2;
-			this.lblGeneral_HotKeys_CaptureDesktop.Text = "Capture Desktop:";
-			this.lblGeneral_HotKeys_CaptureDesktop.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// chkGeneral_HotKeys_Enabled
-			// 
-			this.chkGeneral_HotKeys_Enabled.Location = new System.Drawing.Point(8, 8);
-			this.chkGeneral_HotKeys_Enabled.Name = "chkGeneral_HotKeys_Enabled";
-			this.chkGeneral_HotKeys_Enabled.Size = new System.Drawing.Size(96, 24);
-			this.chkGeneral_HotKeys_Enabled.TabIndex = 1;
-			this.chkGeneral_HotKeys_Enabled.Text = "Enabled";
-			// 
-			// tabGeneral_Misc
-			// 
-			this.tabGeneral_Misc.Controls.Add(this.grpGeneral_Misc_Updates);
-			this.tabGeneral_Misc.Location = new System.Drawing.Point(4, 22);
-			this.tabGeneral_Misc.Name = "tabGeneral_Misc";
-			this.tabGeneral_Misc.Size = new System.Drawing.Size(416, 342);
-			this.tabGeneral_Misc.TabIndex = 3;
-			this.tabGeneral_Misc.Text = "Misc";
-			// 
-			// grpGeneral_Misc_Updates
-			// 
-			this.grpGeneral_Misc_Updates.Controls.Add(this.lblGeneral_Misc_CheckUpdates);
-			this.grpGeneral_Misc_Updates.Controls.Add(this.cbGeneral_Misc_CheckUpdates);
-			this.grpGeneral_Misc_Updates.Location = new System.Drawing.Point(8, 8);
-			this.grpGeneral_Misc_Updates.Name = "grpGeneral_Misc_Updates";
-			this.grpGeneral_Misc_Updates.Size = new System.Drawing.Size(400, 80);
-			this.grpGeneral_Misc_Updates.TabIndex = 0;
-			this.grpGeneral_Misc_Updates.TabStop = false;
-			this.grpGeneral_Misc_Updates.Text = "Updates";
-			// 
-			// lblGeneral_Misc_CheckUpdates
-			// 
-			this.lblGeneral_Misc_CheckUpdates.Location = new System.Drawing.Point(8, 16);
-			this.lblGeneral_Misc_CheckUpdates.Name = "lblGeneral_Misc_CheckUpdates";
-			this.lblGeneral_Misc_CheckUpdates.Size = new System.Drawing.Size(112, 24);
-			this.lblGeneral_Misc_CheckUpdates.TabIndex = 23;
-			this.lblGeneral_Misc_CheckUpdates.Text = "Check for updates:";
-			this.lblGeneral_Misc_CheckUpdates.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// cbGeneral_Misc_CheckUpdates
-			// 
-			this.cbGeneral_Misc_CheckUpdates.Items.AddRange(new object[] {
-																			 "Never",
-																			 "Every Hour",
-																			 "Every Day",
-																			 "Every Week",
-																			 "Every Month"});
-			this.cbGeneral_Misc_CheckUpdates.Location = new System.Drawing.Point(128, 16);
-			this.cbGeneral_Misc_CheckUpdates.Name = "cbGeneral_Misc_CheckUpdates";
-			this.cbGeneral_Misc_CheckUpdates.Size = new System.Drawing.Size(120, 21);
-			this.cbGeneral_Misc_CheckUpdates.TabIndex = 22;
-			this.cbGeneral_Misc_CheckUpdates.Text = "Update Options";
-			// 
-			// tabProfiles
-			// 
-			this.tabProfiles.Controls.Add(this.lblProfiles_ActiveProfile);
-			this.tabProfiles.Controls.Add(this.tabProfileOptions);
-			this.tabProfiles.Controls.Add(this.lstProfiles_Games);
-			this.tabProfiles.Location = new System.Drawing.Point(4, 25);
-			this.tabProfiles.Name = "tabProfiles";
-			this.tabProfiles.Size = new System.Drawing.Size(440, 379);
-			this.tabProfiles.TabIndex = 1;
-			this.tabProfiles.Text = "Profiles";
-			// 
-			// lblProfiles_ActiveProfile
-			// 
-			this.lblProfiles_ActiveProfile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((System.Byte)(0)));
-			this.lblProfiles_ActiveProfile.Location = new System.Drawing.Point(152, 8);
-			this.lblProfiles_ActiveProfile.Name = "lblProfiles_ActiveProfile";
-			this.lblProfiles_ActiveProfile.Size = new System.Drawing.Size(280, 16);
-			this.lblProfiles_ActiveProfile.TabIndex = 12;
-			this.lblProfiles_ActiveProfile.Text = "Title";
-			this.lblProfiles_ActiveProfile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// tabProfileOptions
-			// 
-			this.tabProfileOptions.Controls.Add(this.tabProfiles_GameSettings);
-			this.tabProfileOptions.Controls.Add(this.tabProfiles_SnapSettings);
-			this.tabProfileOptions.Controls.Add(this.tabProfiles_StatsSettings);
-			this.tabProfileOptions.Location = new System.Drawing.Point(152, 24);
-			this.tabProfileOptions.Name = "tabProfileOptions";
-			this.tabProfileOptions.SelectedIndex = 0;
-			this.tabProfileOptions.Size = new System.Drawing.Size(280, 344);
-			this.tabProfileOptions.TabIndex = 11;
-			// 
-			// tabProfiles_GameSettings
-			// 
-			this.tabProfiles_GameSettings.Controls.Add(this.grpProfiles_GameSettings_Path);
-			this.tabProfiles_GameSettings.Location = new System.Drawing.Point(4, 22);
-			this.tabProfiles_GameSettings.Name = "tabProfiles_GameSettings";
-			this.tabProfiles_GameSettings.Size = new System.Drawing.Size(272, 318);
-			this.tabProfiles_GameSettings.TabIndex = 0;
-			this.tabProfiles_GameSettings.Text = "Game Settings";
-			// 
-			// grpProfiles_GameSettings_Path
-			// 
-			this.grpProfiles_GameSettings_Path.Controls.Add(this.cmdProfiles_GameSettings_AutoDetect);
-			this.grpProfiles_GameSettings_Path.Controls.Add(this.cmdProfiles_GameSettings_BrowseGamePath);
-			this.grpProfiles_GameSettings_Path.Controls.Add(this.txtProfiles_GameSettings_Path);
-			this.grpProfiles_GameSettings_Path.Location = new System.Drawing.Point(8, 8);
-			this.grpProfiles_GameSettings_Path.Name = "grpProfiles_GameSettings_Path";
-			this.grpProfiles_GameSettings_Path.Size = new System.Drawing.Size(256, 80);
-			this.grpProfiles_GameSettings_Path.TabIndex = 2;
-			this.grpProfiles_GameSettings_Path.TabStop = false;
-			this.grpProfiles_GameSettings_Path.Text = "Path";
-			// 
-			// cmdProfiles_GameSettings_AutoDetect
-			// 
-			this.cmdProfiles_GameSettings_AutoDetect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdProfiles_GameSettings_AutoDetect.Location = new System.Drawing.Point(8, 16);
-			this.cmdProfiles_GameSettings_AutoDetect.Name = "cmdProfiles_GameSettings_AutoDetect";
-			this.cmdProfiles_GameSettings_AutoDetect.Size = new System.Drawing.Size(80, 24);
-			this.cmdProfiles_GameSettings_AutoDetect.TabIndex = 4;
-			this.cmdProfiles_GameSettings_AutoDetect.Text = "Auto Detect";
-			this.cmdProfiles_GameSettings_AutoDetect.Click += new System.EventHandler(this.cmdProfiles_GameSettings_AutoDetect_Click);
-			// 
-			// cmdProfiles_GameSettings_BrowseGamePath
-			// 
-			this.cmdProfiles_GameSettings_BrowseGamePath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdProfiles_GameSettings_BrowseGamePath.Location = new System.Drawing.Point(192, 16);
-			this.cmdProfiles_GameSettings_BrowseGamePath.Name = "cmdProfiles_GameSettings_BrowseGamePath";
-			this.cmdProfiles_GameSettings_BrowseGamePath.Size = new System.Drawing.Size(56, 24);
-			this.cmdProfiles_GameSettings_BrowseGamePath.TabIndex = 3;
-			this.cmdProfiles_GameSettings_BrowseGamePath.Text = "Browse";
-			this.cmdProfiles_GameSettings_BrowseGamePath.Click += new System.EventHandler(this.cmdProfiles_GameSettings_BrowseGamePath_Click);
-			// 
-			// txtProfiles_GameSettings_Path
-			// 
-			this.txtProfiles_GameSettings_Path.Location = new System.Drawing.Point(8, 48);
-			this.txtProfiles_GameSettings_Path.Name = "txtProfiles_GameSettings_Path";
-			this.txtProfiles_GameSettings_Path.Size = new System.Drawing.Size(240, 20);
-			this.txtProfiles_GameSettings_Path.TabIndex = 2;
-			this.txtProfiles_GameSettings_Path.Text = "Path To Game";
-			// 
-			// tabProfiles_SnapSettings
-			// 
-			this.tabProfiles_SnapSettings.AutoScroll = true;
-			this.tabProfiles_SnapSettings.Controls.Add(this.chkProfiles_SnapSettings_UseGlobal);
-			this.tabProfiles_SnapSettings.Controls.Add(this.grpProfiles_SnapSettingsSub);
-			this.tabProfiles_SnapSettings.Location = new System.Drawing.Point(4, 22);
-			this.tabProfiles_SnapSettings.Name = "tabProfiles_SnapSettings";
-			this.tabProfiles_SnapSettings.Size = new System.Drawing.Size(272, 318);
-			this.tabProfiles_SnapSettings.TabIndex = 1;
-			this.tabProfiles_SnapSettings.Text = "Snap Settings";
-			// 
-			// chkProfiles_SnapSettings_UseGlobal
-			// 
-			this.chkProfiles_SnapSettings_UseGlobal.Location = new System.Drawing.Point(8, 8);
-			this.chkProfiles_SnapSettings_UseGlobal.Name = "chkProfiles_SnapSettings_UseGlobal";
-			this.chkProfiles_SnapSettings_UseGlobal.Size = new System.Drawing.Size(128, 16);
-			this.chkProfiles_SnapSettings_UseGlobal.TabIndex = 0;
-			this.chkProfiles_SnapSettings_UseGlobal.Text = "Use Global Settings";
-			this.chkProfiles_SnapSettings_UseGlobal.CheckedChanged += new System.EventHandler(this.chkProfiles_SnapSettings_UseGlobal_CheckedChanged);
-			// 
-			// grpProfiles_SnapSettingsSub
-			// 
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.groupBox1);
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.lblProfiles_SnapSettings_Save);
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.cbProfiles_SnapSettings_SaveType);
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_SnapDir);
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_TimingAndParameters);
-			this.grpProfiles_SnapSettingsSub.Controls.Add(this.chkProfiles_SnapSettings_Enabled);
-			this.grpProfiles_SnapSettingsSub.Location = new System.Drawing.Point(8, 24);
-			this.grpProfiles_SnapSettingsSub.Name = "grpProfiles_SnapSettingsSub";
-			this.grpProfiles_SnapSettingsSub.Size = new System.Drawing.Size(240, 464);
-			this.grpProfiles_SnapSettingsSub.TabIndex = 1;
-			this.grpProfiles_SnapSettingsSub.TabStop = false;
-			// 
-			// groupBox1
-			// 
-			this.groupBox1.Controls.Add(this.lblProfiles_SnapSettings_Brightness);
-			this.groupBox1.Controls.Add(this.tbProfiles_SnapSettings_Brightness);
-			this.groupBox1.Controls.Add(this.lblProfiles_SnapSettings_Contrast);
-			this.groupBox1.Controls.Add(this.tbProfiles_SnapSettings_Contrast);
-			this.groupBox1.Controls.Add(this.lblProfiles_SnapSettings_Gamma);
-			this.groupBox1.Controls.Add(this.tbProfiles_SnapSettings_Gamma);
-			this.groupBox1.Location = new System.Drawing.Point(8, 248);
-			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(224, 208);
-			this.groupBox1.TabIndex = 23;
-			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Image Adjustments";
-			// 
-			// lblProfiles_SnapSettings_Brightness
-			// 
-			this.lblProfiles_SnapSettings_Brightness.Location = new System.Drawing.Point(8, 144);
-			this.lblProfiles_SnapSettings_Brightness.Name = "lblProfiles_SnapSettings_Brightness";
-			this.lblProfiles_SnapSettings_Brightness.Size = new System.Drawing.Size(208, 16);
-			this.lblProfiles_SnapSettings_Brightness.TabIndex = 32;
-			this.lblProfiles_SnapSettings_Brightness.Text = "Brightness: x (Min: -255 Max: 255)";
-			this.lblProfiles_SnapSettings_Brightness.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// tbProfiles_SnapSettings_Brightness
-			// 
-			this.tbProfiles_SnapSettings_Brightness.LargeChange = 10;
-			this.tbProfiles_SnapSettings_Brightness.Location = new System.Drawing.Point(8, 160);
-			this.tbProfiles_SnapSettings_Brightness.Maximum = 510;
-			this.tbProfiles_SnapSettings_Brightness.Name = "tbProfiles_SnapSettings_Brightness";
-			this.tbProfiles_SnapSettings_Brightness.Size = new System.Drawing.Size(208, 40);
-			this.tbProfiles_SnapSettings_Brightness.TabIndex = 31;
-			this.tbProfiles_SnapSettings_Brightness.TickFrequency = 10;
-			this.tbProfiles_SnapSettings_Brightness.Scroll += new System.EventHandler(this.tbProfiles_SnapSettings_Brightness_Scroll);
-			// 
-			// lblProfiles_SnapSettings_Contrast
-			// 
-			this.lblProfiles_SnapSettings_Contrast.Location = new System.Drawing.Point(8, 80);
-			this.lblProfiles_SnapSettings_Contrast.Name = "lblProfiles_SnapSettings_Contrast";
-			this.lblProfiles_SnapSettings_Contrast.Size = new System.Drawing.Size(208, 16);
-			this.lblProfiles_SnapSettings_Contrast.TabIndex = 30;
-			this.lblProfiles_SnapSettings_Contrast.Text = "Contrast: x (Min: -100 Max: 200)";
-			this.lblProfiles_SnapSettings_Contrast.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// tbProfiles_SnapSettings_Contrast
-			// 
-			this.tbProfiles_SnapSettings_Contrast.LargeChange = 10;
-			this.tbProfiles_SnapSettings_Contrast.Location = new System.Drawing.Point(8, 96);
-			this.tbProfiles_SnapSettings_Contrast.Maximum = 200;
-			this.tbProfiles_SnapSettings_Contrast.Name = "tbProfiles_SnapSettings_Contrast";
-			this.tbProfiles_SnapSettings_Contrast.Size = new System.Drawing.Size(208, 40);
-			this.tbProfiles_SnapSettings_Contrast.TabIndex = 29;
-			this.tbProfiles_SnapSettings_Contrast.TickFrequency = 5;
-			this.tbProfiles_SnapSettings_Contrast.Scroll += new System.EventHandler(this.tbProfiles_SnapSettings_Contrast_Scroll);
-			// 
-			// lblProfiles_SnapSettings_Gamma
-			// 
-			this.lblProfiles_SnapSettings_Gamma.Location = new System.Drawing.Point(8, 16);
-			this.lblProfiles_SnapSettings_Gamma.Name = "lblProfiles_SnapSettings_Gamma";
-			this.lblProfiles_SnapSettings_Gamma.Size = new System.Drawing.Size(208, 16);
-			this.lblProfiles_SnapSettings_Gamma.TabIndex = 28;
-			this.lblProfiles_SnapSettings_Gamma.Text = "Gamma: x (Min: 0.2 Max: 5.0)";
-			this.lblProfiles_SnapSettings_Gamma.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// tbProfiles_SnapSettings_Gamma
-			// 
-			this.tbProfiles_SnapSettings_Gamma.LargeChange = 10;
-			this.tbProfiles_SnapSettings_Gamma.Location = new System.Drawing.Point(8, 32);
-			this.tbProfiles_SnapSettings_Gamma.Maximum = 50;
-			this.tbProfiles_SnapSettings_Gamma.Minimum = 2;
-			this.tbProfiles_SnapSettings_Gamma.Name = "tbProfiles_SnapSettings_Gamma";
-			this.tbProfiles_SnapSettings_Gamma.Size = new System.Drawing.Size(208, 40);
-			this.tbProfiles_SnapSettings_Gamma.TabIndex = 27;
-			this.tbProfiles_SnapSettings_Gamma.Value = 2;
-			this.tbProfiles_SnapSettings_Gamma.Scroll += new System.EventHandler(this.tbProfiles_SnapSettings_Gamma_Scroll);
-			// 
-			// lblProfiles_SnapSettings_Save
-			// 
-			this.lblProfiles_SnapSettings_Save.Location = new System.Drawing.Point(8, 40);
-			this.lblProfiles_SnapSettings_Save.Name = "lblProfiles_SnapSettings_Save";
-			this.lblProfiles_SnapSettings_Save.Size = new System.Drawing.Size(40, 16);
-			this.lblProfiles_SnapSettings_Save.TabIndex = 22;
-			this.lblProfiles_SnapSettings_Save.Text = "Save: ";
-			this.lblProfiles_SnapSettings_Save.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// cbProfiles_SnapSettings_SaveType
-			// 
-			this.cbProfiles_SnapSettings_SaveType.Items.AddRange(new object[] {
-																				  "Only Snaps",
-																				  "Only Animations",
-																				  "Snaps & Animations"});
-			this.cbProfiles_SnapSettings_SaveType.Location = new System.Drawing.Point(48, 40);
-			this.cbProfiles_SnapSettings_SaveType.Name = "cbProfiles_SnapSettings_SaveType";
-			this.cbProfiles_SnapSettings_SaveType.Size = new System.Drawing.Size(184, 21);
-			this.cbProfiles_SnapSettings_SaveType.TabIndex = 21;
-			this.cbProfiles_SnapSettings_SaveType.Text = "Save Options";
-			// 
-			// grpProfiles_SnapSettings_SnapDir
-			// 
-			this.grpProfiles_SnapSettings_SnapDir.Controls.Add(this.txtProfiles_SnapSettings_SnapDir);
-			this.grpProfiles_SnapSettings_SnapDir.Controls.Add(this.cmdProfiles_BrowseSnapDir);
-			this.grpProfiles_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 192);
-			this.grpProfiles_SnapSettings_SnapDir.Name = "grpProfiles_SnapSettings_SnapDir";
-			this.grpProfiles_SnapSettings_SnapDir.Size = new System.Drawing.Size(224, 48);
-			this.grpProfiles_SnapSettings_SnapDir.TabIndex = 8;
-			this.grpProfiles_SnapSettings_SnapDir.TabStop = false;
-			this.grpProfiles_SnapSettings_SnapDir.Text = "Snap Directory";
-			// 
-			// txtProfiles_SnapSettings_SnapDir
-			// 
-			this.txtProfiles_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 16);
-			this.txtProfiles_SnapSettings_SnapDir.Name = "txtProfiles_SnapSettings_SnapDir";
-			this.txtProfiles_SnapSettings_SnapDir.Size = new System.Drawing.Size(144, 20);
-			this.txtProfiles_SnapSettings_SnapDir.TabIndex = 5;
-			this.txtProfiles_SnapSettings_SnapDir.Text = "";
-			// 
-			// cmdProfiles_BrowseSnapDir
-			// 
-			this.cmdProfiles_BrowseSnapDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdProfiles_BrowseSnapDir.Location = new System.Drawing.Point(160, 16);
-			this.cmdProfiles_BrowseSnapDir.Name = "cmdProfiles_BrowseSnapDir";
-			this.cmdProfiles_BrowseSnapDir.Size = new System.Drawing.Size(56, 24);
-			this.cmdProfiles_BrowseSnapDir.TabIndex = 6;
-			this.cmdProfiles_BrowseSnapDir.Text = "Browse";
-			this.cmdProfiles_BrowseSnapDir.Click += new System.EventHandler(this.cmdProfiles_BrowseSnapDir_Click);
-			// 
-			// grpProfiles_SnapSettings_TimingAndParameters
-			// 
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_MultiSnapDelay);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_MultiSnapDelay);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SnapCount);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_SnapCount);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_NextSnapDelay);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_NextSnapDelay);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SnapDelay);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_Delay);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Location = new System.Drawing.Point(8, 64);
-			this.grpProfiles_SnapSettings_TimingAndParameters.Name = "grpProfiles_SnapSettings_TimingAndParameters";
-			this.grpProfiles_SnapSettings_TimingAndParameters.Size = new System.Drawing.Size(224, 120);
-			this.grpProfiles_SnapSettings_TimingAndParameters.TabIndex = 7;
-			this.grpProfiles_SnapSettings_TimingAndParameters.TabStop = false;
-			this.grpProfiles_SnapSettings_TimingAndParameters.Text = "Timing && Parameters";
-			// 
-			// lblProfiles_SnapSettings_MultiSnapDelay
-			// 
-			this.lblProfiles_SnapSettings_MultiSnapDelay.Location = new System.Drawing.Point(8, 88);
-			this.lblProfiles_SnapSettings_MultiSnapDelay.Name = "lblProfiles_SnapSettings_MultiSnapDelay";
-			this.lblProfiles_SnapSettings_MultiSnapDelay.Size = new System.Drawing.Size(96, 16);
-			this.lblProfiles_SnapSettings_MultiSnapDelay.TabIndex = 31;
-			this.lblProfiles_SnapSettings_MultiSnapDelay.Text = "MultiSnap Delay:";
-			this.lblProfiles_SnapSettings_MultiSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// udProfiles_SnapSettings_MultiSnapDelay
-			// 
-			this.udProfiles_SnapSettings_MultiSnapDelay.Location = new System.Drawing.Point(104, 88);
-			this.udProfiles_SnapSettings_MultiSnapDelay.Maximum = new System.Decimal(new int[] {
-																								   10000,
-																								   0,
-																								   0,
-																								   0});
-			this.udProfiles_SnapSettings_MultiSnapDelay.Minimum = new System.Decimal(new int[] {
-																								   1,
-																								   0,
-																								   0,
-																								   0});
-			this.udProfiles_SnapSettings_MultiSnapDelay.Name = "udProfiles_SnapSettings_MultiSnapDelay";
-			this.udProfiles_SnapSettings_MultiSnapDelay.Size = new System.Drawing.Size(112, 20);
-			this.udProfiles_SnapSettings_MultiSnapDelay.TabIndex = 30;
-			this.udProfiles_SnapSettings_MultiSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			this.udProfiles_SnapSettings_MultiSnapDelay.Value = new System.Decimal(new int[] {
-																								 1,
-																								 0,
-																								 0,
-																								 0});
-			// 
-			// lblProfiles_SnapSettings_SnapCount
-			// 
-			this.lblProfiles_SnapSettings_SnapCount.Location = new System.Drawing.Point(8, 64);
-			this.lblProfiles_SnapSettings_SnapCount.Name = "lblProfiles_SnapSettings_SnapCount";
-			this.lblProfiles_SnapSettings_SnapCount.Size = new System.Drawing.Size(96, 16);
-			this.lblProfiles_SnapSettings_SnapCount.TabIndex = 29;
-			this.lblProfiles_SnapSettings_SnapCount.Text = "Snap Count:";
-			this.lblProfiles_SnapSettings_SnapCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// udProfiles_SnapSettings_SnapCount
-			// 
-			this.udProfiles_SnapSettings_SnapCount.Location = new System.Drawing.Point(104, 64);
-			this.udProfiles_SnapSettings_SnapCount.Maximum = new System.Decimal(new int[] {
-																							  20,
-																							  0,
-																							  0,
-																							  0});
-			this.udProfiles_SnapSettings_SnapCount.Minimum = new System.Decimal(new int[] {
-																							  1,
-																							  0,
-																							  0,
-																							  0});
-			this.udProfiles_SnapSettings_SnapCount.Name = "udProfiles_SnapSettings_SnapCount";
-			this.udProfiles_SnapSettings_SnapCount.Size = new System.Drawing.Size(112, 20);
-			this.udProfiles_SnapSettings_SnapCount.TabIndex = 28;
-			this.udProfiles_SnapSettings_SnapCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			this.udProfiles_SnapSettings_SnapCount.Value = new System.Decimal(new int[] {
-																							1,
-																							0,
-																							0,
-																							0});
-			// 
-			// lblProfiles_SnapSettings_NextSnapDelay
-			// 
-			this.lblProfiles_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(8, 40);
-			this.lblProfiles_SnapSettings_NextSnapDelay.Name = "lblProfiles_SnapSettings_NextSnapDelay";
-			this.lblProfiles_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(96, 16);
-			this.lblProfiles_SnapSettings_NextSnapDelay.TabIndex = 27;
-			this.lblProfiles_SnapSettings_NextSnapDelay.Text = "Next Snap Delay:";
-			this.lblProfiles_SnapSettings_NextSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// udProfiles_SnapSettings_NextSnapDelay
-			// 
-			this.udProfiles_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(104, 40);
-			this.udProfiles_SnapSettings_NextSnapDelay.Maximum = new System.Decimal(new int[] {
-																								  10000,
-																								  0,
-																								  0,
-																								  0});
-			this.udProfiles_SnapSettings_NextSnapDelay.Name = "udProfiles_SnapSettings_NextSnapDelay";
-			this.udProfiles_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(112, 20);
-			this.udProfiles_SnapSettings_NextSnapDelay.TabIndex = 26;
-			this.udProfiles_SnapSettings_NextSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			// 
-			// lblProfiles_SnapSettings_SnapDelay
-			// 
-			this.lblProfiles_SnapSettings_SnapDelay.Location = new System.Drawing.Point(8, 16);
-			this.lblProfiles_SnapSettings_SnapDelay.Name = "lblProfiles_SnapSettings_SnapDelay";
-			this.lblProfiles_SnapSettings_SnapDelay.Size = new System.Drawing.Size(72, 16);
-			this.lblProfiles_SnapSettings_SnapDelay.TabIndex = 23;
-			this.lblProfiles_SnapSettings_SnapDelay.Text = "Snap Delay:";
-			this.lblProfiles_SnapSettings_SnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// udProfiles_SnapSettings_Delay
-			// 
-			this.udProfiles_SnapSettings_Delay.Location = new System.Drawing.Point(104, 16);
-			this.udProfiles_SnapSettings_Delay.Maximum = new System.Decimal(new int[] {
-																						  10000,
-																						  0,
-																						  0,
-																						  0});
-			this.udProfiles_SnapSettings_Delay.Name = "udProfiles_SnapSettings_Delay";
-			this.udProfiles_SnapSettings_Delay.Size = new System.Drawing.Size(112, 20);
-			this.udProfiles_SnapSettings_Delay.TabIndex = 22;
-			this.udProfiles_SnapSettings_Delay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-			// 
-			// chkProfiles_SnapSettings_Enabled
-			// 
-			this.chkProfiles_SnapSettings_Enabled.Location = new System.Drawing.Point(8, 16);
-			this.chkProfiles_SnapSettings_Enabled.Name = "chkProfiles_SnapSettings_Enabled";
-			this.chkProfiles_SnapSettings_Enabled.Size = new System.Drawing.Size(72, 16);
-			this.chkProfiles_SnapSettings_Enabled.TabIndex = 0;
-			this.chkProfiles_SnapSettings_Enabled.Text = "Enabled";
-			// 
-			// tabProfiles_StatsSettings
-			// 
-			this.tabProfiles_StatsSettings.Controls.Add(this.chkProfiles_StatsSettings_UseGlobal);
-			this.tabProfiles_StatsSettings.Controls.Add(this.grpProfiles_StatsSettingsSub);
-			this.tabProfiles_StatsSettings.Controls.Add(this.cmdProfiles_StatsSettings_View);
-			this.tabProfiles_StatsSettings.Controls.Add(this.cmdProfiles_StatsSettings_Reset);
-			this.tabProfiles_StatsSettings.Location = new System.Drawing.Point(4, 22);
-			this.tabProfiles_StatsSettings.Name = "tabProfiles_StatsSettings";
-			this.tabProfiles_StatsSettings.Size = new System.Drawing.Size(272, 318);
-			this.tabProfiles_StatsSettings.TabIndex = 2;
-			this.tabProfiles_StatsSettings.Text = "Stats Settings";
-			// 
-			// chkProfiles_StatsSettings_UseGlobal
-			// 
-			this.chkProfiles_StatsSettings_UseGlobal.Location = new System.Drawing.Point(8, 7);
-			this.chkProfiles_StatsSettings_UseGlobal.Name = "chkProfiles_StatsSettings_UseGlobal";
-			this.chkProfiles_StatsSettings_UseGlobal.Size = new System.Drawing.Size(128, 16);
-			this.chkProfiles_StatsSettings_UseGlobal.TabIndex = 2;
-			this.chkProfiles_StatsSettings_UseGlobal.Text = "Use Global Settings";
-			this.chkProfiles_StatsSettings_UseGlobal.CheckedChanged += new System.EventHandler(this.chkProfiles_StatsSettings_UseGlobal_CheckedChanged);
-			// 
-			// grpProfiles_StatsSettingsSub
-			// 
-			this.grpProfiles_StatsSettingsSub.Controls.Add(this.chkProfiles_StatsSettings_Enabled);
-			this.grpProfiles_StatsSettingsSub.Location = new System.Drawing.Point(8, 23);
-			this.grpProfiles_StatsSettingsSub.Name = "grpProfiles_StatsSettingsSub";
-			this.grpProfiles_StatsSettingsSub.Size = new System.Drawing.Size(256, 257);
-			this.grpProfiles_StatsSettingsSub.TabIndex = 3;
-			this.grpProfiles_StatsSettingsSub.TabStop = false;
-			// 
-			// chkProfiles_StatsSettings_Enabled
-			// 
-			this.chkProfiles_StatsSettings_Enabled.Location = new System.Drawing.Point(8, 16);
-			this.chkProfiles_StatsSettings_Enabled.Name = "chkProfiles_StatsSettings_Enabled";
-			this.chkProfiles_StatsSettings_Enabled.Size = new System.Drawing.Size(72, 16);
-			this.chkProfiles_StatsSettings_Enabled.TabIndex = 0;
-			this.chkProfiles_StatsSettings_Enabled.Text = "Enabled";
-			// 
-			// cmdProfiles_StatsSettings_View
-			// 
-			this.cmdProfiles_StatsSettings_View.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdProfiles_StatsSettings_View.Location = new System.Drawing.Point(8, 288);
-			this.cmdProfiles_StatsSettings_View.Name = "cmdProfiles_StatsSettings_View";
-			this.cmdProfiles_StatsSettings_View.Size = new System.Drawing.Size(72, 24);
-			this.cmdProfiles_StatsSettings_View.TabIndex = 7;
-			this.cmdProfiles_StatsSettings_View.Text = "View";
-			this.cmdProfiles_StatsSettings_View.Click += new System.EventHandler(this.cmdProfiles_StatsSettings_View_Click);
-			// 
-			// cmdProfiles_StatsSettings_Reset
-			// 
-			this.cmdProfiles_StatsSettings_Reset.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.cmdProfiles_StatsSettings_Reset.Location = new System.Drawing.Point(192, 288);
-			this.cmdProfiles_StatsSettings_Reset.Name = "cmdProfiles_StatsSettings_Reset";
-			this.cmdProfiles_StatsSettings_Reset.Size = new System.Drawing.Size(72, 24);
-			this.cmdProfiles_StatsSettings_Reset.TabIndex = 6;
-			this.cmdProfiles_StatsSettings_Reset.Text = "Reset";
-			this.cmdProfiles_StatsSettings_Reset.Click += new System.EventHandler(this.cmdProfiles_StatsSettings_Reset_Click);
-			// 
-			// tabLog
-			// 
-			this.tabLog.Controls.Add(this.rtxtLog);
-			this.tabLog.Location = new System.Drawing.Point(4, 25);
-			this.tabLog.Name = "tabLog";
-			this.tabLog.Size = new System.Drawing.Size(440, 379);
-			this.tabLog.TabIndex = 3;
-			this.tabLog.Text = "Log";
-			// 
-			// rtxtLog
-			// 
-			this.rtxtLog.Location = new System.Drawing.Point(4, 8);
-			this.rtxtLog.Name = "rtxtLog";
-			this.rtxtLog.ReadOnly = true;
-			this.rtxtLog.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-			this.rtxtLog.Size = new System.Drawing.Size(436, 368);
-			this.rtxtLog.TabIndex = 11;
-			this.rtxtLog.Text = "";
-			this.rtxtLog.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.rtxtLog_LinkClicked);
-			// 
-			// tabAbout
-			// 
-			this.tabAbout.Controls.Add(this.rtxtAbout);
-			this.tabAbout.Controls.Add(this.picAboutIcon);
-			this.tabAbout.Location = new System.Drawing.Point(4, 25);
-			this.tabAbout.Name = "tabAbout";
-			this.tabAbout.Size = new System.Drawing.Size(440, 379);
-			this.tabAbout.TabIndex = 2;
-			this.tabAbout.Text = "About";
-			// 
-			// rtxtAbout
-			// 
-			this.rtxtAbout.BackColor = System.Drawing.SystemColors.Control;
-			this.rtxtAbout.Location = new System.Drawing.Point(72, 8);
-			this.rtxtAbout.Name = "rtxtAbout";
-			this.rtxtAbout.ReadOnly = true;
-			this.rtxtAbout.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-			this.rtxtAbout.Size = new System.Drawing.Size(360, 360);
-			this.rtxtAbout.TabIndex = 3;
-			this.rtxtAbout.Text = "";
-			// 
-			// picAboutIcon
-			// 
-			this.picAboutIcon.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			this.picAboutIcon.Image = ((System.Drawing.Image)(resources.GetObject("picAboutIcon.Image")));
-			this.picAboutIcon.Location = new System.Drawing.Point(8, 8);
-			this.picAboutIcon.Name = "picAboutIcon";
-			this.picAboutIcon.Size = new System.Drawing.Size(56, 56);
-			this.picAboutIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-			this.picAboutIcon.TabIndex = 2;
-			this.picAboutIcon.TabStop = false;
-			// 
-			// TimerMsg
-			// 
-			this.TimerMsg.Interval = 500;
-			this.TimerMsg.Tick += new System.EventHandler(this.TimerMsg_Tick);
-			// 
-			// cmdApply
-			// 
-			this.cmdApply.Location = new System.Drawing.Point(72, 416);
-			this.cmdApply.Name = "cmdApply";
-			this.cmdApply.Size = new System.Drawing.Size(64, 24);
-			this.cmdApply.TabIndex = 10;
-			this.cmdApply.Text = "Apply";
-			this.cmdApply.Click += new System.EventHandler(this.cmdApply_Click);
-			// 
-			// frmMain
-			// 
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
+            this.HKCaptureDesktop = new Kudlacz.Hooks.GlobalHotKey(this.components);
+            this.HKCaptureWindow = new Kudlacz.Hooks.GlobalHotKey(this.components);
+            this.HKCaptureActiveProfile = new Kudlacz.Hooks.GlobalHotKey(this.components);
+            this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.contextMenu = new System.Windows.Forms.ContextMenu();
+            this.mnuEnableSnaps = new System.Windows.Forms.MenuItem();
+            this.mnuEnableStats = new System.Windows.Forms.MenuItem();
+            this.menuItem6 = new System.Windows.Forms.MenuItem();
+            this.mnuViewStats = new System.Windows.Forms.MenuItem();
+            this.mnuOpenSnapDir = new System.Windows.Forms.MenuItem();
+            this.menuItem4 = new System.Windows.Forms.MenuItem();
+            this.menuOpen = new System.Windows.Forms.MenuItem();
+            this.mnuAbout = new System.Windows.Forms.MenuItem();
+            this.menuItem1 = new System.Windows.Forms.MenuItem();
+            this.mnuExit = new System.Windows.Forms.MenuItem();
+            this.dlgBrowseDir = new System.Windows.Forms.FolderBrowserDialog();
+            this.TimerMisc = new System.Windows.Forms.Timer(this.components);
+            this.cmdOK = new System.Windows.Forms.Button();
+            this.cmdCancel = new System.Windows.Forms.Button();
+            this.lstProfiles_Games = new System.Windows.Forms.ListView();
+            this.tabOptions = new System.Windows.Forms.TabControl();
+            this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.tabGeneralOptions = new System.Windows.Forms.TabControl();
+            this.tabGeneral_GlobalSnapSettings = new System.Windows.Forms.TabPage();
+            this.grpGeneral_SnapSettings_ProcessingSettings = new System.Windows.Forms.GroupBox();
+            this.lblGeneral_SnapSettings_CapturePriority = new System.Windows.Forms.Label();
+            this.cbGeneral_SnapSettings_CapturePriority = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_SnapSettings_SavePriority = new System.Windows.Forms.Label();
+            this.udGeneral_SnapSettings_SaveThreads = new System.Windows.Forms.NumericUpDown();
+            this.cbGeneral_SnapSettings_SavePriority = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_SnapSettings_SaveThreads = new System.Windows.Forms.Label();
+            this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
+            this.grpGeneral_SnapSettings_AnimationSettings = new System.Windows.Forms.GroupBox();
+            this.chkGeneral_SnapSettings_AnimOptimizePalette = new System.Windows.Forms.CheckBox();
+            this.udGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.NumericUpDown();
+            this.lblGeneral_SnapSettings_AnimFrameDelay = new System.Windows.Forms.Label();
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay = new System.Windows.Forms.CheckBox();
+            this.udGeneral_SnapSettings_AnimHeight = new System.Windows.Forms.NumericUpDown();
+            this.lblGeneral_SnapSettings_AnimHeight = new System.Windows.Forms.Label();
+            this.udGeneral_SnapSettings_AnimWidth = new System.Windows.Forms.NumericUpDown();
+            this.lblGeneral_SnapSettings_AnimWidth = new System.Windows.Forms.Label();
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions = new System.Windows.Forms.CheckBox();
+            this.grpGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.GroupBox();
+            this.lblGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.Label();
+            this.cbGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.ComboBox();
+            this.lblGeneral_SnapSettings_Quality = new System.Windows.Forms.Label();
+            this.tbGeneral_SnapSettings_Quality = new System.Windows.Forms.TrackBar();
+            this.grpGeneral_SnapSettings_SnapDir = new System.Windows.Forms.GroupBox();
+            this.txtGeneral_SnapSettings_SnapDir = new System.Windows.Forms.TextBox();
+            this.cmdGeneral_SnapSettings_BrowseSnapDir = new System.Windows.Forms.Button();
+            this.grpGeneral_SnapSettings_TimingAndParameters = new System.Windows.Forms.GroupBox();
+            this.udGeneral_SnapSettings_NextSnapDelay = new System.Windows.Forms.NumericUpDown();
+            this.udGeneral_SnapSettings_SaveQueueSize = new System.Windows.Forms.NumericUpDown();
+            this.udGeneral_SnapSettings_Delay = new System.Windows.Forms.NumericUpDown();
+            this.lblGeneral_SnapSettings_NextSnapDelay = new System.Windows.Forms.Label();
+            this.lblGeneral_SnapSettings_SaveQueueSize = new System.Windows.Forms.Label();
+            this.lblGeneral_SnapSettings_SnapDelay = new System.Windows.Forms.Label();
+            this.chkGeneral_SnapSettings_Enabled = new System.Windows.Forms.CheckBox();
+            this.tabGeneral_GlobalStatsSettings = new System.Windows.Forms.TabPage();
+            this.cmdGeneral_StatsSettings_ViewStats = new System.Windows.Forms.Button();
+            this.cmdGeneral_StatsSettings_Reset = new System.Windows.Forms.Button();
+            this.chkGeneral_StatsSettings_Enabled = new System.Windows.Forms.CheckBox();
+            this.tabGeneral_HotKeys = new System.Windows.Forms.TabPage();
+            this.txtGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.TextBox();
+            this.txtGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.TextBox();
+            this.txtGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.TextBox();
+            this.lblGeneral_HotKeys_CaptureActiveProfile = new System.Windows.Forms.Label();
+            this.lblGeneral_HotKeys_CaptureWindow = new System.Windows.Forms.Label();
+            this.lblGeneral_HotKeys_CaptureDesktop = new System.Windows.Forms.Label();
+            this.chkGeneral_HotKeys_Enabled = new System.Windows.Forms.CheckBox();
+            this.tabGeneral_Misc = new System.Windows.Forms.TabPage();
+            this.grpGeneral_Misc_Updates = new System.Windows.Forms.GroupBox();
+            this.lblGeneral_Misc_CheckUpdates = new System.Windows.Forms.Label();
+            this.cbGeneral_Misc_CheckUpdates = new System.Windows.Forms.ComboBox();
+            this.tabProfiles = new System.Windows.Forms.TabPage();
+            this.lblProfiles_ActiveProfile = new System.Windows.Forms.Label();
+            this.tabProfileOptions = new System.Windows.Forms.TabControl();
+            this.tabProfiles_GameSettings = new System.Windows.Forms.TabPage();
+            this.grpProfiles_GameSettings_Path = new System.Windows.Forms.GroupBox();
+            this.cmdProfiles_GameSettings_AutoDetect = new System.Windows.Forms.Button();
+            this.cmdProfiles_GameSettings_BrowseGamePath = new System.Windows.Forms.Button();
+            this.txtProfiles_GameSettings_Path = new System.Windows.Forms.TextBox();
+            this.tabProfiles_SnapSettings = new System.Windows.Forms.TabPage();
+            this.chkProfiles_SnapSettings_UseGlobal = new System.Windows.Forms.CheckBox();
+            this.grpProfiles_SnapSettingsSub = new System.Windows.Forms.GroupBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblProfiles_SnapSettings_Brightness = new System.Windows.Forms.Label();
+            this.tbProfiles_SnapSettings_Brightness = new System.Windows.Forms.TrackBar();
+            this.lblProfiles_SnapSettings_Contrast = new System.Windows.Forms.Label();
+            this.tbProfiles_SnapSettings_Contrast = new System.Windows.Forms.TrackBar();
+            this.lblProfiles_SnapSettings_Gamma = new System.Windows.Forms.Label();
+            this.tbProfiles_SnapSettings_Gamma = new System.Windows.Forms.TrackBar();
+            this.lblProfiles_SnapSettings_Save = new System.Windows.Forms.Label();
+            this.cbProfiles_SnapSettings_SaveType = new System.Windows.Forms.ComboBox();
+            this.grpProfiles_SnapSettings_SnapDir = new System.Windows.Forms.GroupBox();
+            this.txtProfiles_SnapSettings_SnapDir = new System.Windows.Forms.TextBox();
+            this.cmdProfiles_BrowseSnapDir = new System.Windows.Forms.Button();
+            this.grpProfiles_SnapSettings_TimingAndParameters = new System.Windows.Forms.GroupBox();
+            this.lblProfiles_SnapSettings_MultiSnapDelay = new System.Windows.Forms.Label();
+            this.udProfiles_SnapSettings_MultiSnapDelay = new System.Windows.Forms.NumericUpDown();
+            this.lblProfiles_SnapSettings_SnapCount = new System.Windows.Forms.Label();
+            this.udProfiles_SnapSettings_SnapCount = new System.Windows.Forms.NumericUpDown();
+            this.lblProfiles_SnapSettings_NextSnapDelay = new System.Windows.Forms.Label();
+            this.udProfiles_SnapSettings_NextSnapDelay = new System.Windows.Forms.NumericUpDown();
+            this.lblProfiles_SnapSettings_SnapDelay = new System.Windows.Forms.Label();
+            this.udProfiles_SnapSettings_Delay = new System.Windows.Forms.NumericUpDown();
+            this.chkProfiles_SnapSettings_Enabled = new System.Windows.Forms.CheckBox();
+            this.tabProfiles_StatsSettings = new System.Windows.Forms.TabPage();
+            this.chkProfiles_StatsSettings_UseGlobal = new System.Windows.Forms.CheckBox();
+            this.grpProfiles_StatsSettingsSub = new System.Windows.Forms.GroupBox();
+            this.chkProfiles_StatsSettings_Enabled = new System.Windows.Forms.CheckBox();
+            this.cmdProfiles_StatsSettings_View = new System.Windows.Forms.Button();
+            this.cmdProfiles_StatsSettings_Reset = new System.Windows.Forms.Button();
+            this.tabLog = new System.Windows.Forms.TabPage();
+            this.rtxtLog = new System.Windows.Forms.RichTextBox();
+            this.tabAbout = new System.Windows.Forms.TabPage();
+            this.rtxtAbout = new System.Windows.Forms.RichTextBox();
+            this.picAboutIcon = new System.Windows.Forms.PictureBox();
+            this.TimerMsg = new System.Windows.Forms.Timer(this.components);
+            this.cmdApply = new System.Windows.Forms.Button();
+            this.tabOptions.SuspendLayout();
+            this.tabGeneral.SuspendLayout();
+            this.tabGeneralOptions.SuspendLayout();
+            this.tabGeneral_GlobalSnapSettings.SuspendLayout();
+            this.grpGeneral_SnapSettings_ProcessingSettings.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveThreads)).BeginInit();
+            this.grpGeneral_SnapSettings_AnimationSettings.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimWidth)).BeginInit();
+            this.grpGeneral_SnapSettings_ImageFormat.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tbGeneral_SnapSettings_Quality)).BeginInit();
+            this.grpGeneral_SnapSettings_SnapDir.SuspendLayout();
+            this.grpGeneral_SnapSettings_TimingAndParameters.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_NextSnapDelay)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveQueueSize)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).BeginInit();
+            this.tabGeneral_GlobalStatsSettings.SuspendLayout();
+            this.tabGeneral_HotKeys.SuspendLayout();
+            this.tabGeneral_Misc.SuspendLayout();
+            this.grpGeneral_Misc_Updates.SuspendLayout();
+            this.tabProfiles.SuspendLayout();
+            this.tabProfileOptions.SuspendLayout();
+            this.tabProfiles_GameSettings.SuspendLayout();
+            this.grpProfiles_GameSettings_Path.SuspendLayout();
+            this.tabProfiles_SnapSettings.SuspendLayout();
+            this.grpProfiles_SnapSettingsSub.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Brightness)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Contrast)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Gamma)).BeginInit();
+            this.grpProfiles_SnapSettings_SnapDir.SuspendLayout();
+            this.grpProfiles_SnapSettings_TimingAndParameters.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_MultiSnapDelay)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SnapCount)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_NextSnapDelay)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_Delay)).BeginInit();
+            this.tabProfiles_StatsSettings.SuspendLayout();
+            this.grpProfiles_StatsSettingsSub.SuspendLayout();
+            this.tabLog.SuspendLayout();
+            this.tabAbout.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picAboutIcon)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // HKCaptureDesktop
+            // 
+            this.HKCaptureDesktop.EnableKeyCapture = false;
+            this.HKCaptureDesktop.HotKey = null;
+            this.HKCaptureDesktop.KeyCapture += new System.EventHandler(this.HKCaptureDesktop_KeyCapture);
+            this.HKCaptureDesktop.Pressed += new System.EventHandler(this.HKCaptureDesktop_Pressed);
+            // 
+            // HKCaptureWindow
+            // 
+            this.HKCaptureWindow.EnableKeyCapture = false;
+            this.HKCaptureWindow.HotKey = null;
+            this.HKCaptureWindow.KeyCapture += new System.EventHandler(this.HKCaptureWindow_KeyCapture);
+            this.HKCaptureWindow.Pressed += new System.EventHandler(this.HKCaptureWindow_Pressed);
+            // 
+            // HKCaptureActiveProfile
+            // 
+            this.HKCaptureActiveProfile.EnableKeyCapture = false;
+            this.HKCaptureActiveProfile.HotKey = null;
+            this.HKCaptureActiveProfile.KeyCapture += new System.EventHandler(this.HKCaptureActiveProfile_KeyCapture);
+            this.HKCaptureActiveProfile.Pressed += new System.EventHandler(this.HKCaptureActiveProfile_Pressed);
+            // 
+            // notifyIcon
+            // 
+            this.notifyIcon.ContextMenu = this.contextMenu;
+            this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+            this.notifyIcon.Text = "Smile!";
+            this.notifyIcon.Visible = true;
+            this.notifyIcon.DoubleClick += new System.EventHandler(this.notifyIcon_DoubleClick);
+            // 
+            // contextMenu
+            // 
+            this.contextMenu.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this.mnuEnableSnaps,
+            this.mnuEnableStats,
+            this.menuItem6,
+            this.mnuViewStats,
+            this.mnuOpenSnapDir,
+            this.menuItem4,
+            this.menuOpen,
+            this.mnuAbout,
+            this.menuItem1,
+            this.mnuExit});
+            // 
+            // mnuEnableSnaps
+            // 
+            this.mnuEnableSnaps.Checked = true;
+            this.mnuEnableSnaps.Index = 0;
+            this.mnuEnableSnaps.Text = "Enable Snaps";
+            this.mnuEnableSnaps.Click += new System.EventHandler(this.mnuEnableSnaps_Click);
+            // 
+            // mnuEnableStats
+            // 
+            this.mnuEnableStats.Checked = true;
+            this.mnuEnableStats.Index = 1;
+            this.mnuEnableStats.Text = "Enable Stats";
+            this.mnuEnableStats.Click += new System.EventHandler(this.mnuEnableStats_Click);
+            // 
+            // menuItem6
+            // 
+            this.menuItem6.Index = 2;
+            this.menuItem6.Text = "-";
+            // 
+            // mnuViewStats
+            // 
+            this.mnuViewStats.Index = 3;
+            this.mnuViewStats.Text = "View Stats";
+            this.mnuViewStats.Click += new System.EventHandler(this.mnuViewStats_Click);
+            // 
+            // mnuOpenSnapDir
+            // 
+            this.mnuOpenSnapDir.Index = 4;
+            this.mnuOpenSnapDir.Text = "Open Snap Folder";
+            this.mnuOpenSnapDir.Click += new System.EventHandler(this.mnuOpenSnapDir_Click);
+            // 
+            // menuItem4
+            // 
+            this.menuItem4.Index = 5;
+            this.menuItem4.Text = "-";
+            // 
+            // menuOpen
+            // 
+            this.menuOpen.Index = 6;
+            this.menuOpen.Text = "Open";
+            this.menuOpen.Click += new System.EventHandler(this.mnuOpen_Click);
+            // 
+            // mnuAbout
+            // 
+            this.mnuAbout.Index = 7;
+            this.mnuAbout.Text = "About";
+            this.mnuAbout.Click += new System.EventHandler(this.mnuAbout_Click);
+            // 
+            // menuItem1
+            // 
+            this.menuItem1.Index = 8;
+            this.menuItem1.Text = "-";
+            // 
+            // mnuExit
+            // 
+            this.mnuExit.Index = 9;
+            this.mnuExit.Text = "Exit";
+            this.mnuExit.Click += new System.EventHandler(this.mnuExit_Click);
+            // 
+            // TimerMisc
+            // 
+            this.TimerMisc.Interval = 5000;
+            this.TimerMisc.Tick += new System.EventHandler(this.TimerMisc_Tick);
+            // 
+            // cmdOK
+            // 
+            this.cmdOK.Location = new System.Drawing.Point(8, 416);
+            this.cmdOK.Name = "cmdOK";
+            this.cmdOK.Size = new System.Drawing.Size(64, 24);
+            this.cmdOK.TabIndex = 5;
+            this.cmdOK.Text = "OK";
+            this.cmdOK.Click += new System.EventHandler(this.cmdOK_Click);
+            // 
+            // cmdCancel
+            // 
+            this.cmdCancel.Location = new System.Drawing.Point(136, 416);
+            this.cmdCancel.Name = "cmdCancel";
+            this.cmdCancel.Size = new System.Drawing.Size(64, 24);
+            this.cmdCancel.TabIndex = 6;
+            this.cmdCancel.Text = "Cancel";
+            this.cmdCancel.Click += new System.EventHandler(this.cmdCancel_Click);
+            // 
+            // lstProfiles_Games
+            // 
+            this.lstProfiles_Games.FullRowSelect = true;
+            this.lstProfiles_Games.Location = new System.Drawing.Point(8, 8);
+            this.lstProfiles_Games.MultiSelect = false;
+            this.lstProfiles_Games.Name = "lstProfiles_Games";
+            this.lstProfiles_Games.Size = new System.Drawing.Size(136, 360);
+            this.lstProfiles_Games.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.lstProfiles_Games.TabIndex = 8;
+            this.lstProfiles_Games.UseCompatibleStateImageBehavior = false;
+            this.lstProfiles_Games.View = System.Windows.Forms.View.List;
+            this.lstProfiles_Games.SelectedIndexChanged += new System.EventHandler(this.lstProfiles_Games_SelectedIndexChanged);
+            // 
+            // tabOptions
+            // 
+            this.tabOptions.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
+            this.tabOptions.Controls.Add(this.tabGeneral);
+            this.tabOptions.Controls.Add(this.tabProfiles);
+            this.tabOptions.Controls.Add(this.tabLog);
+            this.tabOptions.Controls.Add(this.tabAbout);
+            this.tabOptions.ItemSize = new System.Drawing.Size(49, 21);
+            this.tabOptions.Location = new System.Drawing.Point(0, 8);
+            this.tabOptions.Name = "tabOptions";
+            this.tabOptions.SelectedIndex = 0;
+            this.tabOptions.Size = new System.Drawing.Size(448, 408);
+            this.tabOptions.TabIndex = 9;
+            // 
+            // tabGeneral
+            // 
+            this.tabGeneral.Controls.Add(this.tabGeneralOptions);
+            this.tabGeneral.Location = new System.Drawing.Point(4, 25);
+            this.tabGeneral.Name = "tabGeneral";
+            this.tabGeneral.Size = new System.Drawing.Size(440, 379);
+            this.tabGeneral.TabIndex = 0;
+            this.tabGeneral.Text = "General";
+            // 
+            // tabGeneralOptions
+            // 
+            this.tabGeneralOptions.Controls.Add(this.tabGeneral_GlobalSnapSettings);
+            this.tabGeneralOptions.Controls.Add(this.tabGeneral_GlobalStatsSettings);
+            this.tabGeneralOptions.Controls.Add(this.tabGeneral_HotKeys);
+            this.tabGeneralOptions.Controls.Add(this.tabGeneral_Misc);
+            this.tabGeneralOptions.Location = new System.Drawing.Point(8, 8);
+            this.tabGeneralOptions.Name = "tabGeneralOptions";
+            this.tabGeneralOptions.SelectedIndex = 0;
+            this.tabGeneralOptions.Size = new System.Drawing.Size(424, 368);
+            this.tabGeneralOptions.TabIndex = 4;
+            // 
+            // tabGeneral_GlobalSnapSettings
+            // 
+            this.tabGeneral_GlobalSnapSettings.AutoScroll = true;
+            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ProcessingSettings);
+            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_AnimationSettings);
+            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ImageFormat);
+            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_SnapDir);
+            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_TimingAndParameters);
+            this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_Enabled);
+            this.tabGeneral_GlobalSnapSettings.Location = new System.Drawing.Point(4, 22);
+            this.tabGeneral_GlobalSnapSettings.Name = "tabGeneral_GlobalSnapSettings";
+            this.tabGeneral_GlobalSnapSettings.Size = new System.Drawing.Size(416, 342);
+            this.tabGeneral_GlobalSnapSettings.TabIndex = 0;
+            this.tabGeneral_GlobalSnapSettings.Text = "Global Snap Settings";
+            // 
+            // grpGeneral_SnapSettings_ProcessingSettings
+            // 
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.lblGeneral_SnapSettings_CapturePriority);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.cbGeneral_SnapSettings_CapturePriority);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.lblGeneral_SnapSettings_SavePriority);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.udGeneral_SnapSettings_SaveThreads);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.cbGeneral_SnapSettings_SavePriority);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.lblGeneral_SnapSettings_SaveThreads);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Controls.Add(this.chkGeneral_SnapSettings_SaveBug);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Location = new System.Drawing.Point(8, 318);
+            this.grpGeneral_SnapSettings_ProcessingSettings.Name = "grpGeneral_SnapSettings_ProcessingSettings";
+            this.grpGeneral_SnapSettings_ProcessingSettings.Size = new System.Drawing.Size(384, 140);
+            this.grpGeneral_SnapSettings_ProcessingSettings.TabIndex = 26;
+            this.grpGeneral_SnapSettings_ProcessingSettings.TabStop = false;
+            this.grpGeneral_SnapSettings_ProcessingSettings.Text = "Processing Settings";
+            // 
+            // lblGeneral_SnapSettings_CapturePriority
+            // 
+            this.lblGeneral_SnapSettings_CapturePriority.Location = new System.Drawing.Point(14, 108);
+            this.lblGeneral_SnapSettings_CapturePriority.Name = "lblGeneral_SnapSettings_CapturePriority";
+            this.lblGeneral_SnapSettings_CapturePriority.Size = new System.Drawing.Size(104, 16);
+            this.lblGeneral_SnapSettings_CapturePriority.TabIndex = 36;
+            this.lblGeneral_SnapSettings_CapturePriority.Text = "Capture Priority:";
+            this.lblGeneral_SnapSettings_CapturePriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbGeneral_SnapSettings_CapturePriority
+            // 
+            this.cbGeneral_SnapSettings_CapturePriority.Location = new System.Drawing.Point(126, 108);
+            this.cbGeneral_SnapSettings_CapturePriority.Name = "cbGeneral_SnapSettings_CapturePriority";
+            this.cbGeneral_SnapSettings_CapturePriority.Size = new System.Drawing.Size(248, 21);
+            this.cbGeneral_SnapSettings_CapturePriority.TabIndex = 35;
+            this.cbGeneral_SnapSettings_CapturePriority.Text = "Priority Levels";
+            // 
+            // lblGeneral_SnapSettings_SavePriority
+            // 
+            this.lblGeneral_SnapSettings_SavePriority.Location = new System.Drawing.Point(14, 81);
+            this.lblGeneral_SnapSettings_SavePriority.Name = "lblGeneral_SnapSettings_SavePriority";
+            this.lblGeneral_SnapSettings_SavePriority.Size = new System.Drawing.Size(104, 16);
+            this.lblGeneral_SnapSettings_SavePriority.TabIndex = 23;
+            this.lblGeneral_SnapSettings_SavePriority.Text = "Save Priority:";
+            this.lblGeneral_SnapSettings_SavePriority.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udGeneral_SnapSettings_SaveThreads
+            // 
+            this.udGeneral_SnapSettings_SaveThreads.Location = new System.Drawing.Point(126, 55);
+            this.udGeneral_SnapSettings_SaveThreads.Maximum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_SaveThreads.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_SaveThreads.Name = "udGeneral_SnapSettings_SaveThreads";
+            this.udGeneral_SnapSettings_SaveThreads.Size = new System.Drawing.Size(248, 20);
+            this.udGeneral_SnapSettings_SaveThreads.TabIndex = 33;
+            this.udGeneral_SnapSettings_SaveThreads.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.udGeneral_SnapSettings_SaveThreads.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // cbGeneral_SnapSettings_SavePriority
+            // 
+            this.cbGeneral_SnapSettings_SavePriority.Location = new System.Drawing.Point(126, 81);
+            this.cbGeneral_SnapSettings_SavePriority.Name = "cbGeneral_SnapSettings_SavePriority";
+            this.cbGeneral_SnapSettings_SavePriority.Size = new System.Drawing.Size(248, 21);
+            this.cbGeneral_SnapSettings_SavePriority.TabIndex = 22;
+            this.cbGeneral_SnapSettings_SavePriority.Text = "Priority Levels";
+            // 
+            // lblGeneral_SnapSettings_SaveThreads
+            // 
+            this.lblGeneral_SnapSettings_SaveThreads.Location = new System.Drawing.Point(14, 55);
+            this.lblGeneral_SnapSettings_SaveThreads.Name = "lblGeneral_SnapSettings_SaveThreads";
+            this.lblGeneral_SnapSettings_SaveThreads.Size = new System.Drawing.Size(93, 16);
+            this.lblGeneral_SnapSettings_SaveThreads.TabIndex = 34;
+            this.lblGeneral_SnapSettings_SaveThreads.Text = "Save Threads:";
+            this.lblGeneral_SnapSettings_SaveThreads.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkGeneral_SnapSettings_SaveBug
+            // 
+            this.chkGeneral_SnapSettings_SaveBug.Location = new System.Drawing.Point(17, 25);
+            this.chkGeneral_SnapSettings_SaveBug.Name = "chkGeneral_SnapSettings_SaveBug";
+            this.chkGeneral_SnapSettings_SaveBug.Size = new System.Drawing.Size(348, 24);
+            this.chkGeneral_SnapSettings_SaveBug.TabIndex = 25;
+            this.chkGeneral_SnapSettings_SaveBug.Text = "Save Bug: Images Don\'t Seem to Save (AntiVirus Conflict)";
+            // 
+            // grpGeneral_SnapSettings_AnimationSettings
+            // 
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimOptimizePalette);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimFrameDelay);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimFrameDelay);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimHeight);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimHeight);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.udGeneral_SnapSettings_AnimWidth);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.lblGeneral_SnapSettings_AnimWidth);
+            this.grpGeneral_SnapSettings_AnimationSettings.Controls.Add(this.chkGeneral_SnapSettings_AnimOriginalDimentions);
+            this.grpGeneral_SnapSettings_AnimationSettings.Location = new System.Drawing.Point(8, 464);
+            this.grpGeneral_SnapSettings_AnimationSettings.Name = "grpGeneral_SnapSettings_AnimationSettings";
+            this.grpGeneral_SnapSettings_AnimationSettings.Size = new System.Drawing.Size(384, 184);
+            this.grpGeneral_SnapSettings_AnimationSettings.TabIndex = 25;
+            this.grpGeneral_SnapSettings_AnimationSettings.TabStop = false;
+            this.grpGeneral_SnapSettings_AnimationSettings.Text = "Animation Settings";
+            // 
+            // chkGeneral_SnapSettings_AnimOptimizePalette
+            // 
+            this.chkGeneral_SnapSettings_AnimOptimizePalette.Location = new System.Drawing.Point(8, 16);
+            this.chkGeneral_SnapSettings_AnimOptimizePalette.Name = "chkGeneral_SnapSettings_AnimOptimizePalette";
+            this.chkGeneral_SnapSettings_AnimOptimizePalette.Size = new System.Drawing.Size(136, 24);
+            this.chkGeneral_SnapSettings_AnimOptimizePalette.TabIndex = 36;
+            this.chkGeneral_SnapSettings_AnimOptimizePalette.Text = "Use Optimized Palette";
+            // 
+            // udGeneral_SnapSettings_AnimFrameDelay
+            // 
+            this.udGeneral_SnapSettings_AnimFrameDelay.Location = new System.Drawing.Point(88, 152);
+            this.udGeneral_SnapSettings_AnimFrameDelay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_AnimFrameDelay.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_AnimFrameDelay.Name = "udGeneral_SnapSettings_AnimFrameDelay";
+            this.udGeneral_SnapSettings_AnimFrameDelay.Size = new System.Drawing.Size(288, 20);
+            this.udGeneral_SnapSettings_AnimFrameDelay.TabIndex = 34;
+            this.udGeneral_SnapSettings_AnimFrameDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.udGeneral_SnapSettings_AnimFrameDelay.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // lblGeneral_SnapSettings_AnimFrameDelay
+            // 
+            this.lblGeneral_SnapSettings_AnimFrameDelay.Location = new System.Drawing.Point(8, 152);
+            this.lblGeneral_SnapSettings_AnimFrameDelay.Name = "lblGeneral_SnapSettings_AnimFrameDelay";
+            this.lblGeneral_SnapSettings_AnimFrameDelay.Size = new System.Drawing.Size(72, 16);
+            this.lblGeneral_SnapSettings_AnimFrameDelay.TabIndex = 35;
+            this.lblGeneral_SnapSettings_AnimFrameDelay.Text = "Frame Delay:";
+            this.lblGeneral_SnapSettings_AnimFrameDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkGeneral_SnapSettings_AnimUseMultiSnapDelay
+            // 
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Location = new System.Drawing.Point(8, 128);
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Name = "chkGeneral_SnapSettings_AnimUseMultiSnapDelay";
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Size = new System.Drawing.Size(144, 16);
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.TabIndex = 33;
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Text = "Use MultiSnap Delay";
+            this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay.CheckedChanged += new System.EventHandler(this.chkGeneral_SnapSettings_AnimUseMultiSnapDelay_CheckedChanged);
+            // 
+            // udGeneral_SnapSettings_AnimHeight
+            // 
+            this.udGeneral_SnapSettings_AnimHeight.Location = new System.Drawing.Point(88, 96);
+            this.udGeneral_SnapSettings_AnimHeight.Maximum = new decimal(new int[] {
+            5000,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_AnimHeight.Name = "udGeneral_SnapSettings_AnimHeight";
+            this.udGeneral_SnapSettings_AnimHeight.Size = new System.Drawing.Size(288, 20);
+            this.udGeneral_SnapSettings_AnimHeight.TabIndex = 31;
+            this.udGeneral_SnapSettings_AnimHeight.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // lblGeneral_SnapSettings_AnimHeight
+            // 
+            this.lblGeneral_SnapSettings_AnimHeight.Location = new System.Drawing.Point(8, 96);
+            this.lblGeneral_SnapSettings_AnimHeight.Name = "lblGeneral_SnapSettings_AnimHeight";
+            this.lblGeneral_SnapSettings_AnimHeight.Size = new System.Drawing.Size(72, 16);
+            this.lblGeneral_SnapSettings_AnimHeight.TabIndex = 32;
+            this.lblGeneral_SnapSettings_AnimHeight.Text = "Height:";
+            this.lblGeneral_SnapSettings_AnimHeight.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udGeneral_SnapSettings_AnimWidth
+            // 
+            this.udGeneral_SnapSettings_AnimWidth.Location = new System.Drawing.Point(88, 72);
+            this.udGeneral_SnapSettings_AnimWidth.Maximum = new decimal(new int[] {
+            5000,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_AnimWidth.Name = "udGeneral_SnapSettings_AnimWidth";
+            this.udGeneral_SnapSettings_AnimWidth.Size = new System.Drawing.Size(288, 20);
+            this.udGeneral_SnapSettings_AnimWidth.TabIndex = 29;
+            this.udGeneral_SnapSettings_AnimWidth.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // lblGeneral_SnapSettings_AnimWidth
+            // 
+            this.lblGeneral_SnapSettings_AnimWidth.Location = new System.Drawing.Point(8, 72);
+            this.lblGeneral_SnapSettings_AnimWidth.Name = "lblGeneral_SnapSettings_AnimWidth";
+            this.lblGeneral_SnapSettings_AnimWidth.Size = new System.Drawing.Size(72, 16);
+            this.lblGeneral_SnapSettings_AnimWidth.TabIndex = 30;
+            this.lblGeneral_SnapSettings_AnimWidth.Text = "Width:";
+            this.lblGeneral_SnapSettings_AnimWidth.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkGeneral_SnapSettings_AnimOriginalDimentions
+            // 
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions.Location = new System.Drawing.Point(8, 48);
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions.Name = "chkGeneral_SnapSettings_AnimOriginalDimentions";
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions.Size = new System.Drawing.Size(160, 24);
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions.TabIndex = 26;
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions.Text = "Use Original Dimentions";
+            this.chkGeneral_SnapSettings_AnimOriginalDimentions.CheckedChanged += new System.EventHandler(this.chkGeneral_SnapSettings_AnimOriginalDimentions_CheckedChanged);
+            // 
+            // grpGeneral_SnapSettings_ImageFormat
+            // 
+            this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.lblGeneral_SnapSettings_ImageFormat);
+            this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.cbGeneral_SnapSettings_ImageFormat);
+            this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.lblGeneral_SnapSettings_Quality);
+            this.grpGeneral_SnapSettings_ImageFormat.Controls.Add(this.tbGeneral_SnapSettings_Quality);
+            this.grpGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(8, 192);
+            this.grpGeneral_SnapSettings_ImageFormat.Name = "grpGeneral_SnapSettings_ImageFormat";
+            this.grpGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(384, 120);
+            this.grpGeneral_SnapSettings_ImageFormat.TabIndex = 23;
+            this.grpGeneral_SnapSettings_ImageFormat.TabStop = false;
+            this.grpGeneral_SnapSettings_ImageFormat.Text = "Image Format";
+            // 
+            // lblGeneral_SnapSettings_ImageFormat
+            // 
+            this.lblGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(16, 24);
+            this.lblGeneral_SnapSettings_ImageFormat.Name = "lblGeneral_SnapSettings_ImageFormat";
+            this.lblGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(104, 16);
+            this.lblGeneral_SnapSettings_ImageFormat.TabIndex = 21;
+            this.lblGeneral_SnapSettings_ImageFormat.Text = "Image Output Type:";
+            this.lblGeneral_SnapSettings_ImageFormat.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbGeneral_SnapSettings_ImageFormat
+            // 
+            this.cbGeneral_SnapSettings_ImageFormat.Location = new System.Drawing.Point(120, 24);
+            this.cbGeneral_SnapSettings_ImageFormat.Name = "cbGeneral_SnapSettings_ImageFormat";
+            this.cbGeneral_SnapSettings_ImageFormat.Size = new System.Drawing.Size(256, 21);
+            this.cbGeneral_SnapSettings_ImageFormat.TabIndex = 20;
+            this.cbGeneral_SnapSettings_ImageFormat.Text = "Image Encoders";
+            // 
+            // lblGeneral_SnapSettings_Quality
+            // 
+            this.lblGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(16, 56);
+            this.lblGeneral_SnapSettings_Quality.Name = "lblGeneral_SnapSettings_Quality";
+            this.lblGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(176, 16);
+            this.lblGeneral_SnapSettings_Quality.TabIndex = 19;
+            this.lblGeneral_SnapSettings_Quality.Text = "Quality x% (100% = Clearest):";
+            // 
+            // tbGeneral_SnapSettings_Quality
+            // 
+            this.tbGeneral_SnapSettings_Quality.Location = new System.Drawing.Point(8, 72);
+            this.tbGeneral_SnapSettings_Quality.Maximum = 100;
+            this.tbGeneral_SnapSettings_Quality.Name = "tbGeneral_SnapSettings_Quality";
+            this.tbGeneral_SnapSettings_Quality.Size = new System.Drawing.Size(368, 42);
+            this.tbGeneral_SnapSettings_Quality.TabIndex = 18;
+            this.tbGeneral_SnapSettings_Quality.Value = 100;
+            this.tbGeneral_SnapSettings_Quality.Scroll += new System.EventHandler(this.tbGeneral_SnapSettings_Quality_Scroll);
+            // 
+            // grpGeneral_SnapSettings_SnapDir
+            // 
+            this.grpGeneral_SnapSettings_SnapDir.Controls.Add(this.txtGeneral_SnapSettings_SnapDir);
+            this.grpGeneral_SnapSettings_SnapDir.Controls.Add(this.cmdGeneral_SnapSettings_BrowseSnapDir);
+            this.grpGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 136);
+            this.grpGeneral_SnapSettings_SnapDir.Name = "grpGeneral_SnapSettings_SnapDir";
+            this.grpGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(384, 48);
+            this.grpGeneral_SnapSettings_SnapDir.TabIndex = 22;
+            this.grpGeneral_SnapSettings_SnapDir.TabStop = false;
+            this.grpGeneral_SnapSettings_SnapDir.Text = "Snap Directory";
+            // 
+            // txtGeneral_SnapSettings_SnapDir
+            // 
+            this.txtGeneral_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 16);
+            this.txtGeneral_SnapSettings_SnapDir.Name = "txtGeneral_SnapSettings_SnapDir";
+            this.txtGeneral_SnapSettings_SnapDir.Size = new System.Drawing.Size(304, 20);
+            this.txtGeneral_SnapSettings_SnapDir.TabIndex = 5;
+            // 
+            // cmdGeneral_SnapSettings_BrowseSnapDir
+            // 
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.Location = new System.Drawing.Point(320, 16);
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.Name = "cmdGeneral_SnapSettings_BrowseSnapDir";
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.Size = new System.Drawing.Size(56, 24);
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.TabIndex = 6;
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.Text = "Browse";
+            this.cmdGeneral_SnapSettings_BrowseSnapDir.Click += new System.EventHandler(this.cmdGeneral_SnapSettings_BrowseSnapDir_Click);
+            // 
+            // grpGeneral_SnapSettings_TimingAndParameters
+            // 
+            this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_NextSnapDelay);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_SaveQueueSize);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.udGeneral_SnapSettings_Delay);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.lblGeneral_SnapSettings_NextSnapDelay);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.lblGeneral_SnapSettings_SaveQueueSize);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Controls.Add(this.lblGeneral_SnapSettings_SnapDelay);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Location = new System.Drawing.Point(8, 32);
+            this.grpGeneral_SnapSettings_TimingAndParameters.Name = "grpGeneral_SnapSettings_TimingAndParameters";
+            this.grpGeneral_SnapSettings_TimingAndParameters.Size = new System.Drawing.Size(384, 96);
+            this.grpGeneral_SnapSettings_TimingAndParameters.TabIndex = 21;
+            this.grpGeneral_SnapSettings_TimingAndParameters.TabStop = false;
+            this.grpGeneral_SnapSettings_TimingAndParameters.Text = "Timing && Parameters";
+            // 
+            // udGeneral_SnapSettings_NextSnapDelay
+            // 
+            this.udGeneral_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(128, 40);
+            this.udGeneral_SnapSettings_NextSnapDelay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_NextSnapDelay.Name = "udGeneral_SnapSettings_NextSnapDelay";
+            this.udGeneral_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(248, 20);
+            this.udGeneral_SnapSettings_NextSnapDelay.TabIndex = 32;
+            this.udGeneral_SnapSettings_NextSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // udGeneral_SnapSettings_SaveQueueSize
+            // 
+            this.udGeneral_SnapSettings_SaveQueueSize.Location = new System.Drawing.Point(128, 64);
+            this.udGeneral_SnapSettings_SaveQueueSize.Maximum = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_SaveQueueSize.Minimum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_SaveQueueSize.Name = "udGeneral_SnapSettings_SaveQueueSize";
+            this.udGeneral_SnapSettings_SaveQueueSize.Size = new System.Drawing.Size(248, 20);
+            this.udGeneral_SnapSettings_SaveQueueSize.TabIndex = 31;
+            this.udGeneral_SnapSettings_SaveQueueSize.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.udGeneral_SnapSettings_SaveQueueSize.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            // 
+            // udGeneral_SnapSettings_Delay
+            // 
+            this.udGeneral_SnapSettings_Delay.Location = new System.Drawing.Point(128, 16);
+            this.udGeneral_SnapSettings_Delay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udGeneral_SnapSettings_Delay.Name = "udGeneral_SnapSettings_Delay";
+            this.udGeneral_SnapSettings_Delay.Size = new System.Drawing.Size(248, 20);
+            this.udGeneral_SnapSettings_Delay.TabIndex = 21;
+            this.udGeneral_SnapSettings_Delay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // lblGeneral_SnapSettings_NextSnapDelay
+            // 
+            this.lblGeneral_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(16, 40);
+            this.lblGeneral_SnapSettings_NextSnapDelay.Name = "lblGeneral_SnapSettings_NextSnapDelay";
+            this.lblGeneral_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(96, 16);
+            this.lblGeneral_SnapSettings_NextSnapDelay.TabIndex = 30;
+            this.lblGeneral_SnapSettings_NextSnapDelay.Text = "Next Snap Delay:";
+            this.lblGeneral_SnapSettings_NextSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblGeneral_SnapSettings_SaveQueueSize
+            // 
+            this.lblGeneral_SnapSettings_SaveQueueSize.Location = new System.Drawing.Point(16, 64);
+            this.lblGeneral_SnapSettings_SaveQueueSize.Name = "lblGeneral_SnapSettings_SaveQueueSize";
+            this.lblGeneral_SnapSettings_SaveQueueSize.Size = new System.Drawing.Size(96, 16);
+            this.lblGeneral_SnapSettings_SaveQueueSize.TabIndex = 29;
+            this.lblGeneral_SnapSettings_SaveQueueSize.Text = "SaveQueue Size:";
+            this.lblGeneral_SnapSettings_SaveQueueSize.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblGeneral_SnapSettings_SnapDelay
+            // 
+            this.lblGeneral_SnapSettings_SnapDelay.Location = new System.Drawing.Point(16, 16);
+            this.lblGeneral_SnapSettings_SnapDelay.Name = "lblGeneral_SnapSettings_SnapDelay";
+            this.lblGeneral_SnapSettings_SnapDelay.Size = new System.Drawing.Size(72, 16);
+            this.lblGeneral_SnapSettings_SnapDelay.TabIndex = 28;
+            this.lblGeneral_SnapSettings_SnapDelay.Text = "Snap Delay:";
+            this.lblGeneral_SnapSettings_SnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkGeneral_SnapSettings_Enabled
+            // 
+            this.chkGeneral_SnapSettings_Enabled.Location = new System.Drawing.Point(8, 8);
+            this.chkGeneral_SnapSettings_Enabled.Name = "chkGeneral_SnapSettings_Enabled";
+            this.chkGeneral_SnapSettings_Enabled.Size = new System.Drawing.Size(80, 24);
+            this.chkGeneral_SnapSettings_Enabled.TabIndex = 11;
+            this.chkGeneral_SnapSettings_Enabled.Text = "Enabled";
+            // 
+            // tabGeneral_GlobalStatsSettings
+            // 
+            this.tabGeneral_GlobalStatsSettings.Controls.Add(this.cmdGeneral_StatsSettings_ViewStats);
+            this.tabGeneral_GlobalStatsSettings.Controls.Add(this.cmdGeneral_StatsSettings_Reset);
+            this.tabGeneral_GlobalStatsSettings.Controls.Add(this.chkGeneral_StatsSettings_Enabled);
+            this.tabGeneral_GlobalStatsSettings.Location = new System.Drawing.Point(4, 22);
+            this.tabGeneral_GlobalStatsSettings.Name = "tabGeneral_GlobalStatsSettings";
+            this.tabGeneral_GlobalStatsSettings.Size = new System.Drawing.Size(416, 342);
+            this.tabGeneral_GlobalStatsSettings.TabIndex = 1;
+            this.tabGeneral_GlobalStatsSettings.Text = "Global Stats Settings";
+            // 
+            // cmdGeneral_StatsSettings_ViewStats
+            // 
+            this.cmdGeneral_StatsSettings_ViewStats.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdGeneral_StatsSettings_ViewStats.Location = new System.Drawing.Point(264, 8);
+            this.cmdGeneral_StatsSettings_ViewStats.Name = "cmdGeneral_StatsSettings_ViewStats";
+            this.cmdGeneral_StatsSettings_ViewStats.Size = new System.Drawing.Size(72, 24);
+            this.cmdGeneral_StatsSettings_ViewStats.TabIndex = 8;
+            this.cmdGeneral_StatsSettings_ViewStats.Text = "View";
+            this.cmdGeneral_StatsSettings_ViewStats.Click += new System.EventHandler(this.cmdGeneral_StatsSettings_ViewStats_Click);
+            // 
+            // cmdGeneral_StatsSettings_Reset
+            // 
+            this.cmdGeneral_StatsSettings_Reset.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdGeneral_StatsSettings_Reset.Location = new System.Drawing.Point(336, 8);
+            this.cmdGeneral_StatsSettings_Reset.Name = "cmdGeneral_StatsSettings_Reset";
+            this.cmdGeneral_StatsSettings_Reset.Size = new System.Drawing.Size(72, 24);
+            this.cmdGeneral_StatsSettings_Reset.TabIndex = 7;
+            this.cmdGeneral_StatsSettings_Reset.Text = "Reset";
+            this.cmdGeneral_StatsSettings_Reset.Click += new System.EventHandler(this.cmdGeneral_StatsSettings_Reset_Click);
+            // 
+            // chkGeneral_StatsSettings_Enabled
+            // 
+            this.chkGeneral_StatsSettings_Enabled.Location = new System.Drawing.Point(8, 8);
+            this.chkGeneral_StatsSettings_Enabled.Name = "chkGeneral_StatsSettings_Enabled";
+            this.chkGeneral_StatsSettings_Enabled.Size = new System.Drawing.Size(80, 24);
+            this.chkGeneral_StatsSettings_Enabled.TabIndex = 6;
+            this.chkGeneral_StatsSettings_Enabled.Text = "Enabled";
+            // 
+            // tabGeneral_HotKeys
+            // 
+            this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureActiveProfile);
+            this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureDesktop);
+            this.tabGeneral_HotKeys.Controls.Add(this.txtGeneral_HotKeys_CaptureWindow);
+            this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureActiveProfile);
+            this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureWindow);
+            this.tabGeneral_HotKeys.Controls.Add(this.lblGeneral_HotKeys_CaptureDesktop);
+            this.tabGeneral_HotKeys.Controls.Add(this.chkGeneral_HotKeys_Enabled);
+            this.tabGeneral_HotKeys.Location = new System.Drawing.Point(4, 22);
+            this.tabGeneral_HotKeys.Name = "tabGeneral_HotKeys";
+            this.tabGeneral_HotKeys.Size = new System.Drawing.Size(416, 342);
+            this.tabGeneral_HotKeys.TabIndex = 2;
+            this.tabGeneral_HotKeys.Text = "Hot Keys";
+            // 
+            // txtGeneral_HotKeys_CaptureActiveProfile
+            // 
+            this.txtGeneral_HotKeys_CaptureActiveProfile.Location = new System.Drawing.Point(160, 112);
+            this.txtGeneral_HotKeys_CaptureActiveProfile.Name = "txtGeneral_HotKeys_CaptureActiveProfile";
+            this.txtGeneral_HotKeys_CaptureActiveProfile.ReadOnly = true;
+            this.txtGeneral_HotKeys_CaptureActiveProfile.Size = new System.Drawing.Size(248, 20);
+            this.txtGeneral_HotKeys_CaptureActiveProfile.TabIndex = 10;
+            this.txtGeneral_HotKeys_CaptureActiveProfile.Text = "Capture Active Profile";
+            this.txtGeneral_HotKeys_CaptureActiveProfile.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureActiveProfile_Enter);
+            this.txtGeneral_HotKeys_CaptureActiveProfile.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureActiveProfile_Leave);
+            // 
+            // txtGeneral_HotKeys_CaptureDesktop
+            // 
+            this.txtGeneral_HotKeys_CaptureDesktop.Location = new System.Drawing.Point(160, 88);
+            this.txtGeneral_HotKeys_CaptureDesktop.Name = "txtGeneral_HotKeys_CaptureDesktop";
+            this.txtGeneral_HotKeys_CaptureDesktop.ReadOnly = true;
+            this.txtGeneral_HotKeys_CaptureDesktop.Size = new System.Drawing.Size(248, 20);
+            this.txtGeneral_HotKeys_CaptureDesktop.TabIndex = 9;
+            this.txtGeneral_HotKeys_CaptureDesktop.Text = "Capture Desktop";
+            this.txtGeneral_HotKeys_CaptureDesktop.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureDesktop_Enter);
+            this.txtGeneral_HotKeys_CaptureDesktop.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureDesktop_Leave);
+            // 
+            // txtGeneral_HotKeys_CaptureWindow
+            // 
+            this.txtGeneral_HotKeys_CaptureWindow.Location = new System.Drawing.Point(160, 64);
+            this.txtGeneral_HotKeys_CaptureWindow.Name = "txtGeneral_HotKeys_CaptureWindow";
+            this.txtGeneral_HotKeys_CaptureWindow.ReadOnly = true;
+            this.txtGeneral_HotKeys_CaptureWindow.Size = new System.Drawing.Size(248, 20);
+            this.txtGeneral_HotKeys_CaptureWindow.TabIndex = 8;
+            this.txtGeneral_HotKeys_CaptureWindow.Text = "Capture Window";
+            this.txtGeneral_HotKeys_CaptureWindow.Enter += new System.EventHandler(this.txtGeneral_HotKeys_CaptureWindow_Enter);
+            this.txtGeneral_HotKeys_CaptureWindow.Leave += new System.EventHandler(this.txtGeneral_HotKeys_CaptureWindow_Leave);
+            // 
+            // lblGeneral_HotKeys_CaptureActiveProfile
+            // 
+            this.lblGeneral_HotKeys_CaptureActiveProfile.Location = new System.Drawing.Point(16, 112);
+            this.lblGeneral_HotKeys_CaptureActiveProfile.Name = "lblGeneral_HotKeys_CaptureActiveProfile";
+            this.lblGeneral_HotKeys_CaptureActiveProfile.Size = new System.Drawing.Size(128, 24);
+            this.lblGeneral_HotKeys_CaptureActiveProfile.TabIndex = 4;
+            this.lblGeneral_HotKeys_CaptureActiveProfile.Text = "Capture Active Profile:";
+            this.lblGeneral_HotKeys_CaptureActiveProfile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblGeneral_HotKeys_CaptureWindow
+            // 
+            this.lblGeneral_HotKeys_CaptureWindow.Location = new System.Drawing.Point(16, 64);
+            this.lblGeneral_HotKeys_CaptureWindow.Name = "lblGeneral_HotKeys_CaptureWindow";
+            this.lblGeneral_HotKeys_CaptureWindow.Size = new System.Drawing.Size(128, 24);
+            this.lblGeneral_HotKeys_CaptureWindow.TabIndex = 3;
+            this.lblGeneral_HotKeys_CaptureWindow.Text = "Capture Window:";
+            this.lblGeneral_HotKeys_CaptureWindow.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblGeneral_HotKeys_CaptureDesktop
+            // 
+            this.lblGeneral_HotKeys_CaptureDesktop.Location = new System.Drawing.Point(16, 88);
+            this.lblGeneral_HotKeys_CaptureDesktop.Name = "lblGeneral_HotKeys_CaptureDesktop";
+            this.lblGeneral_HotKeys_CaptureDesktop.Size = new System.Drawing.Size(128, 24);
+            this.lblGeneral_HotKeys_CaptureDesktop.TabIndex = 2;
+            this.lblGeneral_HotKeys_CaptureDesktop.Text = "Capture Desktop:";
+            this.lblGeneral_HotKeys_CaptureDesktop.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkGeneral_HotKeys_Enabled
+            // 
+            this.chkGeneral_HotKeys_Enabled.Location = new System.Drawing.Point(8, 8);
+            this.chkGeneral_HotKeys_Enabled.Name = "chkGeneral_HotKeys_Enabled";
+            this.chkGeneral_HotKeys_Enabled.Size = new System.Drawing.Size(96, 24);
+            this.chkGeneral_HotKeys_Enabled.TabIndex = 1;
+            this.chkGeneral_HotKeys_Enabled.Text = "Enabled";
+            // 
+            // tabGeneral_Misc
+            // 
+            this.tabGeneral_Misc.Controls.Add(this.grpGeneral_Misc_Updates);
+            this.tabGeneral_Misc.Location = new System.Drawing.Point(4, 22);
+            this.tabGeneral_Misc.Name = "tabGeneral_Misc";
+            this.tabGeneral_Misc.Size = new System.Drawing.Size(416, 342);
+            this.tabGeneral_Misc.TabIndex = 3;
+            this.tabGeneral_Misc.Text = "Misc";
+            // 
+            // grpGeneral_Misc_Updates
+            // 
+            this.grpGeneral_Misc_Updates.Controls.Add(this.lblGeneral_Misc_CheckUpdates);
+            this.grpGeneral_Misc_Updates.Controls.Add(this.cbGeneral_Misc_CheckUpdates);
+            this.grpGeneral_Misc_Updates.Location = new System.Drawing.Point(8, 8);
+            this.grpGeneral_Misc_Updates.Name = "grpGeneral_Misc_Updates";
+            this.grpGeneral_Misc_Updates.Size = new System.Drawing.Size(400, 80);
+            this.grpGeneral_Misc_Updates.TabIndex = 0;
+            this.grpGeneral_Misc_Updates.TabStop = false;
+            this.grpGeneral_Misc_Updates.Text = "Updates";
+            // 
+            // lblGeneral_Misc_CheckUpdates
+            // 
+            this.lblGeneral_Misc_CheckUpdates.Location = new System.Drawing.Point(8, 16);
+            this.lblGeneral_Misc_CheckUpdates.Name = "lblGeneral_Misc_CheckUpdates";
+            this.lblGeneral_Misc_CheckUpdates.Size = new System.Drawing.Size(112, 24);
+            this.lblGeneral_Misc_CheckUpdates.TabIndex = 23;
+            this.lblGeneral_Misc_CheckUpdates.Text = "Check for updates:";
+            this.lblGeneral_Misc_CheckUpdates.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbGeneral_Misc_CheckUpdates
+            // 
+            this.cbGeneral_Misc_CheckUpdates.Items.AddRange(new object[] {
+            "Never",
+            "Every Hour",
+            "Every Day",
+            "Every Week",
+            "Every Month"});
+            this.cbGeneral_Misc_CheckUpdates.Location = new System.Drawing.Point(128, 16);
+            this.cbGeneral_Misc_CheckUpdates.Name = "cbGeneral_Misc_CheckUpdates";
+            this.cbGeneral_Misc_CheckUpdates.Size = new System.Drawing.Size(120, 21);
+            this.cbGeneral_Misc_CheckUpdates.TabIndex = 22;
+            this.cbGeneral_Misc_CheckUpdates.Text = "Update Options";
+            // 
+            // tabProfiles
+            // 
+            this.tabProfiles.Controls.Add(this.lblProfiles_ActiveProfile);
+            this.tabProfiles.Controls.Add(this.tabProfileOptions);
+            this.tabProfiles.Controls.Add(this.lstProfiles_Games);
+            this.tabProfiles.Location = new System.Drawing.Point(4, 25);
+            this.tabProfiles.Name = "tabProfiles";
+            this.tabProfiles.Size = new System.Drawing.Size(440, 379);
+            this.tabProfiles.TabIndex = 1;
+            this.tabProfiles.Text = "Profiles";
+            // 
+            // lblProfiles_ActiveProfile
+            // 
+            this.lblProfiles_ActiveProfile.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblProfiles_ActiveProfile.Location = new System.Drawing.Point(152, 8);
+            this.lblProfiles_ActiveProfile.Name = "lblProfiles_ActiveProfile";
+            this.lblProfiles_ActiveProfile.Size = new System.Drawing.Size(280, 16);
+            this.lblProfiles_ActiveProfile.TabIndex = 12;
+            this.lblProfiles_ActiveProfile.Text = "Title";
+            this.lblProfiles_ActiveProfile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tabProfileOptions
+            // 
+            this.tabProfileOptions.Controls.Add(this.tabProfiles_GameSettings);
+            this.tabProfileOptions.Controls.Add(this.tabProfiles_SnapSettings);
+            this.tabProfileOptions.Controls.Add(this.tabProfiles_StatsSettings);
+            this.tabProfileOptions.Location = new System.Drawing.Point(152, 24);
+            this.tabProfileOptions.Name = "tabProfileOptions";
+            this.tabProfileOptions.SelectedIndex = 0;
+            this.tabProfileOptions.Size = new System.Drawing.Size(280, 344);
+            this.tabProfileOptions.TabIndex = 11;
+            // 
+            // tabProfiles_GameSettings
+            // 
+            this.tabProfiles_GameSettings.Controls.Add(this.grpProfiles_GameSettings_Path);
+            this.tabProfiles_GameSettings.Location = new System.Drawing.Point(4, 22);
+            this.tabProfiles_GameSettings.Name = "tabProfiles_GameSettings";
+            this.tabProfiles_GameSettings.Size = new System.Drawing.Size(272, 318);
+            this.tabProfiles_GameSettings.TabIndex = 0;
+            this.tabProfiles_GameSettings.Text = "Game Settings";
+            // 
+            // grpProfiles_GameSettings_Path
+            // 
+            this.grpProfiles_GameSettings_Path.Controls.Add(this.cmdProfiles_GameSettings_AutoDetect);
+            this.grpProfiles_GameSettings_Path.Controls.Add(this.cmdProfiles_GameSettings_BrowseGamePath);
+            this.grpProfiles_GameSettings_Path.Controls.Add(this.txtProfiles_GameSettings_Path);
+            this.grpProfiles_GameSettings_Path.Location = new System.Drawing.Point(8, 8);
+            this.grpProfiles_GameSettings_Path.Name = "grpProfiles_GameSettings_Path";
+            this.grpProfiles_GameSettings_Path.Size = new System.Drawing.Size(256, 80);
+            this.grpProfiles_GameSettings_Path.TabIndex = 2;
+            this.grpProfiles_GameSettings_Path.TabStop = false;
+            this.grpProfiles_GameSettings_Path.Text = "Path";
+            // 
+            // cmdProfiles_GameSettings_AutoDetect
+            // 
+            this.cmdProfiles_GameSettings_AutoDetect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdProfiles_GameSettings_AutoDetect.Location = new System.Drawing.Point(8, 16);
+            this.cmdProfiles_GameSettings_AutoDetect.Name = "cmdProfiles_GameSettings_AutoDetect";
+            this.cmdProfiles_GameSettings_AutoDetect.Size = new System.Drawing.Size(80, 24);
+            this.cmdProfiles_GameSettings_AutoDetect.TabIndex = 4;
+            this.cmdProfiles_GameSettings_AutoDetect.Text = "Auto Detect";
+            this.cmdProfiles_GameSettings_AutoDetect.Click += new System.EventHandler(this.cmdProfiles_GameSettings_AutoDetect_Click);
+            // 
+            // cmdProfiles_GameSettings_BrowseGamePath
+            // 
+            this.cmdProfiles_GameSettings_BrowseGamePath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdProfiles_GameSettings_BrowseGamePath.Location = new System.Drawing.Point(192, 16);
+            this.cmdProfiles_GameSettings_BrowseGamePath.Name = "cmdProfiles_GameSettings_BrowseGamePath";
+            this.cmdProfiles_GameSettings_BrowseGamePath.Size = new System.Drawing.Size(56, 24);
+            this.cmdProfiles_GameSettings_BrowseGamePath.TabIndex = 3;
+            this.cmdProfiles_GameSettings_BrowseGamePath.Text = "Browse";
+            this.cmdProfiles_GameSettings_BrowseGamePath.Click += new System.EventHandler(this.cmdProfiles_GameSettings_BrowseGamePath_Click);
+            // 
+            // txtProfiles_GameSettings_Path
+            // 
+            this.txtProfiles_GameSettings_Path.Location = new System.Drawing.Point(8, 48);
+            this.txtProfiles_GameSettings_Path.Name = "txtProfiles_GameSettings_Path";
+            this.txtProfiles_GameSettings_Path.Size = new System.Drawing.Size(240, 20);
+            this.txtProfiles_GameSettings_Path.TabIndex = 2;
+            this.txtProfiles_GameSettings_Path.Text = "Path To Game";
+            // 
+            // tabProfiles_SnapSettings
+            // 
+            this.tabProfiles_SnapSettings.AutoScroll = true;
+            this.tabProfiles_SnapSettings.Controls.Add(this.chkProfiles_SnapSettings_UseGlobal);
+            this.tabProfiles_SnapSettings.Controls.Add(this.grpProfiles_SnapSettingsSub);
+            this.tabProfiles_SnapSettings.Location = new System.Drawing.Point(4, 22);
+            this.tabProfiles_SnapSettings.Name = "tabProfiles_SnapSettings";
+            this.tabProfiles_SnapSettings.Size = new System.Drawing.Size(272, 318);
+            this.tabProfiles_SnapSettings.TabIndex = 1;
+            this.tabProfiles_SnapSettings.Text = "Snap Settings";
+            // 
+            // chkProfiles_SnapSettings_UseGlobal
+            // 
+            this.chkProfiles_SnapSettings_UseGlobal.Location = new System.Drawing.Point(8, 8);
+            this.chkProfiles_SnapSettings_UseGlobal.Name = "chkProfiles_SnapSettings_UseGlobal";
+            this.chkProfiles_SnapSettings_UseGlobal.Size = new System.Drawing.Size(128, 16);
+            this.chkProfiles_SnapSettings_UseGlobal.TabIndex = 0;
+            this.chkProfiles_SnapSettings_UseGlobal.Text = "Use Global Settings";
+            this.chkProfiles_SnapSettings_UseGlobal.CheckedChanged += new System.EventHandler(this.chkProfiles_SnapSettings_UseGlobal_CheckedChanged);
+            // 
+            // grpProfiles_SnapSettingsSub
+            // 
+            this.grpProfiles_SnapSettingsSub.Controls.Add(this.groupBox1);
+            this.grpProfiles_SnapSettingsSub.Controls.Add(this.lblProfiles_SnapSettings_Save);
+            this.grpProfiles_SnapSettingsSub.Controls.Add(this.cbProfiles_SnapSettings_SaveType);
+            this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_SnapDir);
+            this.grpProfiles_SnapSettingsSub.Controls.Add(this.grpProfiles_SnapSettings_TimingAndParameters);
+            this.grpProfiles_SnapSettingsSub.Controls.Add(this.chkProfiles_SnapSettings_Enabled);
+            this.grpProfiles_SnapSettingsSub.Location = new System.Drawing.Point(8, 24);
+            this.grpProfiles_SnapSettingsSub.Name = "grpProfiles_SnapSettingsSub";
+            this.grpProfiles_SnapSettingsSub.Size = new System.Drawing.Size(240, 464);
+            this.grpProfiles_SnapSettingsSub.TabIndex = 1;
+            this.grpProfiles_SnapSettingsSub.TabStop = false;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.lblProfiles_SnapSettings_Brightness);
+            this.groupBox1.Controls.Add(this.tbProfiles_SnapSettings_Brightness);
+            this.groupBox1.Controls.Add(this.lblProfiles_SnapSettings_Contrast);
+            this.groupBox1.Controls.Add(this.tbProfiles_SnapSettings_Contrast);
+            this.groupBox1.Controls.Add(this.lblProfiles_SnapSettings_Gamma);
+            this.groupBox1.Controls.Add(this.tbProfiles_SnapSettings_Gamma);
+            this.groupBox1.Location = new System.Drawing.Point(8, 248);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(224, 208);
+            this.groupBox1.TabIndex = 23;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Image Adjustments";
+            // 
+            // lblProfiles_SnapSettings_Brightness
+            // 
+            this.lblProfiles_SnapSettings_Brightness.Location = new System.Drawing.Point(8, 144);
+            this.lblProfiles_SnapSettings_Brightness.Name = "lblProfiles_SnapSettings_Brightness";
+            this.lblProfiles_SnapSettings_Brightness.Size = new System.Drawing.Size(208, 16);
+            this.lblProfiles_SnapSettings_Brightness.TabIndex = 32;
+            this.lblProfiles_SnapSettings_Brightness.Text = "Brightness: x (Min: -255 Max: 255)";
+            this.lblProfiles_SnapSettings_Brightness.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tbProfiles_SnapSettings_Brightness
+            // 
+            this.tbProfiles_SnapSettings_Brightness.LargeChange = 10;
+            this.tbProfiles_SnapSettings_Brightness.Location = new System.Drawing.Point(8, 160);
+            this.tbProfiles_SnapSettings_Brightness.Maximum = 510;
+            this.tbProfiles_SnapSettings_Brightness.Name = "tbProfiles_SnapSettings_Brightness";
+            this.tbProfiles_SnapSettings_Brightness.Size = new System.Drawing.Size(208, 42);
+            this.tbProfiles_SnapSettings_Brightness.TabIndex = 31;
+            this.tbProfiles_SnapSettings_Brightness.TickFrequency = 10;
+            this.tbProfiles_SnapSettings_Brightness.Scroll += new System.EventHandler(this.tbProfiles_SnapSettings_Brightness_Scroll);
+            // 
+            // lblProfiles_SnapSettings_Contrast
+            // 
+            this.lblProfiles_SnapSettings_Contrast.Location = new System.Drawing.Point(8, 80);
+            this.lblProfiles_SnapSettings_Contrast.Name = "lblProfiles_SnapSettings_Contrast";
+            this.lblProfiles_SnapSettings_Contrast.Size = new System.Drawing.Size(208, 16);
+            this.lblProfiles_SnapSettings_Contrast.TabIndex = 30;
+            this.lblProfiles_SnapSettings_Contrast.Text = "Contrast: x (Min: -100 Max: 200)";
+            this.lblProfiles_SnapSettings_Contrast.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tbProfiles_SnapSettings_Contrast
+            // 
+            this.tbProfiles_SnapSettings_Contrast.LargeChange = 10;
+            this.tbProfiles_SnapSettings_Contrast.Location = new System.Drawing.Point(8, 96);
+            this.tbProfiles_SnapSettings_Contrast.Maximum = 200;
+            this.tbProfiles_SnapSettings_Contrast.Name = "tbProfiles_SnapSettings_Contrast";
+            this.tbProfiles_SnapSettings_Contrast.Size = new System.Drawing.Size(208, 42);
+            this.tbProfiles_SnapSettings_Contrast.TabIndex = 29;
+            this.tbProfiles_SnapSettings_Contrast.TickFrequency = 5;
+            this.tbProfiles_SnapSettings_Contrast.Scroll += new System.EventHandler(this.tbProfiles_SnapSettings_Contrast_Scroll);
+            // 
+            // lblProfiles_SnapSettings_Gamma
+            // 
+            this.lblProfiles_SnapSettings_Gamma.Location = new System.Drawing.Point(8, 16);
+            this.lblProfiles_SnapSettings_Gamma.Name = "lblProfiles_SnapSettings_Gamma";
+            this.lblProfiles_SnapSettings_Gamma.Size = new System.Drawing.Size(208, 16);
+            this.lblProfiles_SnapSettings_Gamma.TabIndex = 28;
+            this.lblProfiles_SnapSettings_Gamma.Text = "Gamma: x (Min: 0.2 Max: 5.0)";
+            this.lblProfiles_SnapSettings_Gamma.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tbProfiles_SnapSettings_Gamma
+            // 
+            this.tbProfiles_SnapSettings_Gamma.LargeChange = 10;
+            this.tbProfiles_SnapSettings_Gamma.Location = new System.Drawing.Point(8, 32);
+            this.tbProfiles_SnapSettings_Gamma.Maximum = 50;
+            this.tbProfiles_SnapSettings_Gamma.Minimum = 2;
+            this.tbProfiles_SnapSettings_Gamma.Name = "tbProfiles_SnapSettings_Gamma";
+            this.tbProfiles_SnapSettings_Gamma.Size = new System.Drawing.Size(208, 42);
+            this.tbProfiles_SnapSettings_Gamma.TabIndex = 27;
+            this.tbProfiles_SnapSettings_Gamma.Value = 2;
+            this.tbProfiles_SnapSettings_Gamma.Scroll += new System.EventHandler(this.tbProfiles_SnapSettings_Gamma_Scroll);
+            // 
+            // lblProfiles_SnapSettings_Save
+            // 
+            this.lblProfiles_SnapSettings_Save.Location = new System.Drawing.Point(8, 40);
+            this.lblProfiles_SnapSettings_Save.Name = "lblProfiles_SnapSettings_Save";
+            this.lblProfiles_SnapSettings_Save.Size = new System.Drawing.Size(40, 16);
+            this.lblProfiles_SnapSettings_Save.TabIndex = 22;
+            this.lblProfiles_SnapSettings_Save.Text = "Save: ";
+            this.lblProfiles_SnapSettings_Save.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // cbProfiles_SnapSettings_SaveType
+            // 
+            this.cbProfiles_SnapSettings_SaveType.Items.AddRange(new object[] {
+            "Only Snaps",
+            "Only Animations",
+            "Snaps & Animations"});
+            this.cbProfiles_SnapSettings_SaveType.Location = new System.Drawing.Point(48, 40);
+            this.cbProfiles_SnapSettings_SaveType.Name = "cbProfiles_SnapSettings_SaveType";
+            this.cbProfiles_SnapSettings_SaveType.Size = new System.Drawing.Size(184, 21);
+            this.cbProfiles_SnapSettings_SaveType.TabIndex = 21;
+            this.cbProfiles_SnapSettings_SaveType.Text = "Save Options";
+            // 
+            // grpProfiles_SnapSettings_SnapDir
+            // 
+            this.grpProfiles_SnapSettings_SnapDir.Controls.Add(this.txtProfiles_SnapSettings_SnapDir);
+            this.grpProfiles_SnapSettings_SnapDir.Controls.Add(this.cmdProfiles_BrowseSnapDir);
+            this.grpProfiles_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 192);
+            this.grpProfiles_SnapSettings_SnapDir.Name = "grpProfiles_SnapSettings_SnapDir";
+            this.grpProfiles_SnapSettings_SnapDir.Size = new System.Drawing.Size(224, 48);
+            this.grpProfiles_SnapSettings_SnapDir.TabIndex = 8;
+            this.grpProfiles_SnapSettings_SnapDir.TabStop = false;
+            this.grpProfiles_SnapSettings_SnapDir.Text = "Snap Directory";
+            // 
+            // txtProfiles_SnapSettings_SnapDir
+            // 
+            this.txtProfiles_SnapSettings_SnapDir.Location = new System.Drawing.Point(8, 16);
+            this.txtProfiles_SnapSettings_SnapDir.Name = "txtProfiles_SnapSettings_SnapDir";
+            this.txtProfiles_SnapSettings_SnapDir.Size = new System.Drawing.Size(144, 20);
+            this.txtProfiles_SnapSettings_SnapDir.TabIndex = 5;
+            // 
+            // cmdProfiles_BrowseSnapDir
+            // 
+            this.cmdProfiles_BrowseSnapDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdProfiles_BrowseSnapDir.Location = new System.Drawing.Point(160, 16);
+            this.cmdProfiles_BrowseSnapDir.Name = "cmdProfiles_BrowseSnapDir";
+            this.cmdProfiles_BrowseSnapDir.Size = new System.Drawing.Size(56, 24);
+            this.cmdProfiles_BrowseSnapDir.TabIndex = 6;
+            this.cmdProfiles_BrowseSnapDir.Text = "Browse";
+            this.cmdProfiles_BrowseSnapDir.Click += new System.EventHandler(this.cmdProfiles_BrowseSnapDir_Click);
+            // 
+            // grpProfiles_SnapSettings_TimingAndParameters
+            // 
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_MultiSnapDelay);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_MultiSnapDelay);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SnapCount);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_SnapCount);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_NextSnapDelay);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_NextSnapDelay);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.lblProfiles_SnapSettings_SnapDelay);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Controls.Add(this.udProfiles_SnapSettings_Delay);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Location = new System.Drawing.Point(8, 64);
+            this.grpProfiles_SnapSettings_TimingAndParameters.Name = "grpProfiles_SnapSettings_TimingAndParameters";
+            this.grpProfiles_SnapSettings_TimingAndParameters.Size = new System.Drawing.Size(224, 120);
+            this.grpProfiles_SnapSettings_TimingAndParameters.TabIndex = 7;
+            this.grpProfiles_SnapSettings_TimingAndParameters.TabStop = false;
+            this.grpProfiles_SnapSettings_TimingAndParameters.Text = "Timing && Parameters";
+            // 
+            // lblProfiles_SnapSettings_MultiSnapDelay
+            // 
+            this.lblProfiles_SnapSettings_MultiSnapDelay.Location = new System.Drawing.Point(8, 88);
+            this.lblProfiles_SnapSettings_MultiSnapDelay.Name = "lblProfiles_SnapSettings_MultiSnapDelay";
+            this.lblProfiles_SnapSettings_MultiSnapDelay.Size = new System.Drawing.Size(96, 16);
+            this.lblProfiles_SnapSettings_MultiSnapDelay.TabIndex = 31;
+            this.lblProfiles_SnapSettings_MultiSnapDelay.Text = "MultiSnap Delay:";
+            this.lblProfiles_SnapSettings_MultiSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udProfiles_SnapSettings_MultiSnapDelay
+            // 
+            this.udProfiles_SnapSettings_MultiSnapDelay.Location = new System.Drawing.Point(104, 88);
+            this.udProfiles_SnapSettings_MultiSnapDelay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udProfiles_SnapSettings_MultiSnapDelay.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udProfiles_SnapSettings_MultiSnapDelay.Name = "udProfiles_SnapSettings_MultiSnapDelay";
+            this.udProfiles_SnapSettings_MultiSnapDelay.Size = new System.Drawing.Size(112, 20);
+            this.udProfiles_SnapSettings_MultiSnapDelay.TabIndex = 30;
+            this.udProfiles_SnapSettings_MultiSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.udProfiles_SnapSettings_MultiSnapDelay.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // lblProfiles_SnapSettings_SnapCount
+            // 
+            this.lblProfiles_SnapSettings_SnapCount.Location = new System.Drawing.Point(8, 64);
+            this.lblProfiles_SnapSettings_SnapCount.Name = "lblProfiles_SnapSettings_SnapCount";
+            this.lblProfiles_SnapSettings_SnapCount.Size = new System.Drawing.Size(96, 16);
+            this.lblProfiles_SnapSettings_SnapCount.TabIndex = 29;
+            this.lblProfiles_SnapSettings_SnapCount.Text = "Snap Count:";
+            this.lblProfiles_SnapSettings_SnapCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udProfiles_SnapSettings_SnapCount
+            // 
+            this.udProfiles_SnapSettings_SnapCount.Location = new System.Drawing.Point(104, 64);
+            this.udProfiles_SnapSettings_SnapCount.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.udProfiles_SnapSettings_SnapCount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.udProfiles_SnapSettings_SnapCount.Name = "udProfiles_SnapSettings_SnapCount";
+            this.udProfiles_SnapSettings_SnapCount.Size = new System.Drawing.Size(112, 20);
+            this.udProfiles_SnapSettings_SnapCount.TabIndex = 28;
+            this.udProfiles_SnapSettings_SnapCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.udProfiles_SnapSettings_SnapCount.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // lblProfiles_SnapSettings_NextSnapDelay
+            // 
+            this.lblProfiles_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(8, 40);
+            this.lblProfiles_SnapSettings_NextSnapDelay.Name = "lblProfiles_SnapSettings_NextSnapDelay";
+            this.lblProfiles_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(96, 16);
+            this.lblProfiles_SnapSettings_NextSnapDelay.TabIndex = 27;
+            this.lblProfiles_SnapSettings_NextSnapDelay.Text = "Next Snap Delay:";
+            this.lblProfiles_SnapSettings_NextSnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udProfiles_SnapSettings_NextSnapDelay
+            // 
+            this.udProfiles_SnapSettings_NextSnapDelay.Location = new System.Drawing.Point(104, 40);
+            this.udProfiles_SnapSettings_NextSnapDelay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udProfiles_SnapSettings_NextSnapDelay.Name = "udProfiles_SnapSettings_NextSnapDelay";
+            this.udProfiles_SnapSettings_NextSnapDelay.Size = new System.Drawing.Size(112, 20);
+            this.udProfiles_SnapSettings_NextSnapDelay.TabIndex = 26;
+            this.udProfiles_SnapSettings_NextSnapDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // lblProfiles_SnapSettings_SnapDelay
+            // 
+            this.lblProfiles_SnapSettings_SnapDelay.Location = new System.Drawing.Point(8, 16);
+            this.lblProfiles_SnapSettings_SnapDelay.Name = "lblProfiles_SnapSettings_SnapDelay";
+            this.lblProfiles_SnapSettings_SnapDelay.Size = new System.Drawing.Size(72, 16);
+            this.lblProfiles_SnapSettings_SnapDelay.TabIndex = 23;
+            this.lblProfiles_SnapSettings_SnapDelay.Text = "Snap Delay:";
+            this.lblProfiles_SnapSettings_SnapDelay.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // udProfiles_SnapSettings_Delay
+            // 
+            this.udProfiles_SnapSettings_Delay.Location = new System.Drawing.Point(104, 16);
+            this.udProfiles_SnapSettings_Delay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.udProfiles_SnapSettings_Delay.Name = "udProfiles_SnapSettings_Delay";
+            this.udProfiles_SnapSettings_Delay.Size = new System.Drawing.Size(112, 20);
+            this.udProfiles_SnapSettings_Delay.TabIndex = 22;
+            this.udProfiles_SnapSettings_Delay.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // chkProfiles_SnapSettings_Enabled
+            // 
+            this.chkProfiles_SnapSettings_Enabled.Location = new System.Drawing.Point(8, 16);
+            this.chkProfiles_SnapSettings_Enabled.Name = "chkProfiles_SnapSettings_Enabled";
+            this.chkProfiles_SnapSettings_Enabled.Size = new System.Drawing.Size(72, 16);
+            this.chkProfiles_SnapSettings_Enabled.TabIndex = 0;
+            this.chkProfiles_SnapSettings_Enabled.Text = "Enabled";
+            // 
+            // tabProfiles_StatsSettings
+            // 
+            this.tabProfiles_StatsSettings.Controls.Add(this.chkProfiles_StatsSettings_UseGlobal);
+            this.tabProfiles_StatsSettings.Controls.Add(this.grpProfiles_StatsSettingsSub);
+            this.tabProfiles_StatsSettings.Controls.Add(this.cmdProfiles_StatsSettings_View);
+            this.tabProfiles_StatsSettings.Controls.Add(this.cmdProfiles_StatsSettings_Reset);
+            this.tabProfiles_StatsSettings.Location = new System.Drawing.Point(4, 22);
+            this.tabProfiles_StatsSettings.Name = "tabProfiles_StatsSettings";
+            this.tabProfiles_StatsSettings.Size = new System.Drawing.Size(272, 318);
+            this.tabProfiles_StatsSettings.TabIndex = 2;
+            this.tabProfiles_StatsSettings.Text = "Stats Settings";
+            // 
+            // chkProfiles_StatsSettings_UseGlobal
+            // 
+            this.chkProfiles_StatsSettings_UseGlobal.Location = new System.Drawing.Point(8, 7);
+            this.chkProfiles_StatsSettings_UseGlobal.Name = "chkProfiles_StatsSettings_UseGlobal";
+            this.chkProfiles_StatsSettings_UseGlobal.Size = new System.Drawing.Size(128, 16);
+            this.chkProfiles_StatsSettings_UseGlobal.TabIndex = 2;
+            this.chkProfiles_StatsSettings_UseGlobal.Text = "Use Global Settings";
+            this.chkProfiles_StatsSettings_UseGlobal.CheckedChanged += new System.EventHandler(this.chkProfiles_StatsSettings_UseGlobal_CheckedChanged);
+            // 
+            // grpProfiles_StatsSettingsSub
+            // 
+            this.grpProfiles_StatsSettingsSub.Controls.Add(this.chkProfiles_StatsSettings_Enabled);
+            this.grpProfiles_StatsSettingsSub.Location = new System.Drawing.Point(8, 23);
+            this.grpProfiles_StatsSettingsSub.Name = "grpProfiles_StatsSettingsSub";
+            this.grpProfiles_StatsSettingsSub.Size = new System.Drawing.Size(256, 257);
+            this.grpProfiles_StatsSettingsSub.TabIndex = 3;
+            this.grpProfiles_StatsSettingsSub.TabStop = false;
+            // 
+            // chkProfiles_StatsSettings_Enabled
+            // 
+            this.chkProfiles_StatsSettings_Enabled.Location = new System.Drawing.Point(8, 16);
+            this.chkProfiles_StatsSettings_Enabled.Name = "chkProfiles_StatsSettings_Enabled";
+            this.chkProfiles_StatsSettings_Enabled.Size = new System.Drawing.Size(72, 16);
+            this.chkProfiles_StatsSettings_Enabled.TabIndex = 0;
+            this.chkProfiles_StatsSettings_Enabled.Text = "Enabled";
+            // 
+            // cmdProfiles_StatsSettings_View
+            // 
+            this.cmdProfiles_StatsSettings_View.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdProfiles_StatsSettings_View.Location = new System.Drawing.Point(8, 288);
+            this.cmdProfiles_StatsSettings_View.Name = "cmdProfiles_StatsSettings_View";
+            this.cmdProfiles_StatsSettings_View.Size = new System.Drawing.Size(72, 24);
+            this.cmdProfiles_StatsSettings_View.TabIndex = 7;
+            this.cmdProfiles_StatsSettings_View.Text = "View";
+            this.cmdProfiles_StatsSettings_View.Click += new System.EventHandler(this.cmdProfiles_StatsSettings_View_Click);
+            // 
+            // cmdProfiles_StatsSettings_Reset
+            // 
+            this.cmdProfiles_StatsSettings_Reset.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmdProfiles_StatsSettings_Reset.Location = new System.Drawing.Point(192, 288);
+            this.cmdProfiles_StatsSettings_Reset.Name = "cmdProfiles_StatsSettings_Reset";
+            this.cmdProfiles_StatsSettings_Reset.Size = new System.Drawing.Size(72, 24);
+            this.cmdProfiles_StatsSettings_Reset.TabIndex = 6;
+            this.cmdProfiles_StatsSettings_Reset.Text = "Reset";
+            this.cmdProfiles_StatsSettings_Reset.Click += new System.EventHandler(this.cmdProfiles_StatsSettings_Reset_Click);
+            // 
+            // tabLog
+            // 
+            this.tabLog.Controls.Add(this.rtxtLog);
+            this.tabLog.Location = new System.Drawing.Point(4, 25);
+            this.tabLog.Name = "tabLog";
+            this.tabLog.Size = new System.Drawing.Size(440, 379);
+            this.tabLog.TabIndex = 3;
+            this.tabLog.Text = "Log";
+            // 
+            // rtxtLog
+            // 
+            this.rtxtLog.Location = new System.Drawing.Point(4, 8);
+            this.rtxtLog.Name = "rtxtLog";
+            this.rtxtLog.ReadOnly = true;
+            this.rtxtLog.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
+            this.rtxtLog.Size = new System.Drawing.Size(436, 368);
+            this.rtxtLog.TabIndex = 11;
+            this.rtxtLog.Text = "";
+            this.rtxtLog.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.rtxtLog_LinkClicked);
+            // 
+            // tabAbout
+            // 
+            this.tabAbout.Controls.Add(this.rtxtAbout);
+            this.tabAbout.Controls.Add(this.picAboutIcon);
+            this.tabAbout.Location = new System.Drawing.Point(4, 25);
+            this.tabAbout.Name = "tabAbout";
+            this.tabAbout.Size = new System.Drawing.Size(440, 379);
+            this.tabAbout.TabIndex = 2;
+            this.tabAbout.Text = "About";
+            // 
+            // rtxtAbout
+            // 
+            this.rtxtAbout.BackColor = System.Drawing.SystemColors.Control;
+            this.rtxtAbout.Location = new System.Drawing.Point(72, 8);
+            this.rtxtAbout.Name = "rtxtAbout";
+            this.rtxtAbout.ReadOnly = true;
+            this.rtxtAbout.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
+            this.rtxtAbout.Size = new System.Drawing.Size(360, 360);
+            this.rtxtAbout.TabIndex = 3;
+            this.rtxtAbout.Text = "";
+            // 
+            // picAboutIcon
+            // 
+            this.picAboutIcon.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.picAboutIcon.Image = ((System.Drawing.Image)(resources.GetObject("picAboutIcon.Image")));
+            this.picAboutIcon.Location = new System.Drawing.Point(8, 8);
+            this.picAboutIcon.Name = "picAboutIcon";
+            this.picAboutIcon.Size = new System.Drawing.Size(56, 56);
+            this.picAboutIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.picAboutIcon.TabIndex = 2;
+            this.picAboutIcon.TabStop = false;
+            // 
+            // TimerMsg
+            // 
+            this.TimerMsg.Interval = 500;
+            this.TimerMsg.Tick += new System.EventHandler(this.TimerMsg_Tick);
+            // 
+            // cmdApply
+            // 
+            this.cmdApply.Location = new System.Drawing.Point(72, 416);
+            this.cmdApply.Name = "cmdApply";
+            this.cmdApply.Size = new System.Drawing.Size(64, 24);
+            this.cmdApply.TabIndex = 10;
+            this.cmdApply.Text = "Apply";
+            this.cmdApply.Click += new System.EventHandler(this.cmdApply_Click);
+            // 
+            // frmMain
+            // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-			this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-			this.ClientSize = new System.Drawing.Size(450, 447);
-			this.Controls.Add(this.cmdApply);
-			this.Controls.Add(this.tabOptions);
-			this.Controls.Add(this.cmdCancel);
-			this.Controls.Add(this.cmdOK);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-			this.MaximizeBox = false;
-			this.MinimizeBox = false;
-			this.Name = "frmMain";
-			this.Text = "Smile!";
-			this.WindowState = System.Windows.Forms.FormWindowState.Minimized;
-			this.Closing += new System.ComponentModel.CancelEventHandler(this.frmMain_Closing);
-			this.Load += new System.EventHandler(this.frmMain_Load);
-			this.Closed += new System.EventHandler(this.frmMain_Closed);
-			this.VisibleChanged += new System.EventHandler(this.frmMain_VisibleChanged);
-			this.tabOptions.ResumeLayout(false);
-			this.tabGeneral.ResumeLayout(false);
-			this.tabGeneralOptions.ResumeLayout(false);
-			this.tabGeneral_GlobalSnapSettings.ResumeLayout(false);
-			this.grpGeneral_SnapSettings_AnimationSettings.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimWidth)).EndInit();
-			this.grpGeneral_SnapSettings_ImageFormat.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.tbGeneral_SnapSettings_Quality)).EndInit();
-			this.grpGeneral_SnapSettings_SnapDir.ResumeLayout(false);
-			this.grpGeneral_SnapSettings_TimingAndParameters.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_NextSnapDelay)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveQueueSize)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).EndInit();
-			this.tabGeneral_GlobalStatsSettings.ResumeLayout(false);
-			this.tabGeneral_HotKeys.ResumeLayout(false);
-			this.tabGeneral_Misc.ResumeLayout(false);
-			this.grpGeneral_Misc_Updates.ResumeLayout(false);
-			this.tabProfiles.ResumeLayout(false);
-			this.tabProfileOptions.ResumeLayout(false);
-			this.tabProfiles_GameSettings.ResumeLayout(false);
-			this.grpProfiles_GameSettings_Path.ResumeLayout(false);
-			this.tabProfiles_SnapSettings.ResumeLayout(false);
-			this.grpProfiles_SnapSettingsSub.ResumeLayout(false);
-			this.groupBox1.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Brightness)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Contrast)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Gamma)).EndInit();
-			this.grpProfiles_SnapSettings_SnapDir.ResumeLayout(false);
-			this.grpProfiles_SnapSettings_TimingAndParameters.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_MultiSnapDelay)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SnapCount)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_NextSnapDelay)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_Delay)).EndInit();
-			this.tabProfiles_StatsSettings.ResumeLayout(false);
-			this.grpProfiles_StatsSettingsSub.ResumeLayout(false);
-			this.tabLog.ResumeLayout(false);
-			this.tabAbout.ResumeLayout(false);
-			this.ResumeLayout(false);
+            this.ClientSize = new System.Drawing.Size(450, 447);
+            this.Controls.Add(this.cmdApply);
+            this.Controls.Add(this.tabOptions);
+            this.Controls.Add(this.cmdCancel);
+            this.Controls.Add(this.cmdOK);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "frmMain";
+            this.Text = "Smile!";
+            this.WindowState = System.Windows.Forms.FormWindowState.Minimized;
+            this.Closed += new System.EventHandler(this.frmMain_Closed);
+            this.VisibleChanged += new System.EventHandler(this.frmMain_VisibleChanged);
+            this.Closing += new System.ComponentModel.CancelEventHandler(this.frmMain_Closing);
+            this.Load += new System.EventHandler(this.frmMain_Load);
+            this.tabOptions.ResumeLayout(false);
+            this.tabGeneral.ResumeLayout(false);
+            this.tabGeneralOptions.ResumeLayout(false);
+            this.tabGeneral_GlobalSnapSettings.ResumeLayout(false);
+            this.grpGeneral_SnapSettings_ProcessingSettings.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveThreads)).EndInit();
+            this.grpGeneral_SnapSettings_AnimationSettings.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimFrameDelay)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimHeight)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_AnimWidth)).EndInit();
+            this.grpGeneral_SnapSettings_ImageFormat.ResumeLayout(false);
+            this.grpGeneral_SnapSettings_ImageFormat.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tbGeneral_SnapSettings_Quality)).EndInit();
+            this.grpGeneral_SnapSettings_SnapDir.ResumeLayout(false);
+            this.grpGeneral_SnapSettings_SnapDir.PerformLayout();
+            this.grpGeneral_SnapSettings_TimingAndParameters.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_NextSnapDelay)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_SaveQueueSize)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udGeneral_SnapSettings_Delay)).EndInit();
+            this.tabGeneral_GlobalStatsSettings.ResumeLayout(false);
+            this.tabGeneral_HotKeys.ResumeLayout(false);
+            this.tabGeneral_HotKeys.PerformLayout();
+            this.tabGeneral_Misc.ResumeLayout(false);
+            this.grpGeneral_Misc_Updates.ResumeLayout(false);
+            this.tabProfiles.ResumeLayout(false);
+            this.tabProfileOptions.ResumeLayout(false);
+            this.tabProfiles_GameSettings.ResumeLayout(false);
+            this.grpProfiles_GameSettings_Path.ResumeLayout(false);
+            this.grpProfiles_GameSettings_Path.PerformLayout();
+            this.tabProfiles_SnapSettings.ResumeLayout(false);
+            this.grpProfiles_SnapSettingsSub.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Brightness)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Contrast)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tbProfiles_SnapSettings_Gamma)).EndInit();
+            this.grpProfiles_SnapSettings_SnapDir.ResumeLayout(false);
+            this.grpProfiles_SnapSettings_SnapDir.PerformLayout();
+            this.grpProfiles_SnapSettings_TimingAndParameters.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_MultiSnapDelay)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_SnapCount)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_NextSnapDelay)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.udProfiles_SnapSettings_Delay)).EndInit();
+            this.tabProfiles_StatsSettings.ResumeLayout(false);
+            this.grpProfiles_StatsSettingsSub.ResumeLayout(false);
+            this.tabLog.ResumeLayout(false);
+            this.tabAbout.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.picAboutIcon)).EndInit();
+            this.ResumeLayout(false);
 
 		}
 		#endregion
@@ -1719,7 +1835,8 @@ namespace smiletray
 		{
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
+            Process.GetCurrentProcess().PriorityClass = System.Diagnostics.ProcessPriorityClass.BelowNormal;
+         //   System.Threading.Thread.CurrentThread.Priority = System.Threading.ThreadPriority.BelowNormal;
 			string indentifier = "smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}";
 			MessageId = NativeMethods.RegisterWindowMessage(indentifier);
 			using(SingleProgramInstance spi = new SingleProgramInstance(indentifier))
@@ -2250,7 +2367,7 @@ namespace smiletray
 		{
 			lock(SaveThreadCountLock)
 			{
-				if(NumSaveThreads >= 3)
+				if(CurrentNumSaveThreads >= Settings.SnapSettings.NumSaveThreads)
 				{
 					lock(QueueLock)
 					{
@@ -2261,10 +2378,16 @@ namespace smiletray
 						}
 					}
 				}
-				NumSaveThreads++;
+				CurrentNumSaveThreads++;
 			}
 
-			ExecSaveQueue();
+            // Lag fix?
+            ThreadPriority PreviousThreadPriority = Thread.CurrentThread.Priority;
+            Thread.CurrentThread.Priority = Settings.SnapSettings.SavePriority;
+
+            ExecSaveQueue();
+
+            Thread.CurrentThread.Priority = PreviousThreadPriority;
 			
 			lock(QueueLock)
 			{
@@ -2272,7 +2395,7 @@ namespace smiletray
 				{
 					lock(SaveThreadCountLock)
 					{
-						NumSaveThreads--;
+						CurrentNumSaveThreads--;
 					}
 					TimerSave.Change(100, 100);
 				}
@@ -2342,8 +2465,14 @@ namespace smiletray
 			lblGeneral_SnapSettings_AnimFrameDelay.Enabled = udGeneral_SnapSettings_AnimFrameDelay.Enabled = !chkGeneral_SnapSettings_AnimUseMultiSnapDelay.Checked;
 			lblGeneral_SnapSettings_AnimWidth.Enabled = lblGeneral_SnapSettings_AnimHeight.Enabled = udGeneral_SnapSettings_AnimWidth.Enabled = udGeneral_SnapSettings_AnimHeight.Enabled = !chkGeneral_SnapSettings_AnimOriginalDimentions.Checked;
 			chkGeneral_SnapSettings_AnimOptimizePalette.Checked = Settings.SnapSettings.AnimOptimizePalette;
-
-			// Global Stats Settings
+            if(Settings.SnapSettings.NumSaveThreads >= 1 && Settings.SnapSettings.NumSaveThreads <= 10)
+                udGeneral_SnapSettings_SaveThreads.Value = Settings.SnapSettings.NumSaveThreads;
+            else
+                udGeneral_SnapSettings_SaveThreads.Value = Settings.SnapSettings.NumSaveThreads = 3;
+            cbGeneral_SnapSettings_SavePriority.SelectedItem = Settings.SnapSettings.SavePriority;
+            cbGeneral_SnapSettings_CapturePriority.SelectedItem = Settings.SnapSettings.CapturePriority;
+			
+            // Global Stats Settings
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
 
 			// Hot Keys
@@ -2629,6 +2758,9 @@ namespace smiletray
 					Settings.HotKeySettings.HKDesktop = "F11";
 					Settings.HotKeySettings.HKActiveProfile = "F12";
 					Settings.MiscSettings.CheckUpdates = "Every Day";
+                    Settings.SnapSettings.NumSaveThreads = 3;
+                    Settings.SnapSettings.SavePriority = System.Threading.ThreadPriority.Lowest;
+                    Settings.SnapSettings.CapturePriority = System.Threading.ThreadPriority.Normal;
 
 					AddProfiles ( ref Profiles );  // Just in case none where created
 
@@ -2807,6 +2939,10 @@ namespace smiletray
 							return;
 						}
 
+
+                        // Lag fix?
+                        ThreadPriority PreviousThreadPriority = Thread.CurrentThread.Priority;
+                        Thread.CurrentThread.Priority = Settings.SnapSettings.CapturePriority;
 						try
 						{
 							Thread.Sleep(ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.Delay : ActiveProfile.SnapSettings.Delay);
@@ -2840,6 +2976,8 @@ namespace smiletray
 						{
 							AddLogMessage("Error Capturing/Saving Image (Check Paths/Encoders?)");
 						}
+
+                        Thread.CurrentThread.Priority = PreviousThreadPriority;
 					}
 				}
 			}
@@ -3169,6 +3307,11 @@ namespace smiletray
 			Settings.SnapSettings.AnimFrameDelay = (int)udGeneral_SnapSettings_AnimFrameDelay.Value;
 			Settings.SnapSettings.AnimOptimizePalette = chkGeneral_SnapSettings_AnimOptimizePalette.Checked;
 
+            Settings.SnapSettings.NumSaveThreads = (int)udGeneral_SnapSettings_SaveThreads.Value;
+            Settings.SnapSettings.SavePriority = (System.Threading.ThreadPriority)cbGeneral_SnapSettings_SavePriority.SelectedItem;
+            Settings.SnapSettings.CapturePriority = (System.Threading.ThreadPriority)cbGeneral_SnapSettings_CapturePriority.SelectedItem;
+
+
 			// Global Stats Settings
 			Settings.StatsSettings.Enabled = chkGeneral_StatsSettings_Enabled.Checked;
 
@@ -3203,7 +3346,6 @@ namespace smiletray
 
 			return 0;
 		}
-
 
 	}
 }

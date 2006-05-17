@@ -47,6 +47,9 @@
     <WarningLevel>4</WarningLevel>
     <DebugType>full</DebugType>
     <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -154,10 +157,9 @@
     <EmbeddedResource Include="ViewStats.resx">
       <DependentUpon>ViewStats.cs</DependentUpon>
     </EmbeddedResource>
+    <Content Include="LICENSE.TXT" />
+    <Content Include="ReadMe.txt" />
     <Content Include="tray_icon.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

@@ -378,7 +378,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Valve001","Counter-Strike Source") != 0;
+			return NativeMethods.FindWindow("Valve001","Counter-Strike Source").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -785,7 +785,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Valve001","Half-Life 2 DM") != 0;
+			return NativeMethods.FindWindow("Valve001","Half-Life 2 DM").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -1277,7 +1277,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Valve001","Counter-Strike") != 0;
+			return NativeMethods.FindWindow("Valve001","Counter-Strike").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -1600,7 +1600,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Valve001","Day of Defeat") != 0;
+            return NativeMethods.FindWindow("Valve001", "Day of Defeat").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -2285,7 +2285,7 @@ namespace smiletray
         }
         public override bool CheckActive()
         {
-            return NativeMethods.FindWindow("Valve001", "Team Fortress") != 0;
+            return NativeMethods.FindWindow("Valve001", "Team Fortress").ToInt64() != 0;
         }
         public override String GetDefaultPath()
         {
@@ -2768,7 +2768,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Quake 3: Arena","Quake 3: Arena") != 0;
+            return NativeMethods.FindWindow("Quake 3: Arena", "Quake 3: Arena").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -3270,7 +3270,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Enemy Territory","Enemy Territory") != 0;
+            return NativeMethods.FindWindow("Enemy Territory", "Enemy Territory").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -3791,7 +3791,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Valve001","Day of Defeat Source") != 0;
+            return NativeMethods.FindWindow("Valve001", "Day of Defeat Source").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -4235,7 +4235,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Valve001","Dystopia") != 0;
+            return NativeMethods.FindWindow("Valve001", "Dystopia").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{
@@ -4656,7 +4656,7 @@ namespace smiletray
 		}
 		public override bool CheckActive()
 		{
-			return NativeMethods.FindWindow("Jedi Knight®: Jedi Academy (MP)","Jedi Knight®: Jedi Academy (MP)") != 0;
+            return NativeMethods.FindWindow("Jedi Knight®: Jedi Academy (MP)", "Jedi Knight®: Jedi Academy (MP)").ToInt64() != 0;
 		}
 		public override String GetDefaultPath()
 		{

@@ -24,8 +24,8 @@ namespace Kudlacz.Hooks
 		public event System.EventHandler Pressed;
 		public event System.EventHandler KeyCapture;
 		public bool capture;
-		
-		protected static int hook;
+
+        protected static Int64 hook;
 		protected static keycombo keys = new keycombo();
 		protected static LowLevelKeyboardDelegate del;
 		protected static ArrayList hotkeys = new ArrayList();
@@ -35,19 +35,20 @@ namespace Kudlacz.Hooks
 		public static readonly keycombo EmptyKeyCombo = new keycombo();
 		
 		#region Dll Imports
-		[DllImport("user32")] 
-		private static extern Int32 SetWindowsHookEx(Int32 idHook,  LowLevelKeyboardDelegate lpfn, Int32 hmod, Int32 dwThreadId); 
+		[DllImport("user32")]
+        private static extern IntPtr SetWindowsHookEx(Int32 idHook, LowLevelKeyboardDelegate lpfn, IntPtr hmod, Int32 dwThreadId); 
          
-		[DllImport("user32")]         
-		private static extern Int32 CallNextHookEx(Int32 hHook, Int32 nCode, Int32 wParam, KBDLLHOOKSTRUCT lParam); 
+		[DllImport("user32")]
+        private static extern IntPtr CallNextHookEx(IntPtr hHook, Int32 nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam); 
 
-		[DllImport("user32")] 
-		private static extern Int32 UnhookWindowsHookEx(Int32 hHook); 
+		[DllImport("user32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool UnhookWindowsHookEx(IntPtr hHook); 
 		
 		#endregion
 		
 		// ---------------- Type definitions   ------------------
-		protected delegate Int32 LowLevelKeyboardDelegate(Int32 nCode, Int32 wParam, ref KBDLLHOOKSTRUCT lParam); 
+        protected delegate IntPtr LowLevelKeyboardDelegate(Int32 nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam); 
 		private const Int32 HC_ACTION = 0; 
 		private const Int32 WM_KEYDOWN = 0x0100;
 		private const Int32 WM_KEYUP = 0x0101;
@@ -59,8 +60,8 @@ namespace Kudlacz.Hooks
 			public int vkCode; 
 			public int scanCode; 
 			public int flags; 
-			public int time; 
-			public int dwExtraInfo; 
+			public int time;
+            public IntPtr dwExtraInfo; 
 		} 
 		
 		public class keycombo
@@ -197,12 +198,12 @@ namespace Kudlacz.Hooks
 		
 
 		// Main function proccess
-		static private Int32 LowLevelKeyboardHandler(Int32 nCode, Int32 wParam, ref KBDLLHOOKSTRUCT lParam) 
+        static private IntPtr LowLevelKeyboardHandler(Int32 nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam) 
 		{ 
 	
 			if (nCode == HC_ACTION) 
 			{
-				if (wParam == WM_KEYDOWN)
+				if (wParam.ToInt64() == WM_KEYDOWN)
 				{
 					keys[(int)lParam.vkCode] = 1;
 					for(int i = 0; i < hotkeys.Count; i++)
@@ -219,14 +220,12 @@ namespace Kudlacz.Hooks
 							hk.Pressed(hk, EventArgs.Empty);
 					}
 				}
-				else if (wParam == WM_KEYUP)
+				else if (wParam.ToInt64() == WM_KEYUP)
 					keys[(int)lParam.vkCode] = 0;
 			}
-			return CallNextHookEx(hook, nCode, wParam, lParam); 
-			
+			return CallNextHookEx((IntPtr)hook, nCode, wParam, ref lParam); 
 		} 
-		
-		
+	
 		
 		// Functions & getters and setters
 		public bool EnableKeyCapture
@@ -255,7 +254,7 @@ namespace Kudlacz.Hooks
 				if(registered)
 					return true;
 				del = new LowLevelKeyboardDelegate(LowLevelKeyboardHandler);
-				hook = SetWindowsHookEx(WH_KEYBOARD_LL, del, Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]).ToInt32(),0); 
+				hook = (Int64)SetWindowsHookEx(WH_KEYBOARD_LL, del, Marshal.GetHINSTANCE(System.Reflection.Assembly.GetExecutingAssembly().GetModules()[0]),0); 
 			
 				if(hook != 0)
 					return registered = true;
@@ -273,7 +272,7 @@ namespace Kudlacz.Hooks
 			{
 				if(hotkeys.Count == 0)
 				{
-					return registered = (UnhookWindowsHookEx(hook) != 0);
+					return registered = UnhookWindowsHookEx((IntPtr)hook);
 				}
 			}
 			return false;
