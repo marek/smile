@@ -119,58 +119,65 @@ namespace smiletray
 	
 		public frmMain()
 		{
-			// Required for Windows Form Designer support
-			InitializeComponent();
-
-			// Read Settings
-			this.Settings = new Settings_t();
-			AddProfiles ( ref Profiles );  // Just in case none where created
-			this.LoadSettings();
-
-			// Populate profiles
-			AddProfiles ( ref Profiles );
-			TempProfiles = new CProfile [ Profiles.Length ];
-			for(int i = 0; i < Profiles.Length; i++)
+			try
 			{
-				TempProfiles[i] = (CProfile) System.Activator.CreateInstance(Profiles[i].GetType());
-				ListViewItem item = new ListViewItem();
-				item.Text = Profiles[i].ProfileName;
-				item.Tag = i;
-				lstProfiles_Games.Items.Add(item);
-			}
+				// Required for Windows Form Designer support
+				InitializeComponent();
 
-			// Encoders
-			ImageCodecInfo [] encoders = ImageCodecInfo.GetImageEncoders();
-			foreach(ImageCodecInfo enc in encoders)
+				// Read Settings
+				this.Settings = new Settings_t();
+				AddProfiles ( ref Profiles );  // Just in case none where created
+				this.LoadSettings();
+
+				// Populate profiles
+				AddProfiles ( ref Profiles );
+				TempProfiles = new CProfile [ Profiles.Length ];
+				for(int i = 0; i < Profiles.Length; i++)
+				{
+					TempProfiles[i] = (CProfile) System.Activator.CreateInstance(Profiles[i].GetType());
+					ListViewItem item = new ListViewItem();
+					item.Text = Profiles[i].ProfileName;
+					item.Tag = i;
+					lstProfiles_Games.Items.Add(item);
+				}
+
+				// Encoders
+				ImageCodecInfo [] encoders = ImageCodecInfo.GetImageEncoders();
+				foreach(ImageCodecInfo enc in encoders)
+				{
+					cbGeneral_SnapSettings_ImageFormat.Items.Add(enc.MimeType);
+				}
+
+				UpdateEncoder();
+
+				// Misc Dialog Options
+				this.AllowShow = true;
+				this.notifyIcon.Text = this.Text = "Smile! " + Info.version;
+
+				// Populate Dialog
+				PopulateOptions();
+				this.EnableSnaps = this.Settings.SnapSettings.Enabled;
+				this.EnableStats = this.Settings.StatsSettings.Enabled;
+
+				// Populate the rich text box for about screen
+				rtxtAbout.SelectionStart = 0 ;
+				rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold);
+				rtxtAbout.SelectedText = "Smile! " ;
+				rtxtAbout.SelectionFont = new Font("Verdana", 10, FontStyle.Regular);
+				rtxtAbout.SelectedText = "v" + Info.version + "\n";
+				rtxtAbout.SelectedText = "©2005 Marek Kudlacz\nhttp://www.kudlacz.com\n";
+				rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold|FontStyle.Underline);
+				rtxtAbout.SelectedText = "                                                                                                            \n\n";
+				rtxtAbout.SelectedText = "This is a program designed in C#/.NET to keep track of statistics, and to take \"kill\" screenshots when you actually manage to kill someone. Enjoy!\n";
+				rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
+				rtxtAbout.SelectionStart = 0 ;
+
+				CheckEnabled();
+			}
+			catch ( Exception e ) 
 			{
-				cbGeneral_SnapSettings_ImageFormat.Items.Add(enc.MimeType);
+				Ex.DumpException(e);
 			}
-
-			UpdateEncoder();
-
-			// Misc Dialog Options
-			this.AllowShow = true;
-			this.notifyIcon.Text = this.Text = "Smile! " + Info.version;
-
-			// Populate Dialog
-			PopulateOptions();
-			this.EnableSnaps = this.Settings.SnapSettings.Enabled;
-			this.EnableStats = this.Settings.StatsSettings.Enabled;
-
-			// Populate the rich text box for about screen
-			rtxtAbout.SelectionStart = 0 ;
-			rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold);
-			rtxtAbout.SelectedText = "Smile! " ;
-			rtxtAbout.SelectionFont = new Font("Verdana", 10, FontStyle.Regular);
-			rtxtAbout.SelectedText = "v" + Info.version + "\n";
-			rtxtAbout.SelectedText = "©2005 Marek Kudlacz\nhttp://www.kudlacz.com\n";
-			rtxtAbout.SelectionFont = new Font("Verdana", 12, FontStyle.Bold|FontStyle.Underline);
-			rtxtAbout.SelectedText = "                                                                                                            \n\n";
-			rtxtAbout.SelectedText = "This is a program designed in C#/.NET to keep track of statistics, and to take \"kill\" screenshots when you actually manage to kill someone. Enjoy!\n";
-			rtxtAbout.SelectedText = "\n\nSmile!, Copyright (C) 2005 Marek Kudlacz. Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions; for details see bundled LICENSE.TXT.";
-			rtxtAbout.SelectionStart = 0 ;
-
-			CheckEnabled();
 		}
 
 		private void rtxtAbout_LinkClicked(object sender, System.Windows.Forms.LinkClickedEventArgs e)
@@ -230,6 +237,7 @@ namespace smiletray
 			this.tabGeneral = new System.Windows.Forms.TabPage();
 			this.tabGeneralOptions = new System.Windows.Forms.TabControl();
 			this.tabGeneral_GlobalSnapSettings = new System.Windows.Forms.TabPage();
+			this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
 			this.grpGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.GroupBox();
 			this.lblGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.Label();
 			this.cbGeneral_SnapSettings_ImageFormat = new System.Windows.Forms.ComboBox();
@@ -275,7 +283,6 @@ namespace smiletray
 			this.picAboutIcon = new System.Windows.Forms.PictureBox();
 			this.tabLog = new System.Windows.Forms.TabPage();
 			this.rtxtLog = new System.Windows.Forms.RichTextBox();
-			this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
 			this.tabOptions.SuspendLayout();
 			this.tabGeneral.SuspendLayout();
 			this.tabGeneralOptions.SuspendLayout();
@@ -468,6 +475,14 @@ namespace smiletray
 			this.tabGeneral_GlobalSnapSettings.Size = new System.Drawing.Size(400, 342);
 			this.tabGeneral_GlobalSnapSettings.TabIndex = 0;
 			this.tabGeneral_GlobalSnapSettings.Text = "Global Snap Settings";
+			// 
+			// chkGeneral_SnapSettings_SaveBug
+			// 
+			this.chkGeneral_SnapSettings_SaveBug.Location = new System.Drawing.Point(128, 8);
+			this.chkGeneral_SnapSettings_SaveBug.Name = "chkGeneral_SnapSettings_SaveBug";
+			this.chkGeneral_SnapSettings_SaveBug.Size = new System.Drawing.Size(80, 24);
+			this.chkGeneral_SnapSettings_SaveBug.TabIndex = 24;
+			this.chkGeneral_SnapSettings_SaveBug.Text = "Save Bug";
 			// 
 			// grpGeneral_SnapSettings_ImageFormat
 			// 
@@ -910,14 +925,6 @@ namespace smiletray
 			this.rtxtLog.Size = new System.Drawing.Size(416, 368);
 			this.rtxtLog.TabIndex = 11;
 			this.rtxtLog.Text = "";
-			// 
-			// chkGeneral_SnapSettings_SaveBug
-			// 
-			this.chkGeneral_SnapSettings_SaveBug.Location = new System.Drawing.Point(128, 8);
-			this.chkGeneral_SnapSettings_SaveBug.Name = "chkGeneral_SnapSettings_SaveBug";
-			this.chkGeneral_SnapSettings_SaveBug.Size = new System.Drawing.Size(80, 24);
-			this.chkGeneral_SnapSettings_SaveBug.TabIndex = 24;
-			this.chkGeneral_SnapSettings_SaveBug.Text = "Save Bug";
 			// 
 			// frmMain
 			// 
