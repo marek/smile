@@ -16,7 +16,7 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.2";
+		public static readonly String version = "1.3";
 	}
 
 	public class SnapSettings_t

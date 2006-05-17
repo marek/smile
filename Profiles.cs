@@ -323,8 +323,9 @@ namespace smiletray
 				PopulateRegEx();								// Create our Regex objects
 				return true;
 			}
-			catch 
+			catch (Exception e)
 			{
+				frmMain.error += "|||" + e.Message;
 				return false;
 			}
 		}
@@ -467,10 +468,15 @@ namespace smiletray
 					strStats += "\t\tSuicides: " + stats.suicides + "<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
 					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -525,14 +531,19 @@ namespace smiletray
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Weapon Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
 						foreach(String Key in stats.gun.Keys)
 						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
 							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
 							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
 						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionStart = 0 ;
@@ -835,10 +846,15 @@ namespace smiletray
 					strStats += "\t\tSuicides: " + stats.suicides + "<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
 					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -870,14 +886,19 @@ namespace smiletray
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Weapon Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
 						foreach(String Key in stats.gun.Keys)
 						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
 							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
 							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
 						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionStart = 0 ;
@@ -1178,10 +1199,15 @@ namespace smiletray
 					strStats += "\t\tMiscellaneous Deaths: " + stats.deaths + "<br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
 					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -1213,14 +1239,19 @@ namespace smiletray
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Weapon Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
 						foreach(String Key in stats.gun.Keys)
 						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
 							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
 							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
 						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionStart = 0 ;
@@ -1633,10 +1664,19 @@ namespace smiletray
 					strStats += "\t\tSuicides: " + stats.suicides + "<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
+					uint TotalTeamKills = 0;
+					uint TotalTeamKilled = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
+						TotalKills += ((CProfileDayofDefeat_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfileDayofDefeat_Gun)stats.gun[Key]).killed;
+						TotalTeamKills += ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkills;
+						TotalTeamKilled += ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkilled;
 						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfileDayofDefeat_Gun)stats.gun[Key]).kills + " team kills: " + ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkills + " killed: " + ((CProfileDayofDefeat_Gun)stats.gun[Key]).killed + " team killed: " + ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkilled + "<br />\r\n";
 					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Team Kills: " + TotalTeamKills + " Total Killed: " + TotalKilled + " Total Team Killed: " + TotalTeamKilled + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -1671,8 +1711,16 @@ namespace smiletray
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Weapon Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
+						uint TotalTeamKills = 0;
+						uint TotalTeamKilled = 0;
 						foreach(String Key in stats.gun.Keys)
 						{
+							TotalKills += ((CProfileDayofDefeat_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfileDayofDefeat_Gun)stats.gun[Key]).killed;
+							TotalTeamKills += ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkills;
+							TotalTeamKilled += ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkilled;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
@@ -1681,6 +1729,7 @@ namespace smiletray
 							c.SelectedText = " killed: " + ((CProfileDayofDefeat_Gun)stats.gun[Key]).killed;
 							c.SelectedText = " team killed: " + ((CProfileDayofDefeat_Gun)stats.gun[Key]).teamkilled + "\n";
 						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Team Kills: " + TotalTeamKills +  " Total Killed: " + TotalKilled + " Total Team Killed: " + TotalTeamKilled + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionStart = 0 ;
@@ -2087,10 +2136,15 @@ namespace smiletray
 					strStats += "\t\t<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
 					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -2126,15 +2180,20 @@ namespace smiletray
 						c.SelectedText = "\n\n";
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
-						c.SelectedText = "Weapon Statistics:\n" ;
+						c.SelectedText = "Weapon Statistics:\n";
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
 						foreach(String Key in stats.gun.Keys)
 						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
 							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
 							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
 						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionStart = 0 ;
@@ -2652,10 +2711,15 @@ namespace smiletray
 					strStats += "\t\t<br /><br />\r\n";
 
 					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
 					foreach(String Key in stats.gun.Keys)
 					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
 					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
 					strStats += "\t\t<br /><br />\r\n";
 					strStats += "\t</body>\r\n";
 					strStats += "</html>";
@@ -2681,13 +2745,18 @@ namespace smiletray
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
 						c.SelectedText = "Self-Inflicted/Unknown Death Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
 						foreach(String Key in stats.death.Keys)
 						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
 							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
 							c.SelectedText = Key + ": ";
 							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
 							c.SelectedText = (uint)stats.death[Key] + "\n";
 						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
 						c.SelectedText = "\n\n";
 
 						c.SelectionFont = new Font(font, 10, FontStyle.Bold);

@@ -109,13 +109,17 @@ BUNG: Especially Adam for help in one thing, and pix & i[e for testing.
 Military Forces Quake 3 Team
 Steampowered.com forums
 SniperKil from #teamxecuter
+CyberRob for suggestions
+Danny for reporting a bugs
 
 
 
 Known Bugs:
 ------------------------
+I left the below bug in just in case someone may recognize it even though i *think* i fixed it in v1.3. Never know i could have failed to fix it.
 -Captures "stray" screenshots. Looks as if the program didn't wait for D3D to finish rendering, and sometimes catches just the environment. 
  Investigating alternative capture methods. Anyone have suggestions?
+
 
 
 Why Smile? Why not "DEATHCAM! etc":
@@ -126,6 +130,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.2: Compatible
 1.1: Compatible
 1.0: NOT Compatible
 
@@ -133,6 +138,12 @@ Version Compatiblity:
 
 Changelog:
 ------------------------
+**v1.3**
+-Fixed a browse button under Profiles->Snap Settings
+-Added Total Kills/Killed stats for weapons in all profiles
+-Fixed "stray" screenshot bug
+
+
 **v1.2**
 -Added Quake III Arena Profile
 -Added Quake III Team Arena Profile

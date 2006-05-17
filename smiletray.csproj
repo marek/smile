@@ -90,33 +90,9 @@
                     HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.XML.dll"
                 />
                 <Reference
-                    Name = "Microsoft.DirectX"
-                    AssemblyName = "Microsoft.DirectX"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\DirectX for Managed Code\1.0.2902.0\Microsoft.DirectX.dll"
-                    AssemblyFolderKey = "hklm\dn\dx_1.0.2902.0"
-                />
-                <Reference
-                    Name = "Microsoft.DirectX.Direct3D"
-                    AssemblyName = "Microsoft.DirectX.Direct3D"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Managed DirectX\v9.02.3900\Microsoft.DirectX.Direct3D.dll"
-                    AssemblyFolderKey = "hklm\current managed directx 9.2"
-                />
-                <Reference
                     Name = "System.Management"
                     AssemblyName = "System.Management"
                     HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Management.dll"
-                />
-                <Reference
-                    Name = "Microsoft.DirectX.Direct3DX"
-                    AssemblyName = "Microsoft.DirectX.Direct3DX"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\DirectX for Managed Code\1.0.2905.0\Microsoft.DirectX.Direct3DX.dll"
-                    AssemblyFolderKey = "hklm\dn\dx_1.0.2905.0"
-                />
-                <Reference
-                    Name = "Microsoft.DirectX.DirectDraw"
-                    AssemblyName = "Microsoft.DirectX.DirectDraw"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\DirectX for Managed Code\1.0.2902.0\Microsoft.DirectX.DirectDraw.dll"
-                    AssemblyFolderKey = "hklm\dn\dx_1.0.2902.0"
                 />
             </References>
         </Build>
@@ -124,11 +100,6 @@
             <Include>
                 <File
                     RelPath = "AssemblyInfo.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "DXScreenCapture.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

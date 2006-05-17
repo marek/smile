@@ -30,6 +30,7 @@ namespace smiletray
 		public static Image GetDesktopImage(bool primary)
 		{
 			Graphics desktopGraphics;
+			Graphics desktopWindowGraphics;
 			Image desktopImage;
 			Rectangle screen;
 			if(primary) screen = Screen.PrimaryScreen.Bounds; 
@@ -40,7 +41,9 @@ namespace smiletray
 				IntPtr pDesktop = desktopGraphics.GetHdc();
 				IntPtr pDesktopWindow = NativeMethods.GetDesktopWindow();
 				IntPtr pWindowDC = NativeMethods.GetWindowDC(pDesktopWindow);
+				desktopWindowGraphics = Graphics.FromHdc(pWindowDC);
 
+				desktopWindowGraphics.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
 				NativeMethods.BitBlt(pDesktop, 0, 0, screen.Width, screen.Height, pWindowDC, screen.X, screen.Y, SRCCOPY);
 
 				//Release device contexts
@@ -48,6 +51,7 @@ namespace smiletray
 				desktopGraphics.ReleaseHdc(pDesktop);
 
 				//Set pointers to zero.
+				desktopWindowGraphics.Dispose();
 				pDesktop = IntPtr.Zero;
 				pDesktopWindow = IntPtr.Zero;
 				pWindowDC = IntPtr.Zero;

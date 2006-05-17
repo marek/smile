@@ -758,6 +758,7 @@ namespace smiletray
 			this.cmdProfiles_BrowseSnapDir.Size = new System.Drawing.Size(56, 24);
 			this.cmdProfiles_BrowseSnapDir.TabIndex = 6;
 			this.cmdProfiles_BrowseSnapDir.Text = "Browse";
+			this.cmdProfiles_BrowseSnapDir.Click += new System.EventHandler(this.cmdProfiles_BrowseSnapDir_Click);
 			// 
 			// grpProfiles_SnapSettings_Delay
 			// 
@@ -1081,6 +1082,13 @@ namespace smiletray
 			txtProfiles_GameSettings_Path.Text = dlgBrowseDir.SelectedPath;
 		}
 
+		private void cmdProfiles_BrowseSnapDir_Click(object sender, System.EventArgs e)
+		{
+			dlgBrowseDir.SelectedPath = txtProfiles_SnapSettings_SnapDir.Text;
+			dlgBrowseDir.ShowDialog();
+			txtProfiles_SnapSettings_SnapDir.Text = dlgBrowseDir.SelectedPath;
+		}
+
 		private void cmdGeneral_StatsSettings_Reset_Click(object sender, System.EventArgs e)
 		{
 			if(MessageBox.Show("Are you sure you want to reset the statistics?\n\nNote: This will also cause your settings to save!", "Question!", MessageBoxButtons.YesNo).Equals(DialogResult.Yes))
@@ -1192,6 +1200,7 @@ namespace smiletray
 		//////////////////////////////////////////////////////////////////////////////////////////////
 
 		// Main Statistics/Screenshot Routine
+		public static String error;
 		private void TimerCheckConsoleLog_Tick(object sender, System.EventArgs e)
 		{
 			if(ActiveProfile == null)
@@ -1266,7 +1275,11 @@ namespace smiletray
 					if(ActiveProfile.IsOpen())
 						AddLogMessage("Begining Session For: " + ActiveProfile.ProfileName);
 					else
+					{
 						AddLogMessage("Error Starting Session For: " + ActiveProfile.ProfileName);
+						AddLogMessage(frmMain.error);
+						frmMain.error = "";
+					}
 				}
 
 				if(ActiveProfile.NewStats)
