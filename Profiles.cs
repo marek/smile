@@ -940,6 +940,7 @@ namespace smiletray
 		{
 			this.ProfileName = "Counter-Strike";
 			this.SnapName = "Counter-Strike";
+			this.stats = new CProfileCounterStrike_Stats();
 		}
 		private void PopulateRegEx()
 		{
@@ -1315,6 +1316,7 @@ namespace smiletray
 		{
 			this.ProfileName = "Day of Defeat";
 			this.SnapName = "Day of Defeat";
+			this.stats = new CProfileDayofDefeat_Stats();
 		}
 		public override bool CheckActive()
 		{

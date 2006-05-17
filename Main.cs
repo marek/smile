@@ -1224,7 +1224,7 @@ namespace smiletray
 						Image img = ScreenCapture.GetDesktopImage(Settings.SnapSettings.SingleDisplay);
 						Graphics g = Graphics.FromImage(img);
 
-						g.DrawString(encoderstring, encoderfont , new SolidBrush(Color.FromArgb(70, Color.White)), img.Width - g.MeasureString(encoderstring, encoderfont).Width - 5, img.Height - g.MeasureString(encoderstring, encoderfont).Height - 5);
+						g.DrawString(encoderstring, encoderfont , new SolidBrush(Color.FromArgb(75, Color.White)), img.Width - g.MeasureString(encoderstring, encoderfont).Width - 5, img.Height - g.MeasureString(encoderstring, encoderfont).Height - 5);
 
 						String dir = ActiveProfile.SnapSettings.UseGlobal ? Settings.SnapSettings.SnapDir + @"\" + ActiveProfile.SnapName : ActiveProfile.SnapSettings.SnapDir;
 						if(!Directory.Exists(dir))

@@ -115,7 +115,7 @@ SniperKil from #teamxecuter
 Known Bugs:
 ------------------------
 -Captures "stray" screenshots. Looks as if the program didn't wait for D3D to finish rendering, and sometimes catches just the environment. 
- Investigating alternative capture methods.
+ Investigating alternative capture methods. Anyone have suggestions?
 
 
 Why Smile? Why not "DEATHCAM! etc":
@@ -146,7 +146,8 @@ Changelog:
 -Moved log to its own tab
 -Add profile title to options page
 -Made watermark semi transparent
--Misc things
+-Fixed Stats and Snaps Enable Toggles
+-Misc things and other bugfixes
 
 
 **v1.1**
