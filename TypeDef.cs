@@ -17,7 +17,8 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.5 BETA 2";
+		public static readonly String version = "1.5 BETA 5";
+		public static readonly String copyrightdate = "©2005";
 	}
 
 	public class SnapSettings_t
@@ -94,5 +95,110 @@ namespace smiletray
 			this.frames = frames;
 		}
 	}
+
+	// Thread Safe ArrayList
+	public class TSArrayList
+	{
+		private ArrayList a;
+
+		public TSArrayList()
+		{
+			a = new ArrayList();
+		}
+
+		public TSArrayList(int size)
+		{
+			a = new ArrayList(size);
+		}
+
+		public void Add(object item)
+		{
+			lock(a.SyncRoot)
+			{
+				a.Add(item);
+			}
+		}
+
+		public object ObjectAt(int index)
+		{
+			lock (a.SyncRoot)
+			{
+				return a[index];
+			}
+		}
+
+		public void AddRange(ICollection c)
+		{
+			lock(a.SyncRoot)
+			{
+				a.AddRange(c);
+			}
+		}
+
+		public int Capacity() 
+		{
+			lock (a.SyncRoot)
+			{
+				return	a.Capacity;
+			}
+		}
+
+		public void Clear()
+		{
+			lock (a.SyncRoot)
+			{
+				a.Clear();
+			}
+		}
+
+		public bool Contains(object item)
+		{
+			lock (a.SyncRoot)
+			{
+				return a.Contains(item);
+			}
+		}
+
+		public int Count() 
+		{
+			lock (a.SyncRoot)
+			{
+				return a.Count;
+			}
+		}
+
+		public void Insert(int index, object Value)
+		{
+			lock (a.SyncRoot)
+			{
+				a.Insert(index, Value);
+			}
+		}
+
+		public void Remove(object obj)
+		{
+			lock (a.SyncRoot)
+			{
+				a.Remove(obj);
+			}
+		}
+
+		public void RemoveAt(int index)
+		{
+			lock (a.SyncRoot)
+			{
+				a.RemoveAt(index);
+			}
+		}
+
+		public void RemoveRange(int index, int count)
+		{
+			lock (a.SyncRoot)
+			{
+				a.RemoveRange(index, count);
+			}
+		}
+	}
+
 
 }

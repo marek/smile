@@ -62,7 +62,7 @@ details on what you should enter.
 
 Game Configuration:
 ------------------------
-• Steam Installation (HL, CS, DOD, DOD:S, CS:S & HL2:DM):
+• Steam Installation (HL, CS, DOD, DOD:S, CS:S, HL2:DM & Dystopia):
 Open steam. Go to "Play Games". Right-Click on "Counter-Strike: Source" and/or "Half-Life 2: Deathmatch", and/or any other steam game
 and click the “Launch Options" button. Add " -condebug" (without the quotes) as launch parameter.
 
@@ -116,6 +116,10 @@ X:\ being the letter of the drive steam is installed to.
 	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
 	Log File: "\missionpack\qconsole.log"
 
+• Dystopia (HL2/Source Mod)
+	Game Path: "X:\...\Steam\SteamApps\SourceMods\dystopia"
+	Log File: "console.log"	
+
 
 
 
@@ -130,13 +134,17 @@ Options that are globally used by default.
 	• Snap Directory: Where to save your screenshots
 	• Single Display: Whether you're running on a singledisplay or not (only if you use a multi-monitor setup)
 	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
-	I have yet to find a good value myself. A delay of 0, is to fast, the screenshot is 
-	taken before the hit is even registered on your display. Good values are 
+	I have yet to find a good value myself. A delay of 0, is too fast, so the screenshot is 
+	taken to early and the player will just look like it's twitching. Good values are 
 	between 0-100ms.
 	• Image Output Type: Let's you select between image formats (such as bitmap, jpeg, etc..)
 	• Quality: If the selected image format supports compression, use this quality setting.
 	• Save Bug: Allow the program to retry saving multiple times if a file does not seem to save the first time (AntiVirus conflict)
-
+	• Use Original Dimentions: Whether to keep or resize the image when saving a sequence to an animation
+		• Width: Width of animation
+		• Height: Height of animation
+	• Use MultiSnap Delay: Whether to use a fixed delay for all animations, or use the capture delay between multiple frames
+		• Delay: Custom delay inbetween frames
 	[Global Stats Settings]
 	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for all games by default
 	• View: View stats.
@@ -155,6 +163,12 @@ options that are specific to certain games.
 	I have yet to find a good value myself. A delay of 0, is to fast, the screenshot is 
 	taken before the hit is even registered on your display. Good values are 
 	between 0-100ms.
+	• Save: "Only Snaps" save only single framed images, "Only Animations", Save only animatation sequences (Snap Count must be > 1)
+	or "Snaps & Animations" to save a copy of both
+	• Save Delay: How long to wait before saving (recommended to leave as is)
+	• Next Snap Delay: How long to wait before taking another snap/series of snaps
+	• Snap Count: How many frames to capture in a sequence
+	• MultiSnap Delay: How long to wait inbetween each frame captured in a sequence
 
 	[Stats Settings]
 	• Enabled: Enable or disable the stats settings (if you just want to do screenshots) for just this game
@@ -187,6 +201,7 @@ Danny for reporting bugs
 Extreme_One for help in implementing DoD:S support
 Iain for reporting bugs
 TSW|Abaddon & Sloan for feature ideas
+Fuzzy from Team Dystopia
 Everyone who has sent me a "thanks"
 
 
@@ -210,6 +225,7 @@ like "say cheese" and you get a bullet in the face.. plus i dont want to change 
 
 Version Compatiblity:
 ------------------------
+1.4: Compatible
 1.3: Compatible
 1.2: Compatible
 1.1: Compatible
@@ -224,6 +240,9 @@ Changelog:
 -Save Queue with Save Delay to help decrease lag due to image saving activity
 -Next Snap Delay added help tweak capture frequencies
 -Animated GIF capture support
+-Threaded SaveQueue and LogReader/Capture processes (needed for animation support, but also introduces new bugs)
+-Added Dystopia Profile (an HL2/Source Mod)
+-More misc bug fixes
 
 
 **v1.4**

@@ -61,7 +61,7 @@ namespace smiletray
 	{
 		public Boolean Enabled;
 		public Boolean SingleDisplay;
-		public Boolean SaveAnimation;
+		public String SaveType;
 		public Int32 Delay;
 		public Int32 SaveDelay;
 		public Int32 NextSnapDelay;
@@ -76,7 +76,8 @@ namespace smiletray
 			Enabled = new Boolean();
 			SingleDisplay = new Boolean();
 			UseGlobal = new Boolean();
-			SaveAnimation = new Boolean();
+			SaveType = "Only Snaps";
+			SnapDir = "";
 			Delay = new Int32();
 			SaveDelay = new Int32();
 			NextSnapDelay = new Int32();
@@ -85,6 +86,7 @@ namespace smiletray
 		}
 	}
 	// Simplest way since we DO have access to the src:
+	[XmlInclude(typeof(CProfileSourceDystopia))]
 	[XmlInclude(typeof(CProfileDayofDefeatSource))]
 	[XmlInclude(typeof(CProfileCounterStrikeSource))]
 	[XmlInclude(typeof(CProfileHalfLife2Deathmatch))]
@@ -354,7 +356,7 @@ namespace smiletray
 				frmSearch search = new frmSearch();
 				search.Show();
 				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()) + @"\SteamApps", 
-					new Regex(@"counter\-strike source\\cstrike$", RegexOptions.IgnoreCase));
+					new Regex(@"\\counter\-strike source\\cstrike$", RegexOptions.IgnoreCase));
 				search.Close();
 				if(result != null)
 					return result;
@@ -436,7 +438,7 @@ namespace smiletray
 		public override string GetStatsReport(String font, CProfile.SaveTypes format)
 		{
 			string strStats = null;
-			CProfileCounterStrikeSource_Stats stats = (CProfileCounterStrikeSource_Stats)this.stats;
+			CProfileCounterStrikeSource_Stats stats = this.stats;
 			switch(format)
 			{
 				case CProfile.SaveTypes.HTML:
@@ -448,7 +450,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -508,7 +510,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -843,7 +845,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -886,7 +888,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -1196,7 +1198,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -1239,7 +1241,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -1658,7 +1660,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -1708,7 +1710,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -2130,7 +2132,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -2176,7 +2178,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -2698,7 +2700,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -2751,7 +2753,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -3160,7 +3162,7 @@ namespace smiletray
 		public override string GetStatsReport(String font, CProfile.SaveTypes format)
 		{
 			string strStats = null;
-			CProfileDayofDefeatSource_Stats stats = (CProfileDayofDefeatSource_Stats)this.stats;
+			CProfileDayofDefeatSource_Stats stats = this.stats;
 			switch(format)
 			{
 				case CProfile.SaveTypes.HTML:
@@ -3172,7 +3174,7 @@ namespace smiletray
 					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
 					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
 					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
-					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
 					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
 					strStats += "\t</head>\r\n";
 					strStats += "\t<body>\r\n";
@@ -3238,7 +3240,7 @@ namespace smiletray
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
-						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
 						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
 						c.SelectedText = "                                                                \n\n";
 
@@ -3324,5 +3326,367 @@ namespace smiletray
 			return strStats;		
 		}
 	}
+
+
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	/// Source: Dystopia
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	public class CProfileSourceDystopia_Stats
+	{
+		public UInt32 deaths;		// misc deaths, does not include being killed by weapon
+		public UInt32 suicides;
+		[XmlIgnoreAttribute] public Hashtable gun;
+		[XmlElement(ElementName = "gun")]public CProfile_XMLGun [] xmlgun;
+
+		public CProfileSourceDystopia_Stats()
+		{
+			deaths = new UInt32();
+			suicides = new UInt32();
+			gun = new Hashtable();
+		}
+	}
+
+	public class CProfileSourceDystopia : CProfile
+	{
+		public CProfileSourceDystopia_Stats stats;
+
+		private String alias;
+		private Regex rKill;
+		private Regex rKilled;
+		private Regex rNickChange;
+		private Regex rSuicide;
+		private Regex rDeath;
+
+		public CProfileSourceDystopia()
+		{
+			this.ProfileName = "Dystopia";
+			this.SnapName = "Dystopia";
+			this.stats = new CProfileSourceDystopia_Stats();
+		}
+
+		private void PopulateRegEx()
+		{
+			this.rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+) at .+$");
+			this.rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+) at .+$");
+			this.rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
+			this.rSuicide = new Regex("^" + Regex.Escape(this.alias) + " suicided at .+$");
+			this.rDeath =  new Regex("^" + Regex.Escape(this.alias) + " died at .+$");
+		}
+
+		public override void Parse()
+		{
+			if(this.log == null)
+				return;
+
+			Match match;
+			String strLine;
+
+			while ((strLine = this.log.ReadLine()) != null)
+			{
+				// Match kills given
+				if(EnableSnaps || EnableStats)
+				{
+					match = rKill.Match(strLine);
+					if(match.Success) 
+					{
+						if(EnableStats)
+						{
+							String strGun = match.Groups[1].Value;
+							CProfile_Gun gun;
+							if(stats.gun.Contains(strGun))
+							{
+								gun = (CProfile_Gun)stats.gun[strGun];
+								gun.kills++;
+								stats.gun[strGun] = gun;
+							}
+							else 
+							{
+								gun = new CProfile_Gun();
+								gun.kills = 1;
+								stats.gun.Add(strGun, gun);
+							}
+						}
+						NewSnaps = true;
+						NewStats = true;
+						continue;
+					}
+				}
+
+				if(EnableStats)
+				{
+					// Match times self has been killed
+					match = rKilled.Match(strLine);
+					if(match.Success)
+					{
+						String strGun = match.Groups[1].Value;
+						CProfile_Gun gun;
+						if(stats.gun.Contains(strGun)) 
+						{
+							gun = (CProfile_Gun)stats.gun[strGun];
+							gun.killed++;
+							stats.gun[strGun] = gun;
+						}
+						else  
+						{
+							gun = new CProfile_Gun();
+							gun.killed = 1;
+							stats.gun.Add(strGun, gun);
+						}
+						NewStats = true;
+						continue;
+					}
+
+					// Match nickchange of self
+					match = rNickChange.Match(strLine);
+					if(match.Success)
+					{
+						this.alias = match.Groups[1].Value;
+						PopulateRegEx();
+						NewStats = true;
+						continue;
+					}
+
+					// Match Suicide
+					match = rSuicide.Match(strLine);
+					if(match.Success)
+					{
+						stats.suicides++;
+						NewStats = true;
+						continue;
+					}
+
+					// Match Misc Death
+					match = rDeath.Match(strLine);
+					if(match.Success)
+					{
+						stats.deaths++;
+						NewStats = true;
+						continue;
+					}
+				}
+			}
+		}
+		public override bool Open()
+		{
+			try 
+			{
+				this.alias = GetGameAlias();
+				this.log = new StreamReader(new FileStream(this.path + @"\console.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
+				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End
+				PopulateRegEx();								// Create our Regex objects
+				return true;
+			}
+			catch (Exception e)
+			{
+				frmMain.error += "|||" + e.Message;
+				return false;
+			}
+		}
+		public override bool CheckActive()
+		{
+			return NativeMethods.FindWindow("Valve001","Dystopia") != 0;
+		}
+		public override String GetDefaultPath()
+		{
+			try
+			{
+				RegistryKey Key = Registry.CurrentUser;
+				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
+				frmSearch search = new frmSearch();
+				search.Show();
+				string result = search.Search(ProfileName, Key.GetValue("SourceModInstallPath").ToString(), 
+					new Regex(@"\\dystopia$", RegexOptions.IgnoreCase));
+				search.Close();
+				if(result != null)
+					return result;
+				
+			}
+			catch(Exception e)
+			{
+				Ex.DumpException(e);
+				return null;
+			}
+			return null;
+		}
+		// Get the game alias for said default user
+		public String GetGameAlias()
+		{
+			String strLine;
+			Match match;
+			String nick = null;
+			StreamReader sr = null;
+			
+			try
+			{
+				sr = new StreamReader(this.path + @"\cfg\config.cfg");
+				//Continues to output one line at a time until end of file(EOF) is reached
+				while ( (strLine = sr.ReadLine()) != null)
+				{
+					Regex rNick=new Regex("^name\\s+\"(.+)\"$");
+					match = rNick.Match(strLine);
+					if(match.Success)
+					{
+						nick = match.Groups[1].Value;
+						break;
+					}
+				}
+			}
+			catch
+			{
+				nick = null;
+			}
+			finally 
+			{
+				// Cleanup
+				if(sr != null) sr.Close();	
+			}
+			return nick;
+		}
+		public override void toXMLOperations()
+		{
+			// Turn gun hastable into something more useable
+			if(stats.gun == null)
+				return;
+			stats.xmlgun = new CProfile_XMLGun [ stats.gun.Count ];
+			int i = 0;
+			foreach(String key in stats.gun.Keys)
+			{
+				stats.xmlgun[i] = new CProfile_XMLGun();
+				stats.xmlgun[i].name = key;
+				stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
+				i++;
+			}
+		}
+		public override void fromXMLOperations()
+		{
+			if(stats.xmlgun == null)
+				return;
+
+			if(stats.gun == null)
+				stats.gun = new Hashtable();
+
+			for(int i = 0; i < stats.xmlgun.Length; i++)
+			{
+				stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+			}
+		}
+		public override void ResetStats()
+		{
+			stats = new CProfileSourceDystopia_Stats();
+		}
+		public override string GetStatsReport(String font, CProfile.SaveTypes format)
+		{
+			string strStats = null;
+			CProfileSourceDystopia_Stats stats = this.stats;
+			switch(format)
+			{
+				case CProfile.SaveTypes.HTML:
+				{
+					strStats = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n";
+					strStats += "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n";
+					strStats += "\t<head>\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=iso-8859-1\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
+					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
+					strStats += "\t</head>\r\n";
+					strStats += "\t<body>\r\n";
+					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
+					strStats += "\t\t<hr />\r\n";
+					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
+					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t<hr />\r\n";
+
+					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
+					strStats += "\t\tMiscellaneous Deaths: " + stats.deaths + "<br />\r\n";
+					strStats += "\t\tSuicides: " + stats.suicides + "<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
+					foreach(String Key in stats.gun.Keys)
+					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
+					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
+					strStats += "\t\t<br /><br />\r\n";
+					strStats += "\t</body>\r\n";
+					strStats += "</html>";
+					break;
+				}
+				case CProfile.SaveTypes.RTF:
+				case CProfile.SaveTypes.TXT:
+				{
+					RichTextBox c = new RichTextBox();
+
+					try
+					{
+						// Populate the rich text box
+						c.SelectionStart = 0 ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold);
+						c.SelectedText = ProfileName + " Statistics:\n" ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Misc Statistics:\n" ;
+						c.SelectedText = "Miscellaneous Deaths: " + stats.deaths + "\n";
+						c.SelectedText = "Suicides: " + stats.suicides + "\n";
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Weapon Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
+						foreach(String Key in stats.gun.Keys)
+						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
+							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
+						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
+						c.SelectedText = "\n\n";
+
+						c.SelectionStart = 0 ;
+					}
+					catch
+					{
+						c.Clear();
+						c.SelectionStart = 0 ;
+						c.SelectedText = "There was an error writing the stats, (missing font?) Try saving it to html instead using the edit menu.\n\n";
+						c.SelectionStart = 0 ;
+					}
+
+					switch(format)
+					{
+						case CProfile.SaveTypes.RTF:
+							strStats = c.Rtf;
+							break;
+						case CProfile.SaveTypes.TXT:
+							strStats = c.Text;
+							break;
+					}
+					c.Dispose();
+					break;
+				}
+			}
+			return strStats;		
+		}
+	}
+
 }
+
 
