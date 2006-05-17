@@ -110,6 +110,7 @@ namespace smiletray
 		private System.Windows.Forms.Label lblProfiles_ActiveProfile;
 		private System.Windows.Forms.TabPage tabLog;
 		private System.Windows.Forms.RichTextBox rtxtLog;
+		private System.Windows.Forms.CheckBox chkGeneral_SnapSettings_SaveBug;
 		private System.Windows.Forms.CheckBox chkGeneral_StatsSettings_Enabled;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,6 +275,7 @@ namespace smiletray
 			this.picAboutIcon = new System.Windows.Forms.PictureBox();
 			this.tabLog = new System.Windows.Forms.TabPage();
 			this.rtxtLog = new System.Windows.Forms.RichTextBox();
+			this.chkGeneral_SnapSettings_SaveBug = new System.Windows.Forms.CheckBox();
 			this.tabOptions.SuspendLayout();
 			this.tabGeneral.SuspendLayout();
 			this.tabGeneralOptions.SuspendLayout();
@@ -455,6 +457,7 @@ namespace smiletray
 			// 
 			// tabGeneral_GlobalSnapSettings
 			// 
+			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.chkGeneral_SnapSettings_SaveBug);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_ImageFormat);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_SnapDir);
 			this.tabGeneral_GlobalSnapSettings.Controls.Add(this.grpGeneral_SnapSettings_Delay);
@@ -908,6 +911,14 @@ namespace smiletray
 			this.rtxtLog.TabIndex = 11;
 			this.rtxtLog.Text = "";
 			// 
+			// chkGeneral_SnapSettings_SaveBug
+			// 
+			this.chkGeneral_SnapSettings_SaveBug.Location = new System.Drawing.Point(128, 8);
+			this.chkGeneral_SnapSettings_SaveBug.Name = "chkGeneral_SnapSettings_SaveBug";
+			this.chkGeneral_SnapSettings_SaveBug.Size = new System.Drawing.Size(80, 24);
+			this.chkGeneral_SnapSettings_SaveBug.TabIndex = 24;
+			this.chkGeneral_SnapSettings_SaveBug.Text = "Save Bug";
+			// 
 			// frmMain
 			// 
 			this.AutoScale = false;
@@ -1002,6 +1013,7 @@ namespace smiletray
 			Settings.SnapSettings.SnapDir = txtGeneral_SnapSettings_SnapDir.Text;
 			Settings.SnapSettings.Quality = tbGeneral_SnapSettings_Quality.Value;
 			Settings.SnapSettings.Encoder = cbGeneral_SnapSettings_ImageFormat.SelectedItem.ToString();
+			Settings.SnapSettings.SaveBug = chkGeneral_SnapSettings_SaveBug.Checked;
 
 			// Global Stats Settings
 			Settings.StatsSettings.Enabled = chkGeneral_StatsSettings_Enabled.Checked;
@@ -1117,6 +1129,7 @@ namespace smiletray
 			{
 				for(int i=0;i<Profiles.Length;i++)
 				{
+					PopulateOptions();
 					CopyProfile(Profiles[i], TempProfiles[i]);
 				}
 			}
@@ -1242,7 +1255,14 @@ namespace smiletray
 							AddLogMessage("Created Directory: " + dir);
 						}
 						String file = dir + @"\kill-" + DateTime.Now.ToString("yyyyMMdd_HHmmss_ffff") + encoderext;
-						img.Save(file , encoder, encoderParams);
+						img.Save(file, encoder, encoderParams);
+						if(Settings.SnapSettings.SaveBug)
+						{
+							for(int i = 0; !File.Exists(file) && i < 8; i++)
+							{
+								img.Save(file, encoder, encoderParams);
+							}
+						}
 						AddLogMessage("Saved Image to: " + file);
 						ActiveProfile.NewSnaps = false;
 						g.Dispose();
@@ -1331,6 +1351,7 @@ namespace smiletray
 			tbGeneral_SnapSettings_Quality.Value = Settings.SnapSettings.Quality;
 			lblGeneral_SnapSettings_Quality.Text = "Quality " + tbGeneral_SnapSettings_Quality.Value + "% (100% = Clearest):";
 			cbGeneral_SnapSettings_ImageFormat.SelectedItem = Settings.SnapSettings.Encoder;
+			chkGeneral_SnapSettings_SaveBug.Checked = Settings.SnapSettings.SaveBug;
 
 			// Global Stats Settings
 			chkGeneral_StatsSettings_Enabled.Checked = Settings.StatsSettings.Enabled;
@@ -1477,6 +1498,7 @@ namespace smiletray
 					Settings.SnapSettings.Delay = 75;
 					Settings.SnapSettings.SingleDisplay = true;
 					Settings.SnapSettings.Quality = 85;
+					Settings.SnapSettings.SaveBug = false;
 					Settings.SnapSettings.Encoder = "image/jpeg";
 					SaveSettings();
 				}
@@ -1543,7 +1565,8 @@ namespace smiletray
 				typeof(CProfileQ3OSP),
 				typeof(CProfileEnemyTerritory),
 				typeof(CProfileCounterStrike),
-				typeof(CProfileDayofDefeat)
+				typeof(CProfileDayofDefeat),
+				typeof(CProfileDayofDefeatSource)
 			};
 			int length = p == null ? 0 : p.Length;
 			bool found;

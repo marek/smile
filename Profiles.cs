@@ -74,6 +74,7 @@ namespace smiletray
 		}
 	}
 	// Simplest way since we DO have access to the src:
+	[XmlInclude(typeof(CProfileDayofDefeatSource))]
 	[XmlInclude(typeof(CProfileCounterStrikeSource))]
 	[XmlInclude(typeof(CProfileHalfLife2Deathmatch))]
 	[XmlInclude(typeof(CProfileCounterStrike))]
@@ -182,8 +183,8 @@ namespace smiletray
 
 		private void PopulateRegEx()
 		{
-			this.rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .* with (\\w+).$");
-			this.rKilled = new Regex("^.* killed " + Regex.Escape(this.alias) + " with (\\w+).$");
+			this.rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+).$");
+			this.rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+).$");
 			this.rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
 			this.rDamage = new Regex("^Damage (\\w+ \\w+) \".*\" - (\\d+) in (\\d+) hits?$");
 			this.rTeamDamage = new Regex("^" + Regex.Escape(this.alias) + " attacked a teammate$"); 
@@ -611,8 +612,8 @@ namespace smiletray
 
 		private void PopulateRegEx()
 		{
-			this.rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .* with (\\w+).$");
-			this.rKilled = new Regex("^.* killed " + Regex.Escape(this.alias) + " with (\\w+).$");
+			this.rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+).$");
+			this.rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+).$");
 			this.rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
 			this.rSuicide = new Regex("^" + Regex.Escape(this.alias) + " suicided.$");
 			this.rDeath =  new Regex("^" + Regex.Escape(this.alias) + " died.$");
@@ -965,8 +966,8 @@ namespace smiletray
 		}
 		private void PopulateRegEx()
 		{
-			rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .* with (\\w+)$");
-			rKilled = new Regex("^.* killed " + Regex.Escape(this.alias) + " with (\\w+)$");
+			rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+)$");
+			rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+)$");
 			rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
 			rDeath = new Regex("^" + Regex.Escape(this.alias) + " died$");
 			rTeamAttack = new Regex("^" + Regex.Escape(this.alias) + " attacked a teammate$");
@@ -1375,8 +1376,8 @@ namespace smiletray
 		}
 		private void PopulateRegEx()
 		{
-			rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .* with (\\w+)$");
-			rKilled = new Regex("^.* killed " + Regex.Escape(this.alias) + " with (\\w+)$");
+			rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+)$");
+			rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+)$");
 			rTeamKill = new Regex("^" + Regex.Escape(this.alias) + " killed his teammate .+ with (\\w+)$");
 			rTeamKilled = new Regex("^.+ killed his teammate " + Regex.Escape(this.alias) + " with (\\w+)$");
 			rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
@@ -2797,4 +2798,520 @@ namespace smiletray
 			return strStats;
 		}
 	}
+
+
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	/// Day of Defeat: Source
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	public class CProfileDayofDefeatSource_XMLObjective
+	{
+		public String name;
+		public CProfileDayofDefeatSource_Objective stats;
+		
+		public CProfileDayofDefeatSource_XMLObjective()
+		{
+			stats = new CProfileDayofDefeatSource_Objective();
+		}
+	}
+	public class  CProfileDayofDefeatSource_Objective
+	{
+		public UInt32 captures;
+
+		public  CProfileDayofDefeatSource_Objective()
+		{
+			this.captures = new UInt32();	
+		}
+	}
+	public class CProfileDayofDefeatSource_Stats
+	{
+		public UInt32 damage_given;
+		public UInt32 damage_received;
+		public UInt32 hits_received;
+		public UInt32 hits_given;
+		public UInt32 received_counts;
+		public UInt32 given_counts;
+		public UInt32 deaths;		// misc deaths, does not include being killed by weapon
+		public UInt32 suicides;
+		[XmlIgnoreAttribute] public Hashtable gun;
+		[XmlElement(ElementName = "gun")]public CProfile_XMLGun [] xmlgun;
+		[XmlIgnoreAttribute] public Hashtable objective;
+		[XmlElement(ElementName = "objective")]public CProfileDayofDefeatSource_XMLObjective [] xmlobjective;
+		public CProfileDayofDefeatSource_Stats()
+		{
+			damage_given = new UInt32();
+			damage_received = new UInt32();
+			hits_received = new UInt32();
+			hits_given = new UInt32();
+			received_counts = new UInt32();
+			given_counts = new UInt32();
+			deaths = new UInt32();
+			suicides = new UInt32();
+			gun = new Hashtable();
+			objective = new Hashtable();
+		}
+	}
+
+	public class CProfileDayofDefeatSource : CProfile
+	{
+		public CProfileDayofDefeatSource_Stats stats;
+
+		private String alias;
+		private Regex rKill;
+		private Regex rKilled;
+		private Regex rNickChange;
+		private Regex rDamage;
+		private Regex rSuicide;
+		private Regex rCapture;
+		private Regex rDeath;
+
+		public CProfileDayofDefeatSource()
+		{
+			this.ProfileName = "Day of Defeat: Source";
+			this.SnapName = "Day of Defeat Source";
+			this.stats = new CProfileDayofDefeatSource_Stats();
+		}
+
+		private void PopulateRegEx()
+		{
+			rKill = new Regex("^" + Regex.Escape(this.alias) + " killed .+ with (\\w+).$");
+			rKilled = new Regex("^.+ killed " + Regex.Escape(this.alias) + " with (\\w+).$");
+			rNickChange = new Regex("^" + Regex.Escape(this.alias) + " is now known as (.+)$");
+			rDamage = new Regex("^Damage (\\w+ \\w+) \".+\" - (\\d+) in (\\d+) hits?$");
+			rCapture = new Regex("^" + Regex.Escape(this.alias) + " captured .+ for the (.+)$");
+			rSuicide = new Regex("^" + Regex.Escape(this.alias) + " suicided.$");
+			rDeath =  new Regex("^" + Regex.Escape(this.alias) + " died.$");
+		}
+
+		public override void Parse()
+		{
+			if(this.log == null)
+				return;
+
+			Match match;
+			String strLine;
+
+			while ((strLine = this.log.ReadLine()) != null)
+			{
+				// Match kills given
+				if(EnableSnaps || EnableStats)
+				{
+					match = rKill.Match(strLine);
+					if(match.Success) 
+					{
+						if(EnableStats)
+						{
+							String strGun = match.Groups[1].Value;
+							CProfile_Gun gun;
+							if(stats.gun.Contains(strGun))
+							{
+								gun = (CProfile_Gun)stats.gun[strGun];
+								gun.kills++;
+								stats.gun[strGun] = gun;
+							}
+							else 
+							{
+								gun = new CProfile_Gun();
+								gun.kills = 1;
+								stats.gun.Add(strGun, gun);
+							}
+						}
+						NewSnaps = true;
+						NewStats = true;
+						continue;
+					}
+				}
+
+				if(EnableStats)
+				{
+					// Match times self has been killed
+					match = rKilled.Match(strLine);
+					if(match.Success)
+					{
+						String strGun = match.Groups[1].Value;
+						CProfile_Gun gun;
+						if(stats.gun.Contains(strGun)) 
+						{
+							gun = (CProfile_Gun)stats.gun[strGun];
+							gun.killed++;
+							stats.gun[strGun] = gun;
+						}
+						else  
+						{
+							gun = new CProfile_Gun();
+							gun.killed = 1;
+							stats.gun.Add(strGun, gun);
+						}
+						NewStats = true;
+						continue;
+					}
+
+					// Match nickchange of self
+					match = rNickChange.Match(strLine);
+					if(match.Success)
+					{
+						this.alias = match.Groups[1].Value;
+						PopulateRegEx();
+						NewStats = true;
+						continue;
+					}
+
+					// Match Damage given/received
+					match = rDamage.Match(strLine);
+					if(match.Success)
+					{
+						if(match.Groups[1].Value == "Given to")
+						{
+							stats.damage_given += Convert.ToUInt32(match.Groups[2].Value);
+							stats.hits_given += Convert.ToUInt32(match.Groups[3].Value);
+							stats.given_counts++;
+						}
+						else
+						{
+							stats.damage_received += Convert.ToUInt32(match.Groups[2].Value);
+							stats.hits_received += Convert.ToUInt32(match.Groups[3].Value);
+							stats.received_counts++;
+						}
+						NewStats = true;
+						continue;
+					}
+
+					// Match Captures
+					match = rCapture.Match(strLine);
+					if(match.Success)
+					{
+						String strTeam = match.Groups[2].Value;
+						CProfileDayofDefeatSource_Objective objective;
+
+						if(stats.objective.Contains(strTeam))
+						{
+							objective = (CProfileDayofDefeatSource_Objective)stats.objective[strTeam];
+							objective.captures++;
+							stats.objective[strTeam] = objective;
+						}
+						else 
+						{
+							objective = new CProfileDayofDefeatSource_Objective();
+							objective.captures = 1;
+							stats.objective.Add(strTeam, objective);
+						}
+						NewStats = true;
+						continue;
+					}
+
+					// Match Suicide
+					match = rSuicide.Match(strLine);
+					if(match.Success)
+					{
+						stats.suicides++;
+						NewStats = true;
+						continue;
+					}
+
+					// Match Misc Death
+					match = rDeath.Match(strLine);
+					if(match.Success)
+					{
+						stats.deaths++;
+						NewStats = true;
+						continue;
+					}
+				}
+			}
+		}
+		public override bool Open()
+		{
+			try 
+			{
+				this.alias = GetGameAlias();
+				this.log = new StreamReader(new FileStream(this.path + @"\console.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
+				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End
+				PopulateRegEx();								// Create our Regex objects
+				return true;
+			}
+			catch (Exception e)
+			{
+				frmMain.error += "|||" + e.Message;
+				return false;
+			}
+		}
+		public override bool CheckActive()
+		{
+			return NativeMethods.FindWindow("Valve001","Day of Defeat Source") != 0;
+		}
+		public override String GetDefaultPath()
+		{
+			try
+			{
+				RegistryKey Key = Registry.CurrentUser;
+				Key = Key.OpenSubKey(@"Software\Valve\Steam", false);
+				frmSearch search = new frmSearch();
+				search.Show();
+				string result = search.Search(ProfileName, Path.GetDirectoryName(Key.GetValue("SteamExe").ToString()) + @"\SteamApps", 
+					new Regex(@"day of defeat source\\dod$", RegexOptions.IgnoreCase));
+				search.Close();
+				if(result != null)
+					return result;
+				
+			}
+			catch(Exception e)
+			{
+				Ex.DumpException(e);
+				return null;
+			}
+			return null;
+		}
+		// Get the game alias for said default user
+		public String GetGameAlias()
+		{
+			String strLine;
+			Match match;
+			String nick = null;
+			StreamReader sr = null;
+			
+			try
+			{
+				sr = new StreamReader(this.path + @"\cfg\config.cfg");
+				//Continues to output one line at a time until end of file(EOF) is reached
+				while ( (strLine = sr.ReadLine()) != null)
+				{
+					Regex rNick=new Regex("^name\\s+\"(.+)\"$");
+					match = rNick.Match(strLine);
+					if(match.Success)
+					{
+						nick = match.Groups[1].Value;
+						break;
+					}
+				}
+			}
+			catch
+			{
+				nick = null;
+			}
+			finally 
+			{
+				// Cleanup
+				if(sr != null) sr.Close();	
+			}
+			return nick;
+		}
+		public override void toXMLOperations()
+		{
+			// Turn gun hastable into something more useable
+			if(stats.gun == null || stats.objective == null)
+				return;
+			stats.xmlgun = new CProfile_XMLGun [ stats.gun.Count ];
+			int i = 0;
+			foreach(String key in stats.gun.Keys)
+			{
+				stats.xmlgun[i] = new CProfile_XMLGun();
+				stats.xmlgun[i].name = key;
+				stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
+				i++;
+			}
+
+			stats.xmlobjective = new CProfileDayofDefeatSource_XMLObjective [ stats.objective.Count ];
+			i = 0;
+			foreach(String key in stats.objective.Keys)
+			{
+				stats.xmlobjective[i] = new CProfileDayofDefeatSource_XMLObjective();
+				stats.xmlobjective[i].name = key;
+				stats.xmlobjective[i].stats = (CProfileDayofDefeatSource_Objective)stats.objective[key];
+				i++;
+			}
+
+		}
+		public override void fromXMLOperations()
+		{
+			if(stats.xmlgun == null || stats.xmlobjective == null)
+				return;
+
+			if(stats.gun == null)
+				stats.gun = new Hashtable();
+
+			if(stats.objective == null)
+				stats.objective = new Hashtable();
+
+			for(int i = 0; i < stats.xmlgun.Length; i++)
+			{
+				stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+			}
+
+			for(int i = 0; i < stats.xmlobjective.Length; i++)
+			{
+				stats.objective.Add(stats.xmlobjective[i].name, stats.xmlobjective[i].stats);
+			}
+		}
+		public override void ResetStats()
+		{
+			stats = new CProfileDayofDefeatSource_Stats();
+		}
+		public override string GetStatsReport(String font, CProfile.SaveTypes format)
+		{
+			string strStats = null;
+			CProfileDayofDefeatSource_Stats stats = (CProfileDayofDefeatSource_Stats)this.stats;
+			switch(format)
+			{
+				case CProfile.SaveTypes.HTML:
+				{
+					strStats = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n";
+					strStats += "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n";
+					strStats += "\t<head>\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=iso-8859-1\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
+					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"©2005 Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
+					strStats += "\t</head>\r\n";
+					strStats += "\t<body>\r\n";
+					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
+					strStats += "\t\t<hr />\r\n";
+					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
+					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t<hr />\r\n";
+
+					strStats += "\t\t<h3>Enagement Information</h3>\r\n";
+					strStats += "\t\tYou've engaged others " + stats.given_counts + " times.<br />\r\n";
+					strStats += "\t\tYou've been engaged " + stats.received_counts + " times.<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Hit Information:</h3>\r\n";
+					strStats += "\t\tHits given: " + stats.hits_given + "<br />\r\n";
+					strStats += "\t\tAverage hits given per engagement: " + (float)stats.hits_given/stats.given_counts + "<br />\r\n";
+					strStats += "\t\tHits received: " + stats.hits_received + "<br />\r\n";
+					strStats += "\t\tAverage hits received per engagement: " + (float)stats.hits_received/stats.received_counts + "<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Damage Information:</h3>\r\n";
+					strStats += "\t\tDamage given: " + stats.damage_given + "<br />\r\n";
+					strStats += "\t\tAverage damage given per engagement: " + (float)stats.damage_given/stats.given_counts + "<br />\r\n";
+					strStats += "\t\tDamage received: " + stats.damage_received + "<br />\r\n";
+					strStats += "\t\tAverage damage received per engagement: " + (float)stats.damage_received/stats.received_counts + "<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Misc Statistics:</h3>\r\n";
+					strStats += "\t\tMiscellaneous Deaths: " + stats.deaths + "<br />\r\n";
+					strStats += "\t\tSuicides: " + stats.suicides + "<br /><br />\r\n";
+
+					strStats += "\t\t<h3>Capture Statistics:</h3>\r\n";
+					foreach(String Key in stats.objective.Keys)
+					{
+						strStats += "\t\t<b>"+ Key + "captures:</b> " + ((CProfileDayofDefeatSource_Objective)stats.objective[Key]).captures + "<br />\r\n";
+					}
+					strStats += "\t\t<br />\r\n";
+
+					strStats += "\t\t<h3>Weapon Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
+					foreach(String Key in stats.gun.Keys)
+					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
+					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
+					strStats += "\t\t<br /><br />\r\n";
+					strStats += "\t</body>\r\n";
+					strStats += "</html>";
+					break;
+				}
+				case CProfile.SaveTypes.RTF:
+				case CProfile.SaveTypes.TXT:
+				{
+					RichTextBox c = new RichTextBox();
+
+					try
+					{
+						// Populate the rich text box
+						c.SelectionStart = 0 ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold);
+						c.SelectedText = ProfileName + " Statistics:\n" ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
+						c.SelectedText = "©2005 Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Engagement Information:\n";
+						c.SelectedText = "You've engaged others " + stats.given_counts + " times.\n";
+						c.SelectedText = "You've been engaged " + stats.received_counts + " times.\n";
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Hit Information:\n" ;
+						c.SelectedText = "Hits given: " + stats.hits_given + "\n";
+						c.SelectedText = "Average hits given per engagement: " + (float)stats.hits_given/stats.given_counts + "\n";
+						c.SelectedText = "Hits received: " + stats.hits_received + "\n";
+						c.SelectedText = "Average hits received per engagement: " + (float)stats.hits_received/stats.received_counts + "\n";
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Damage Information:\n" ;
+						c.SelectedText = "Damage given: " + stats.damage_given + "\n";
+						c.SelectedText = "Average damage given per engagement: " + (float)stats.damage_given/stats.given_counts + "\n";
+						c.SelectedText = "Damage received: " + stats.damage_received + "\n";
+						c.SelectedText = "Average damage received per engagement: " + (float)stats.damage_received/stats.received_counts + "\n";
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Misc Statistics:\n" ;
+						c.SelectedText = "Miscellaneous Deaths: " + stats.deaths + "\n";
+						c.SelectedText = "Suicides: " + stats.suicides + "\n";
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Capture Statistics:\n" ;
+						foreach(String Key in stats.objective.Keys)
+						{
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + " captures: ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = ((CProfileDayofDefeatSource_Objective)stats.objective[Key]).captures + "\n";
+						}
+						c.SelectedText = "\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Weapon Statistics:\n" ;
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
+						foreach(String Key in stats.gun.Keys)
+						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
+							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
+						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
+						c.SelectedText = "\n\n";
+
+						c.SelectionStart = 0 ;
+					}
+					catch
+					{
+						c.Clear();
+						c.SelectionStart = 0 ;
+						c.SelectedText = "There was an error writing the stats, (missing font?) Try saving it to html instead using the edit menu.\n\n";
+						c.SelectionStart = 0 ;
+					}
+
+					switch(format)
+					{
+						case CProfile.SaveTypes.RTF:
+							strStats = c.Rtf;
+							break;
+						case CProfile.SaveTypes.TXT:
+							strStats = c.Text;
+							break;
+					}
+					c.Dispose();
+					break;
+				}
+			}
+			return strStats;		
+		}
+	}
 }
+

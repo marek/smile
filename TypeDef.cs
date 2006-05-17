@@ -16,13 +16,14 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.3";
+		public static readonly String version = "1.4";
 	}
 
 	public class SnapSettings_t
 	{
 		public Boolean Enabled;
 		public Boolean SingleDisplay;
+		public Boolean SaveBug;
 		public Int32 Delay;
 		public String SnapDir;
 		public String Encoder;
@@ -32,6 +33,7 @@ namespace smiletray
 		{
 			Enabled = new Boolean();
 			SingleDisplay = new Boolean();
+			SaveBug = new Boolean();
 			Delay = new Int32();
 			Quality = new Int32();
 		}
@@ -65,9 +67,5 @@ namespace smiletray
 		public Settings_t Settings;
 		[XmlElement(ElementName = "Profile")] public CProfile [] Profiles;
 	}
-
-
-
-
 
 }
