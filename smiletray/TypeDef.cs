@@ -18,14 +18,29 @@ namespace smiletray
 {
 	class Info
 	{
-		public static readonly String version = "1.5 BETA 6";
+		public static readonly String version = "1.5 BETA 8";
 		public static readonly String copyrightdate = "©2005";
+	}
+
+	public class HotKeySettings_t
+	{
+		public Boolean Enabled;
+		public String HKWindow;
+		public String HKDesktop;
+		public String HKActiveProfile;
+
+		public HotKeySettings_t()
+		{
+			Enabled = new Boolean();
+			HKWindow = "F10";
+			HKDesktop = "F11";
+			HKActiveProfile = "F12";
+		}
 	}
 
 	public class SnapSettings_t
 	{
 		public Boolean Enabled;
-		public Boolean SingleDisplay;
 		public Boolean SaveBug;
 		public Boolean AnimOriginalDimentions;
 		public Boolean AnimUseMultiSnapDelay;
@@ -34,7 +49,7 @@ namespace smiletray
 		public Int32 AnimHeight;
 		public Int32 AnimFrameDelay;
 		public Int32 Delay;
-		public Int32 SaveDelay;
+		public Int32 SaveQueueSize;
 		public Int32 NextSnapDelay;
 		public String SnapDir;
 		public String Encoder;
@@ -43,7 +58,6 @@ namespace smiletray
 		public SnapSettings_t()
 		{
 			Enabled = new Boolean();
-			SingleDisplay = new Boolean();
 			SaveBug = new Boolean();
 			AnimOptimizePalette = new Boolean();
 			AnimOriginalDimentions = new Boolean();
@@ -52,7 +66,7 @@ namespace smiletray
 			AnimHeight = new Int32();
 			AnimFrameDelay = new Int32();
 			Delay = new Int32();
-			SaveDelay = new Int32();
+			SaveQueueSize = new Int32();
 			NextSnapDelay = new Int32();
 			Quality = new Int32();
 		}
@@ -72,11 +86,13 @@ namespace smiletray
 	{
 		public SnapSettings_t SnapSettings;
 		public StatsSettings_t StatsSettings;
+		public HotKeySettings_t HotKeySettings;
 
 		public Settings_t()
 		{
 			SnapSettings = new SnapSettings_t();
 			StatsSettings = new StatsSettings_t();
+			HotKeySettings = new HotKeySettings_t();
 		}
 	}
 

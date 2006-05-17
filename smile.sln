@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smile-hook", "smile-hook\smile-hook.vcproj", "{EE0A002A-DC6C-4B55-B401-EA252A85BDB7}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smile-injector", "smile-injector\smile-injector.vcproj", "{F38461CB-7F74-42D1-9EE9-5757D58E2A84}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "smiletray", "smiletray\smiletray.csproj", "{B87A3EFE-7747-488D-BF5D-71274E6D956E}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{EE0A002A-DC6C-4B55-B401-EA252A85BDB7}.Debug.ActiveCfg = Debug|Win32
+		{EE0A002A-DC6C-4B55-B401-EA252A85BDB7}.Debug.Build.0 = Debug|Win32
+		{EE0A002A-DC6C-4B55-B401-EA252A85BDB7}.Release.ActiveCfg = Release|Win32
+		{EE0A002A-DC6C-4B55-B401-EA252A85BDB7}.Release.Build.0 = Release|Win32
+		{F38461CB-7F74-42D1-9EE9-5757D58E2A84}.Debug.ActiveCfg = Debug|Win32
+		{F38461CB-7F74-42D1-9EE9-5757D58E2A84}.Debug.Build.0 = Debug|Win32
+		{F38461CB-7F74-42D1-9EE9-5757D58E2A84}.Release.ActiveCfg = Release|Win32
+		{F38461CB-7F74-42D1-9EE9-5757D58E2A84}.Release.Build.0 = Release|Win32
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Debug.ActiveCfg = Debug|.NET
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Debug.Build.0 = Debug|.NET
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Release.ActiveCfg = Release|.NET
+		{B87A3EFE-7747-488D-BF5D-71274E6D956E}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

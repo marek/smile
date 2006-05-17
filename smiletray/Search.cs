@@ -36,12 +36,25 @@ namespace smiletray
 			forcestop = false;
 		}
 
+		public bool Stopped()
+		{
+			return forcestop;
+		}
+
 		public String Search(string title, String startpath, Regex r)
 		{
 			if(forcestop)
 				return null;
 			Match m;
-			string [] entries = Directory.GetFiles(startpath);
+			string [] entries;
+			try
+			{
+				entries = Directory.GetFiles(startpath);
+			}
+			catch
+			{
+				return null;
+			}
 			lblTitle.Text = title;
 
 			// Check self
@@ -63,7 +76,14 @@ namespace smiletray
 			}
 			
 			// Recurse through dirs
-			entries = Directory.GetDirectories(startpath);
+			try
+			{
+				entries = Directory.GetDirectories(startpath);
+			}
+			catch
+			{
+				return null;
+			}
 			string result;
 			foreach(string entry in entries)
 			{

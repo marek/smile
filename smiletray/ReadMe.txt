@@ -24,13 +24,17 @@ Enjoy!
 -Marek
 
 
-
+License:
+------------------------
+See LICENSE.TXT for more details. As of v1.5, Smile! is no longer under GPL. Please see the 
+little blurb under the changelog for details.
 
 
 Requirements:
 ------------------------
 • Any of the Supported Games listed
 • AMD 2000+ or Intel 2Ghz equivalent
+• 512mb Ram (Animations require a lot more, or you start crapping out after 2)
 • Latest .NET runtime files (www.microsoft.com or windowsupdate.microsoft.com)  ********<-----IMPORTANT*******
 • food
 • i guess a mouse helps too
@@ -44,12 +48,12 @@ Counter-Strike Source
 Day of Defeat
 Day of Defeat: Source
 Dystopia (HL2/Source Mod)
-Wolfenstein: Enemy Territory
 Half-Life 2: Deatchmatch
+Jedi Academy
 Quake III Arena
 Quake III Arena: OSP
 Quake III Team Arena
-
+Wolfenstein: Enemy Territory
 
 
 Installation:
@@ -68,9 +72,9 @@ Game Configuration:
 Open steam. Go to "Play Games". Right-Click on "Counter-Strike: Source" and/or "Half-Life 2: Deathmatch", and/or any other steam game
 and click the “Launch Options" button. Add " -condebug" (without the quotes) as launch parameter.
 
-• Quake III Arena & Enemy Territory (And Mods if supported)
+• Quake III Arena, Enemy Territory & Jedi Academy (And Mods if supported)
 Add "+set logfile 2" without quotes into the shortcut parameters of your favourite icon you use to start the game
-
+Note: A gamma value of 2.2 and contrast value of +30 is recommended for this profile in fullscreen.
 
 
 
@@ -98,17 +102,21 @@ X:\ being the letter of the drive steam is installed to.
 	Game Path: "X:\...\Steam\SteamApps\<account name>\day of defeat source\dod"
 	Log File: "console.log"
 
-• Wolfenstein: Enemy Territory
-	Game Path: "X:\...\Enemy Territory" (or wherever et.exe is located)
-	Log File: "etconsole.log"
+• Dystopia (HL2/Source Mod)
+	Game Path: "X:\...\Steam\SteamApps\SourceMods\dystopia"
+	Log File: "console.log"	
 
 • Half-Life 2: Deatchmatch
 	Game Path: "X:\...\Steam\SteamApps\<account name>\half-life 2 deathmatch\hl2mp"
 	Log File: "console.log"
 
-• Quake III Arena
+• Jedi Academy
 	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
 	Log File: "\baseq3\qconsole.log"
+
+• Quake III Arena
+	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
+	Log File: "\GameData\Base\qconsole.log"
 
 • Quake III Arena: OSP
 	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
@@ -118,9 +126,10 @@ X:\ being the letter of the drive steam is installed to.
 	Game Path: "X:\...\Quake III Arena" (or wherever quake3.exe is located)
 	Log File: "\missionpack\qconsole.log"
 
-• Dystopia (HL2/Source Mod)
-	Game Path: "X:\...\Steam\SteamApps\SourceMods\dystopia"
-	Log File: "console.log"	
+• Wolfenstein: Enemy Territory
+	Game Path: "X:\...\Enemy Territory" (or wherever et.exe is located)
+	Log File: "etconsole.log"
+
 
 
 
@@ -134,7 +143,6 @@ Options that are globally used by default.
 	[Global Snap Settings]
 	• Enabled: Enable or disable the snap settings (if you just want to do stats) for all games by default
 	• Snap Directory: Where to save your screenshots
-	• Single Display: Whether you're running on a singledisplay or not (only if you use a multi-monitor setup)
 	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
 	I have yet to find a good value myself. A delay of 0, is too fast, so the screenshot is 
 	taken to early and the player will just look like it's twitching. Good values are 
@@ -163,14 +171,12 @@ options that are specific to certain games.
 	[Snap Settings]
 	• Enabled: Enable or disable the snap settings (if you just want to do stats) for just this game
 	• Snap Directory: Where to save your screenshots
-	• Single Display: Whether you're running on a singledisplay or not (only if you use a multi-monitor setup)
 	• Snap Delay: How many x milliseconds to wait before you take a kill screenshot
 	I have yet to find a good value myself. A delay of 0, is to fast, the screenshot is 
 	taken before the hit is even registered on your display. Good values are 
 	between 0-100ms.
 	• Save: "Only Snaps" save only single framed images, "Only Animations", Save only animatation sequences (Snap Count must be > 1)
 	or "Snaps & Animations" to save a copy of both
-	• Save Delay: How long to wait before saving (recommended to leave as is)
 	• Next Snap Delay: How long to wait before taking another snap/series of snaps
 	• Snap Count: How many frames to capture in a sequence
 	• MultiSnap Delay: How long to wait inbetween each frame captured in a sequence
@@ -187,7 +193,11 @@ options that are specific to certain games.
 
 Source:
 ------------------------
+<<<<<<< HEAD:ReadMe.txt
 Source code is available from http://www.kudlacz.com
+=======
+As of 1.5 the source code will no longer be available. See the blurb about the license in the changelog.
+>>>>>>> 5d8efe4... 1.5 Beta 8:smiletray/ReadMe.txt
 
 
 
@@ -207,6 +217,7 @@ Extreme_One for help in implementing DoD:S support
 Iain for reporting bugs
 TSW|Abaddon & Sloan for feature ideas
 Fuzzy from Team Dystopia
+tiki from planetquake
 Everyone who has sent me a "thanks"
 
 
@@ -241,13 +252,26 @@ Version Compatiblity:
 Changelog:
 ------------------------
 **v1.5**
+-Rewrote a lot of stuff to introduce threading (SaveQueue w/ 3 workers and one Scanner/Capture thread).
 -MultiSnap support for sequenced captures
--Save Queue with Save Delay to help decrease lag due to image saving activity
+-Save Queue features a save delay to help decrease lag due to image saving/trashing activity
 -Next Snap Delay added help tweak capture frequencies
 -Animated GIF capture support
--Threaded SaveQueue and LogReader/Capture processes (needed for animation support, but also introduces new bugs)
 -Added Dystopia Profile (an HL2/Source Mod)
+-Added Jedi Academy Profile
 -More misc bug fixes
+-Removed "single display" check box, and am temporarly leaving window/fullscreen capture only
+-Better handling of corrupt configs
+-Added QueueSize control
+-New filename format for snaps: smile00000001.jpg smile0000002.jpg  etc.
+-Added Profile Gamma Slider
+-Added Profile Contrast Slider
+-Added Profile Brightness Slider
+-Added Capture Window, Capture Desktop, Capture Active Profile Hotkeys
+-LICENSE CHANGED. Smile! IS NO LONGER UNDER GPL. As I am the sole contributer and owner of Smile! I am granted this right. Hey Mozilla did it! 
+ My reason for this is to allow the future use of code and libraries that do not fall under specific open source requirements thus
+ keeping the author's own agreements and needs intact. Smile! will remain freeware, (It's not like there is a glimpse for anything 
+ else) but closed source.
 
 
 **v1.4**

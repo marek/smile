@@ -7,8 +7,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-
-
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -29,21 +27,36 @@ namespace smiletray
 			return GetDesktopImage(false);
 		}
 		// Get a screenshot of the current desktop
-		public static Image GetDesktopImage(bool primary)
+		public static Image GetDesktopImage(bool fullscreen)
 		{
 			Graphics desktopGraphics;
 			Graphics desktopWindowGraphics;
 			Image desktopImage;
-			Rectangle screen;
-			if(primary) screen = Screen.PrimaryScreen.Bounds; 
-			else screen = SystemInformation.VirtualScreen;
+			Rectangle screen = new Rectangle();
+
+			IntPtr pDesktopWindow;
+			if(fullscreen) 
+			{
+				pDesktopWindow = NativeMethods.GetDesktopWindow();
+				screen = SystemInformation.VirtualScreen;
+			}
+			else
+			{
+				pDesktopWindow = NativeMethods.GetForegroundWindow();
+				NativeMethods.RECT rect = new NativeMethods.RECT();
+				NativeMethods.GetWindowRect(pDesktopWindow, ref rect);
+				screen.X = screen.Y = 0;
+				screen.Width = rect.width;
+				screen.Height = rect.height;
+			}
+
 			desktopImage = new Bitmap(screen.Width, screen.Height);
 			using (desktopGraphics = Graphics.FromImage(desktopImage))
 			{
 				IntPtr pDesktop = desktopGraphics.GetHdc();
-				IntPtr pDesktopWindow = NativeMethods.GetDesktopWindow();
 				IntPtr pWindowDC = NativeMethods.GetWindowDC(pDesktopWindow);
 				desktopWindowGraphics = Graphics.FromHdc(pWindowDC);
+
 
 				desktopWindowGraphics.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
 				NativeMethods.BitBlt(pDesktop, 0, 0, screen.Width, screen.Height, pWindowDC, screen.X, screen.Y, SRCCOPY|CAPTUREBLT);

@@ -104,7 +104,27 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "CaptureKey.cs"
+                    SubType = "Form"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "CaptureKey.resx"
+                    DependentUpon = "CaptureKey.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
                     RelPath = "Exception.cs"
+                    SubType = "Form"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Exception.resx"
+                    DependentUpon = "Exception.cs"
+                    BuildAction = "EmbeddedResource"
+                />
+                <File
+                    RelPath = "Filters.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
@@ -112,6 +132,16 @@
                     RelPath = "GIFFile.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "HotKeys.cs"
+                    SubType = "Component"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "HotKeys.resx"
+                    DependentUpon = "HotKeys.cs"
+                    BuildAction = "EmbeddedResource"
                 />
                 <File
                     RelPath = "Main.cs"
@@ -167,6 +197,7 @@
                     DependentUpon = "ViewStats.cs"
                     BuildAction = "EmbeddedResource"
                 />
+                <Folder RelPath = "Profiles\" />
             </Include>
         </Files>
     </CSHARP>

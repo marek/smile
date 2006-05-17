@@ -1,3 +1,12 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// Smile! -- Screenshot and Statistics Utility
+// Copyright (c) 2005 Marek Kudlacz
+//
+// http://kudlacz.com
+//
+/////////////////////////////////////////////////////////////////////////////
+
 /* 
 GIF89a Exporter
 
@@ -23,19 +32,15 @@ namespace smiletray
 
 	class CGifFile
 	{
+		public static void SaveAnimation(String file, ArrayList frames)
+		{
+			SaveAnimation(file, frames, 10, false);
+		}
 		public static void SaveAnimation(String file, ArrayList frames, int frameDelay)
 		{
-			SaveAnimation(file, frames, frameDelay, 0);
+			SaveAnimation(file, frames, frameDelay, false);
 		}
 		public static void SaveAnimation(String file, ArrayList frames, int frameDelay, bool optimized)
-		{
-			SaveAnimation(file, frames, frameDelay, 0, optimized);
-		}
-		public static void SaveAnimation(String file, ArrayList frames, int frameDelay, int rest)
-		{
-			SaveAnimation(file, frames, frameDelay, rest, true);
-		}
-		public static void SaveAnimation(String file, ArrayList frames, int frameDelay, int rest, bool optimized)
 		{
 			if(frames.Count == 0)
 				return;
@@ -74,7 +79,7 @@ namespace smiletray
 			int height = 0;
 			// Create binary writer so we can write our bytes
 			bw = new BinaryWriter(File.Open(file, FileMode.Create, FileAccess.Write, FileShare.None));
-			Thread.Sleep(1);
+
 			for(int i = 0; i < frames.Count; i++)
 			{
 				Image frame = (Image)frames[i];
@@ -82,7 +87,6 @@ namespace smiletray
 				if(optimized)
 				{
 					optimized_frame = Quantize(frame);
-					Thread.Sleep(1);
 					optimized_frame.Save(ms, System.Drawing.Imaging.ImageFormat.Gif);		// Save the image as a gif
 					width = optimized_frame.Width;
 					height = optimized_frame.Height;
@@ -95,7 +99,6 @@ namespace smiletray
 				frame.Dispose();
 				frame = null;
 				optimized_frame = null;
-				Thread.Sleep(1);
 				temp = ms.ToArray();	// Copy the gif into a byte array
 				Thread.Sleep(1);
 				if(i == 0) 
@@ -128,9 +131,7 @@ namespace smiletray
 						id[8] = (byte)((height >> 8) & 0xFF);	// Height high byte
 
 						bw.Write(header, 0, 6);		// Write Header
-						Thread.Sleep(1);
 						bw.Write(lsd, 0, 7);		// Write Logical Screen Discriptor
-						Thread.Sleep(1);
 
 						header = null;
 						lsd = null;
@@ -163,7 +164,6 @@ namespace smiletray
 					ae[18] = 0;				// Block terminator
 
 					bw.Write(ae, 0, 19);	// Copy the application extension we defined
-					Thread.Sleep(1);
 
 					// Comment Extension
 					String ce_txt = "Captured with Smile! - www.Kudlacz.com";
@@ -180,13 +180,11 @@ namespace smiletray
 
 				}
 				bw.Write(cb, 0, 8);		// Graphic control block
-				Thread.Sleep(1);
+
 				if(optimized)
 				{
 					bw.Write(id, 0, 10);						// Image Descriptor block
-					Thread.Sleep(1);
-					bw.Write(temp, 13, 768);					// Copy Optimized Color Table
-					Thread.Sleep(1);							
+					bw.Write(temp, 13, 768);					// Copy Optimized Color Table						
 					bw.Write(temp, 799, temp.Length - 800);		// Image data (skip over original header/screen descriptor/colortable/image descriptor)
 				}
 				else
@@ -194,9 +192,8 @@ namespace smiletray
 					bw.Write(temp, 789, temp.Length - 790);		// Image data. include image descriptor
 				}
 				
-				Thread.Sleep(1);
+				Thread.Sleep(10);
 				ms.SetLength(0);		// Flush current frame
-				Thread.Sleep(rest);
 			}
 			bw.Write(';'); // Image terminator
 			
@@ -236,6 +233,7 @@ namespace smiletray
 				// Draw the source image onto the copy bitmap,
 				// which will effect a widening as appropriate.
 				g.DrawImageUnscaled  ( source , bounds ) ;
+				g.Dispose();
 			}
 
 			// Define a pointer to the bitmap data

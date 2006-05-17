@@ -61,13 +61,14 @@ namespace smiletray
 	public class CGameSnapSettings
 	{
 		public Boolean Enabled;
-		public Boolean SingleDisplay;
 		public String SaveType;
 		public Int32 Delay;
-		public Int32 SaveDelay;
 		public Int32 NextSnapDelay;
 		public Int32 MultiSnapDelay;
 		public Int32 SnapCount;
+		public Int32 Gamma;
+		public Int32 Contrast;
+		public Int32 Brightness;
 
 		public Boolean UseGlobal;
 		public String SnapDir;
@@ -75,18 +76,20 @@ namespace smiletray
 		public CGameSnapSettings()
 		{
 			Enabled = new Boolean();
-			SingleDisplay = new Boolean();
 			UseGlobal = new Boolean();
 			SaveType = "Only Snaps";
 			SnapDir = "";
 			Delay = new Int32();
-			SaveDelay = new Int32();
 			NextSnapDelay = new Int32();
 			MultiSnapDelay = new Int32();
+			Gamma = 10;
+			Contrast = 0;
+			Brightness = 0;
 			SnapCount = new Int32();
 		}
 	}
 	// Simplest way since we DO have access to the src:
+	[XmlInclude(typeof(CProfileJediAcademy))]
 	[XmlInclude(typeof(CProfileSourceDystopia))]
 	[XmlInclude(typeof(CProfileDayofDefeatSource))]
 	[XmlInclude(typeof(CProfileCounterStrikeSource))]
@@ -122,7 +125,7 @@ namespace smiletray
 		public abstract bool Open();
 		public virtual bool IsOpen()
 		{
-			return this.log != null;
+			return this.log != null && this.log.BaseStream != null;
 		}
 		public virtual void Close()
 		{
@@ -208,7 +211,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -238,9 +241,9 @@ namespace smiletray
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
+							NewStats = true;
 						}
 						NewSnaps = true;
-						NewStats = true;
 						continue;
 					}
 				}
@@ -338,9 +341,12 @@ namespace smiletray
 				PopulateRegEx();								// Create our Regex objects
 				return true;
 			}
-			catch (Exception e)
+			catch
 			{
-				frmMain.error += "|||" + e.Message;
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -363,9 +369,8 @@ namespace smiletray
 					return result;
 				
 			}
-			catch(Exception e)
+			catch
 			{
-				Ex.DumpException(e);
 				return null;
 			}
 			return null;
@@ -635,7 +640,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -738,6 +743,10 @@ namespace smiletray
 			}
 			catch 
 			{
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -779,7 +788,7 @@ namespace smiletray
 				//Continues to output one line at a time until end of file(EOF) is reached
 				while ( (strLine = sr.ReadLine()) != null)
 				{
-					Regex rNick=new Regex("^name\\s+\"(.+)\"$");
+					Regex rNick=new Regex("^\\s*name\\s+\"(.+)\"\\s*$");
 					match = rNick.Match(strLine);
 					if(match.Success)
 					{
@@ -989,7 +998,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -1019,9 +1028,9 @@ namespace smiletray
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
+							NewStats = true;
 						}
 						NewSnaps = true;
-						NewStats = true;
 						continue;
 					}
 				}
@@ -1092,6 +1101,10 @@ namespace smiletray
 			}
 			catch 
 			{
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -1130,9 +1143,9 @@ namespace smiletray
 			{
 				sr = new StreamReader(this.path + @"\cstrike\config.cfg");
 				//Continues to output one line at a time until end of file(EOF) is reached
+				Regex rNick=new Regex("^\\s*name\\s*\"(.+)\"\\s*$");
 				while ( (strLine = sr.ReadLine()) != null)
 				{
-					Regex rNick=new Regex("^name\\s+\"(.+)\"$");
 					match = rNick.Match(strLine);
 					if(match.Success)
 					{
@@ -1404,7 +1417,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -1434,9 +1447,9 @@ namespace smiletray
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
+							NewStats = true;
 						}
 						NewSnaps = true;
-						NewStats = true;
 						continue;
 					}
 				}
@@ -1578,6 +1591,10 @@ namespace smiletray
 			}
 			catch 
 			{
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -1592,9 +1609,9 @@ namespace smiletray
 			{
 				sr = new StreamReader(this.path + @"\dod\config.cfg");
 				//Continues to output one line at a time until end of file(EOF) is reached
+				Regex rNick=new Regex("^\\s*name\\s+\"(.+)\"\\s*$");
 				while ( (strLine = sr.ReadLine()) != null)
 				{
-					Regex rNick=new Regex("^name\\s+\"(.+)\"$");
 					match = rNick.Match(strLine);
 					if(match.Success)
 					{
@@ -1777,7 +1794,6 @@ namespace smiletray
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Quake III Arena
 	//////////////////////////////////////////////////////////////////////////////////////////////
-
 	public class CProfileQuakeIIIArena_MOD
 	{
 		public string name;
@@ -1876,7 +1892,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -1994,6 +2010,10 @@ namespace smiletray
 			}
 			catch 
 			{
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -2008,26 +2028,25 @@ namespace smiletray
 			frmSearch search = new frmSearch();
 			try
 			{
-				
 				search.Show();
 				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
 				ManagementObjectCollection queryCollection = query.Get();
+				string result = null;
 				foreach( ManagementObject mo in queryCollection )
 				{
-					string result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
+					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
 						new Regex(@"\\quake3.exe$", RegexOptions.IgnoreCase));
-					search.Close();
-					if(result != null)
-						return Path.GetDirectoryName(result);	
+					if(result != null || search.Stopped())
+						break;
 				}
+				search.Close();
+				return Path.GetDirectoryName(result);	
 			}
 			catch
 			{
 				search.Close();
 				return null;
 			}
-			search.Close();
-			return null;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias(String file)
@@ -2039,11 +2058,11 @@ namespace smiletray
 		
 			try
 			{
+				Regex rNick=new Regex("^\\s*seta\\s+name\\s+\"(.+)\"\\s*$");
 				sr = new StreamReader(this.path + file);
 				//Continues to output one line at a time until end of file(EOF) is reached
 				while ( (strLine = sr.ReadLine()) != null)
 				{
-					Regex rNick=new Regex("^seta name\\s+\"(.+)\"$");
 					match = rNick.Match(strLine);
 					if(match.Success)
 					{
@@ -2051,6 +2070,7 @@ namespace smiletray
 						break;
 					}
 				}
+				nick = rStripColor.Replace(nick, "");
 			}
 			catch
 			{
@@ -2061,7 +2081,7 @@ namespace smiletray
 				// Cleanup
 				if(sr != null) sr.Close();	
 			}
-			return rStripColor.Replace(nick, "");
+			return nick;
 		}
 		public override void toXMLOperations()
 		{
@@ -2268,7 +2288,6 @@ namespace smiletray
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Q3: OSP
 	//////////////////////////////////////////////////////////////////////////////////////////////
-
 	public class CProfileQ3OSP : CProfileQuakeIIIArena
 	{
 		public CProfileQ3OSP()
@@ -2295,7 +2314,6 @@ namespace smiletray
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	/// Enemy Territory
 	//////////////////////////////////////////////////////////////////////////////////////////////
-
 	public class CProfileEnemyTerritory_MOD
 	{
 		public string name;
@@ -2417,7 +2435,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -2537,6 +2555,10 @@ namespace smiletray
 			}
 			catch 
 			{
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -2551,26 +2573,25 @@ namespace smiletray
 			frmSearch search = new frmSearch();
 			try
 			{
-				
 				search.Show();
 				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
 				ManagementObjectCollection queryCollection = query.Get();
+				string result = null;
 				foreach( ManagementObject mo in queryCollection )
 				{
-					string result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
+					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
 						new Regex(@"\\et.exe$", RegexOptions.IgnoreCase));
-					search.Close();
-					if(result != null)
-						return Path.GetDirectoryName(result);	
+					if(result != null || search.Stopped())
+						break;
 				}
+				search.Close();
+				return Path.GetDirectoryName(result);	
 			}
 			catch
 			{
 				search.Close();
 				return null;
 			}
-			search.Close();
-			return null;
 		}
 		// Get the game alias for said default user
 		public String GetGameAlias(String dir)
@@ -2609,9 +2630,9 @@ namespace smiletray
 				}
 			
 				sr = new StreamReader(profile + "\\etconfig.cfg");
+				Regex rNick=new Regex("^\\s*seta\\s+name\\s+\"(.+)\"\\s*$");
 				while ( (strLine = sr.ReadLine()) != null)
 				{
-					Regex rNick=new Regex("^seta name\\s+\"(.+)\"$");
 					match = rNick.Match(strLine);
 					if(match.Success)
 					{
@@ -2619,6 +2640,7 @@ namespace smiletray
 						break;
 					}
 				}
+				nick = rStripColor.Replace(nick, "");
 			}
 			catch
 			{
@@ -2629,7 +2651,7 @@ namespace smiletray
 				// Cleanup
 				if(sr != null) sr.Close();	
 			}
-			return rStripColor.Replace(nick, "");
+			return nick;
 		}
 		public override void toXMLOperations()
 		{
@@ -2899,7 +2921,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -2929,9 +2951,9 @@ namespace smiletray
 								gun.kills = 1;
 								stats.gun.Add(strGun, gun);
 							}
+							NewStats = true;
 						}
 						NewSnaps = true;
-						NewStats = true;
 						continue;
 					}
 				}
@@ -3043,9 +3065,12 @@ namespace smiletray
 				PopulateRegEx();								// Create our Regex objects
 				return true;
 			}
-			catch (Exception e)
+			catch
 			{
-				frmMain.error += "|||" + e.Message;
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -3068,9 +3093,8 @@ namespace smiletray
 					return result;
 				
 			}
-			catch(Exception e)
+			catch
 			{
-				Ex.DumpException(e);
 				return null;
 			}
 			return null;
@@ -3089,7 +3113,7 @@ namespace smiletray
 				//Continues to output one line at a time until end of file(EOF) is reached
 				while ( (strLine = sr.ReadLine()) != null)
 				{
-					Regex rNick=new Regex("^name\\s+\"(.+)\"$");
+					Regex rNick=new Regex("^\\s*name\\s+\"(.+)\"\\s*$");
 					match = rNick.Match(strLine);
 					if(match.Success)
 					{
@@ -3377,7 +3401,7 @@ namespace smiletray
 
 		public override void Parse()
 		{
-			if(this.log == null)
+			if(!this.IsOpen())
 				return;
 
 			Match match;
@@ -3478,9 +3502,12 @@ namespace smiletray
 				PopulateRegEx();								// Create our Regex objects
 				return true;
 			}
-			catch (Exception e)
+			catch
 			{
-				frmMain.error += "|||" + e.Message;
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
 				return false;
 			}
 		}
@@ -3503,9 +3530,8 @@ namespace smiletray
 					return result;
 				
 			}
-			catch(Exception e)
+			catch
 			{
-				Ex.DumpException(e);
 				return null;
 			}
 			return null;
@@ -3685,6 +3711,329 @@ namespace smiletray
 				}
 			}
 			return strStats;		
+		}
+	}
+
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	/// Jedi Academy
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	public class CProfileJediAcademy_Stats
+	{
+		[XmlIgnoreAttribute] public Hashtable gun;
+		[XmlElement(ElementName = "gun")]public CProfile_XMLGun [] xmlgun;
+
+		public CProfileJediAcademy_Stats()
+		{
+			gun = new Hashtable();
+		}
+	}
+	public class CProfileJediAcademy : CProfile
+	{
+		public CProfileJediAcademy_Stats stats;
+
+		protected String alias;
+		private Regex rKill;
+		private Regex rKilled;
+		private Regex rStripColor;
+
+		public CProfileJediAcademy()
+		{
+			this.ProfileName = "Jedi Academy";
+			this.SnapName = "Jedi Academy";
+			this.stats = new CProfileJediAcademy_Stats();
+			this.rStripColor = new Regex("\\^\\d");
+		}
+
+		private void PopulateRegEx()
+		{
+			this.rKill = new Regex("\\s*\\d{1,2}:\\d{1,2} Kill: \\d{1,2} \\d{1,2} \\d{1,2}: " + Regex.Escape(this.alias) + " killed .+ by MOD_(\\w+)$");
+			this.rKilled = new Regex("\\s*\\d{1,2}:\\d{1,2} Kill: \\d{1,2} \\d{1,2} \\d{1,2}: .+ killed " + Regex.Escape(this.alias) + " by MOD_(\\w+)$");
+		}
+
+		public override void Parse()
+		{
+			if(!this.IsOpen())
+				return;
+
+			Match match;
+			String strLine;
+
+			while ((strLine = this.log.ReadLine()) != null)
+			{
+				strLine = rStripColor.Replace(strLine, "");
+
+				// Match kills given
+				if(EnableSnaps || EnableStats)
+				{
+					match = rKill.Match(strLine);
+					if(match.Success) 
+					{
+						if(EnableStats)
+						{
+							String strGun = match.Groups[1].Value;
+							CProfile_Gun gun;
+							if(stats.gun.Contains(strGun))
+							{
+								gun = (CProfile_Gun)stats.gun[strGun];
+								gun.kills++;
+								stats.gun[strGun] = gun;
+							}
+							else 
+							{
+								gun = new CProfile_Gun();
+								gun.kills = 1;
+								stats.gun.Add(strGun, gun);
+							}
+						}
+						NewSnaps = true;
+						NewStats = true;
+						continue;
+					}
+				}
+
+				if(EnableStats)
+				{
+					// Match times self has been killed
+					match = rKilled.Match(strLine);
+					if(match.Success)
+					{
+						String strGun = match.Groups[1].Value;
+						CProfile_Gun gun;
+						if(stats.gun.Contains(strGun)) 
+						{
+							gun = (CProfile_Gun)stats.gun[strGun];
+							gun.killed++;
+							stats.gun[strGun] = gun;
+						}
+						else  
+						{
+							gun = new CProfile_Gun();
+							gun.killed = 1;
+							stats.gun.Add(strGun, gun);
+						}
+						NewStats = true;
+						continue;
+					}
+				}
+			}
+		}
+		public override bool Open()
+		{
+			try 
+			{
+				this.alias = GetGameAlias(@"\GameData\base\jampconfig.cfg");
+				this.log = new StreamReader(new FileStream(this.path + @"\GameData\base\games.log", FileMode.Open,  FileAccess.Read, FileShare.ReadWrite));
+				this.log.BaseStream.Seek(0,SeekOrigin.End);		// Set to End	
+				PopulateRegEx();
+				return true;
+			}
+			catch 
+			{
+				this.alias = null;
+				if(this.log != null)
+					this.log.Close();
+				this.log = null;
+				return false;
+			}
+		}
+		public override bool CheckActive()
+		{
+			return NativeMethods.FindWindow("Jedi Knight®: Jedi Academy (MP)","Jedi Knight®: Jedi Academy (MP)") != 0;
+		}
+		public override String GetDefaultPath()
+		{
+			const int LocalDisk = 3;
+
+			frmSearch search = new frmSearch();
+			try
+			{
+				search.Show();
+				ManagementObjectSearcher query = new ManagementObjectSearcher("SELECT * FROM Win32_LogicalDisk WHERE DriveType=" + LocalDisk.ToString());
+				ManagementObjectCollection queryCollection = query.Get();
+				string result = null;
+				foreach( ManagementObject mo in queryCollection )
+				{
+					result = search.Search(ProfileName, mo["Name"].ToString() + "\\", 
+						new Regex(@"\\jamp.exe$", RegexOptions.IgnoreCase));
+					if(result != null || search.Stopped())
+						break;
+				}
+				search.Close();
+				return Path.GetDirectoryName(result);	
+			}
+			catch
+			{
+				search.Close();
+				return null;
+			}
+		}
+		// Get the game alias for said default user
+		public String GetGameAlias(String file)
+		{
+			String strLine;
+			Match match;
+			String nick = null;
+			StreamReader sr = null;
+		
+			try
+			{
+				Regex rNick=new Regex("^\\s*seta\\s+name\\s+\"(.+)\"\\s*$");
+				sr = new StreamReader(this.path + file);
+				// Continues to output one line at a time until end of file(EOF) is reached
+				while ( (strLine = sr.ReadLine()) != null)
+				{
+					match = rNick.Match(strLine);
+					if(match.Success)
+					{
+						nick = match.Groups[1].Value;
+						break;
+					}
+				}
+				nick = rStripColor.Replace(nick, "");
+			}
+			catch
+			{
+				nick = null;
+			}
+			finally 
+			{
+				// Cleanup
+				if(sr != null) sr.Close();	
+			}
+			return nick;
+		}
+		public override void toXMLOperations()
+		{
+			// Turn gun hastable into something more useable
+			if(stats.gun == null)
+				return;
+			stats.xmlgun = new CProfile_XMLGun [ stats.gun.Count ];
+			int i = 0;
+			foreach(String key in stats.gun.Keys)
+			{
+				stats.xmlgun[i] = new CProfile_XMLGun();
+				stats.xmlgun[i].name = key;
+				stats.xmlgun[i].stats = (CProfile_Gun)stats.gun[key];
+				i++;
+			}
+		}
+		public override void fromXMLOperations()
+		{
+			if(stats.xmlgun == null)
+				return;
+
+			if(stats.gun == null)
+				stats.gun = new Hashtable();
+
+			for(int i = 0; i < stats.xmlgun.Length; i++)
+			{
+				stats.gun.Add(stats.xmlgun[i].name, stats.xmlgun[i].stats);
+			}
+		}
+		public override void ResetStats()
+		{
+			stats = new CProfileJediAcademy_Stats();
+		}
+		public override string GetStatsReport(String font, CProfile.SaveTypes format)
+		{
+			string strStats = null;
+			CProfileJediAcademy_Stats stats = this.stats;
+			switch(format)
+			{
+				case CProfile.SaveTypes.HTML:
+				{
+					strStats = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n";
+					strStats += "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n";
+					strStats += "\t<head>\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml; charset=iso-8859-1\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Style-Type\" content=\"text/css\" />\r\n";
+					strStats += "\t\t<meta http-equiv=\"Content-Language\" content=\"EN\" />\r\n";
+					strStats += "\t\t<meta name=\"description\" content=\"Smile! v" + Info.version + " -- " + ProfileName + " Generator.\" />\r\n";
+					strStats += "\t\t<meta name=\"copyright\" content=\"" + Info.copyrightdate + " Marek Kudlacz -- Kudlacz.com\" />\r\n";
+					strStats += "\t\t<title>Smile! v" + Info.version + " - " + ProfileName + " Statistics</title>\r\n";
+					strStats += "\t</head>\r\n";
+					strStats += "\t<body>\r\n";
+					strStats += "\t\t<h2>" + ProfileName + " Statistics:</h2>\r\n";
+					strStats += "\t\t<hr />\r\n";
+					strStats += "\t\tCreated with Smile! v" + Info.version + "<br />\r\n";
+					strStats += "\t\t©2005 Marek Kudlacz -- <a href=\"http://www.kudlacz.com\">http://www.kudlacz.com</a><br />\r\n";
+					strStats += "\t\t<hr />\r\n";
+
+					strStats += "\t\t<h3>Weapon/Death Statistics:</h3>\r\n";
+					uint TotalKills = 0;
+					uint TotalKilled = 0;
+					foreach(String Key in stats.gun.Keys)
+					{
+						TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+						TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+						strStats += "\t\t<b>"+ Key + ":</b> kills: " + ((CProfile_Gun)stats.gun[Key]).kills + " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "<br />\r\n";
+					}
+					strStats += "\t\tTotal Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "<br />\r\n";
+					strStats += "\t\t<br /><br />\r\n";
+					strStats += "\t</body>\r\n";
+					strStats += "</html>";
+					break;
+				}
+				case CProfile.SaveTypes.RTF:
+				case CProfile.SaveTypes.TXT:
+				{
+					RichTextBox c = new RichTextBox();
+
+					try
+					{
+						// Populate the rich text box
+						c.SelectionStart = 0 ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold);
+						c.SelectedText = ProfileName + " Statistics:\n" ;
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+						c.SelectedText = "Created with Smile! v" + Info.version + "\n";
+						c.SelectedText = Info.copyrightdate + " Marek Kudlacz -- http://www.kudlacz.com\n";
+						c.SelectionFont = new Font(font, 12, FontStyle.Bold|FontStyle.Underline);
+						c.SelectedText = "                                                                \n\n";
+
+						c.SelectionFont = new Font(font, 10, FontStyle.Bold);
+						c.SelectedText = "Weapon/Death Statistics:\n";
+						uint TotalKills = 0;
+						uint TotalKilled = 0;
+						foreach(String Key in stats.gun.Keys)
+						{
+							TotalKills += ((CProfile_Gun)stats.gun[Key]).kills;
+							TotalKilled += ((CProfile_Gun)stats.gun[Key]).killed;
+							c.SelectionFont = new Font(font, 9, FontStyle.Bold|FontStyle.Italic);
+							c.SelectedText = Key + ": ";
+							c.SelectionFont = new Font(font, 9, FontStyle.Regular);
+							c.SelectedText = " kills: " + ((CProfile_Gun)stats.gun[Key]).kills;
+							c.SelectedText = " deaths: " + ((CProfile_Gun)stats.gun[Key]).killed + "\n";
+						}
+						c.SelectedText = "Total Kills: " + TotalKills + " Total Deaths: " + TotalKilled + "\n";
+						c.SelectedText = "\n\n";
+
+						c.SelectionStart = 0 ;
+					}
+					catch
+					{
+						c.Clear();
+						c.SelectionStart = 0 ;
+						c.SelectedText = "There was an error writing the stats, (missing font?) Try saving it to html instead using the edit menu.\n\n";
+						c.SelectionStart = 0 ;
+					}
+
+					switch(format)
+					{
+						case CProfile.SaveTypes.RTF:
+							strStats = c.Rtf;
+							break;
+						case CProfile.SaveTypes.TXT:
+							strStats = c.Text;
+							break;
+					}
+					c.Dispose();
+					break;
+				}
+			}
+			return strStats;
 		}
 	}
 
