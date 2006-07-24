@@ -3,24 +3,21 @@
 	<Smile>
 		<name>Smile!</name>
 		<description>Screenshot and Statistics Utility</description>
-		<version>1.8</version>
-		<intversion>1.8.0</intversion>
-		<date>03/24/2006</date>
-		<time>16:16:20</time>
+		<version>1.9</version>
+		<intversion>1.9.0</intversion>
+		<date>09/24/2006</date>
+		<time>02:49:51</time>
 		<page>http://www.kudlacz.com/?/section/projects</page>
-		<downloadurl>http://www.kudlacz.com/?/download/projects/smiletray%201.8.zip</downloadurl>
-		<fileurl>http://www.kudlacz.com/?/fetch/projects/smiletray%201.8.zip</fileurl>
+		<downloadurl>http://www.kudlacz.com/?/download/projects/smiletray%201.9.zip</downloadurl>
+		<fileurl>http://www.kudlacz.com/?/fetch/projects/smiletray%201.9.zip</fileurl>
 		<hash></hash>
 		<comments>
 Changelog:
 ------------------------
-**v1.8**
--Fixed the tray icon's right click 'about' menu item.
--Added Counter-Strike: Condition Zero support (thanks Jake)
--Added Ricochet support (thanks T@T-5-MoNk3y)
--Added the ability to adjust priority thanks to feedback (Thanks eram)
--Improved Cross platform compatability.
--Redid parts of the logging system again. Should provide some better information.
+**v1.9**
+-Select Game Menu under the ViewStats form should now display sorted.
+-Fixed Crash message on exit (log file closing problem)
+-Changed the default priority settings everyone has back to Normal. Seemed to cause a lot of lag issues. Woops. :(
 		</comments>
 	</Smile>
 </Version>

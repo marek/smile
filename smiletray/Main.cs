@@ -315,7 +315,7 @@ namespace smiletray
 
 			// Start key gooks
 			GlobalHotKey.RegisterHook();
-			AddLogMessage("Registering system keyboard hook.");
+			AddLogMessage("Registering system keyboard hook for Hot Keys.");
 			DisableHotkeys = false;
 			HKCaptureWindow.HotKey = GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKWindow);
 			HKCaptureDesktop.HotKey = GlobalHotKey.StringToKeyCombo(Settings.HotKeySettings.HKDesktop);
@@ -2868,7 +2868,7 @@ namespace smiletray
 					Settings.MiscSettings.CheckUpdates = "Every Day";
                     Settings.MiscSettings.SaveBug = false;
                     Settings.MiscSettings.NumSaveThreads = 3;
-                    Settings.MiscSettings.SavePriority = System.Threading.ThreadPriority.BelowNormal;
+                    Settings.MiscSettings.SavePriority = System.Threading.ThreadPriority.Normal;
                     Settings.MiscSettings.CapturePriority = System.Threading.ThreadPriority.Normal;
                     Settings.MiscSettings.ApplicationPriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
                     Settings.MiscSettings.ApplicationPriority = System.Threading.ThreadPriority.Normal;

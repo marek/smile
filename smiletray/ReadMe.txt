@@ -327,14 +327,30 @@ Q: I get an error in the log window: Error Starting Session For: <some game>
 A: See points (1) to (4)
 (1) Did you add -condebug into the launch parameters for steam games, 
     or "+set logfile 2" into the shortcut of quake based games? 
-(2) For a steam game, and if youcreated a shortcut to that game, did 
+(2) For a steam game, and if you created a shortcut to that game, did 
     you add -condebug into it also? If So, *REMOVE* it from the 
-    shortcut! Only put it into the launch parameters.
+    shortcut! Only put it into the launch parameters in steam.
 (3) Did you setup the game's path in smile!? Try autodetect under the 
     right profile first.
 (4) If using steam, did you make sure the path has the right account 
     name for the current user you are logged in as (Otherwise it won't 
     find the log).
+(5)	Im getting strange lag, even when i have no kills.  Try adjusting 
+	the priority levels in Smile!. This either gives more or less 
+	CPU resources to Smile! Smile! is CPU intensive and may sometimes 
+	"fight" with the game in question for proccessing power. Reducing 
+	Priority may help reduce lag in a high CPU usage game, but may 
+	also cause lag in other games if it needs to wait for Smile! 
+	to finish what it's doing. Best bet is that normal is OK for you, 
+	and the rest of your system may not be good enough to run both 
+	programs at once.
+(6)	I get lag when capturing/saving images! Try switching to a non 
+	compressed image format like BMP or TGA. If you're using JPEG, 
+	increase the quality. Compression takes a lot of CPU power and 
+	may cause lag. Also post-proccessing filter effects may also add 
+	lag. Use those settings wisely. If you're saving animations. Try 
+	reducing the frame count, or the resolution you save them in, 
+	or even the resolution you play in.
 
 
 
@@ -368,6 +384,9 @@ Changelog:
 ------------------------
 **v1.9**
 -Select Game Menu under the ViewStats form should now display sorted.
+-Fixed Crash message on exit (log file closing problem)
+-Changed the default priority settings everyone has back to Normal. Seemed to cause a lot of lag issues. Woops. :(
+
 
 **v1.8**
 -Fixed the tray icon's right click 'about' menu item.

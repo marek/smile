@@ -31,6 +31,8 @@ namespace smiletray
                 log.WriteLine("\r\n\r\n-----Log Session Ended: " + DateTime.Now.ToLongDateString() + "-----\r\n\r\n");
                 log.Flush();
                 log.Close();
+                log.Dispose();
+                log = null;
             }
         }
 
@@ -40,7 +42,7 @@ namespace smiletray
 			{
 				string s = String.Format("[{0:D2}:{1:D2}:{2:D2}] ", DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second) + msg;
 				MsgQueue.Add(s);
-				if(log != null)
+                if (log != null)
 				{
 					log.WriteLine(s);
 					log.Flush();

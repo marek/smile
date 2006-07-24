@@ -55,7 +55,7 @@ namespace smiletray
 			LastCheckTime = new Int64();
             SaveBug = new Boolean();
             NumSaveThreads = 3;
-            SavePriority = System.Threading.ThreadPriority.BelowNormal;
+            SavePriority = System.Threading.ThreadPriority.Normal;
             CapturePriority = System.Threading.ThreadPriority.Normal;
             ApplicationPriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
             ApplicationPriority = System.Threading.ThreadPriority.Normal;
