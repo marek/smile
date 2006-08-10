@@ -178,19 +178,18 @@ Smile! Freeware License Agreement.
 10. EXPORT CONTROLS. None of the Software or underlying information or
     technology may be downloaded or otherwise exported or re-exported
     into (or to a national or resident of) any country in violation of
-    the laws and administrative regulations of Canada
-    relating to the control of exports of commodities and technical
-    data. By downloading or using the Software, you are agreeing to
-    the foregoing and you are representing and warranting that you are
-    not located in, under the control of, or a national or resident of
-    any such country.
+    the laws and administrative regulations of CANADA relating to the 
+    control of exports of commodities and technical data. By 
+    downloading or using the Software, you are agreeing to the foregoing 
+    and you are representing and warranting that you are not located in, 
+    under the control of, or a national or resident of any such country.
 
 11. MISCELLANEOUS. This Agreement represents the complete agreement
     concerning this license between the parties and supersedes all
     prior agreements and representations between them. It may not be
     amended. If any provision of this Agreement is held to be
     unenforceable for any reason, this Agreement shall terminate. This
-    Agreement shall be governed by and construed under Canadian law.
+    Agreement shall be governed by and construed under CANADIAN law.
     Send all correspondence regarding this license to:
 
     www.kudlacz.com for more information.

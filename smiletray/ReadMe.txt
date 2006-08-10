@@ -22,10 +22,40 @@ Enjoy!
 
 
 
+
+Disclaimer:
+------------------------
+Smile! comes with ABSOLUTELY NO WARRANTY. This is free software, and 
+you are welcome to redistribute it under certain conditions; for 
+details see bundled LICENSE.TXT.
+
+.NET Framework 2.0 is © Microsoft Corporation. The download of this framework 
+may require the validation of your Windows installation using Windows Genuine 
+Advantage. If it fails validation please contact Microsoft to remedy the 
+situation or visit http://www.microsoft.com/piracy/ 
+
+
+
+
 License:
 ------------------------
-See LICENSE.TXT for more details. As of v1.5, Smile! is no longer under 
-GPL. Please see the little blurb under the changelog for details.
+See LICENSE.TXT for more details. 
+
+
+
+
+Contact Information / Technical Support
+------------------------
+This is free unsupported software. Regardless, I try my best to answer all 
+emails recieved. Please do not contact me regarding .NET, why it says you do 
+not have the latest version and how to aquire it. I do not care that your 
+PC's manufacturer gave you an illegal installation of windows and you 
+cannot use Windows Update. I will not help you get around such software 
+protections. Otherwise if it's a technical issue directly relating to Smile! 
+you are more than welcome to contact me using the information at the top of 
+this file. Please be prepaired to send me your 'smiletray.dat' and 
+'smiletray.log' files to help me understand the problem.
+
 
 
 
@@ -35,10 +65,9 @@ Requirements:
 • AMD 2000+ or Intel 2Ghz equivalent
 • 512mb Ram (Animations require a lot more, or you start crapping out 
   after 2)
-• ********IMPORTANT******* Latest .NET runtime files (www.microsoft.com 
+• Latest Microsoft .NET runtime files (www.microsoft.com 
   or windowsupdate.microsoft.com)  
-• food
-• i guess a mouse helps too
+
 
 
 
@@ -56,6 +85,7 @@ Quake III Arena (and some mods)
 Ricochet
 Team Fortress Classic
 Wolfenstein: Enemy Territory
+
 
 
 
@@ -354,10 +384,11 @@ A: See points (1) to (4)
 
 
 
-Why Smile? Why not "DEATHCAM! etc":
+Why name it Smile? Why not "DEATHCAM! etc":
 ------------------------
-like "say cheese" and you get a bullet in the face.. Plus i dont want 
-to change it once i picked it.
+It's like when you say "cheese" and you get a bullet in the face. 
+Just think it terms of photography, and you'll know why. Plus I don't want 
+to change it once I picked out a name.
 
 
 
