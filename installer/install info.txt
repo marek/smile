@@ -1,0 +1,4 @@
+Smile! requires .Net Framework v2.0.50727 (or higher).  This installer will attempt to automatically download the appropriate version (x86, x64 or IA64) of this for you if it determines your system needs it.  If you have a legitimate copy of Windows, you shouldn't have any problems downloading.
+
+
+You can get other versions of .NET manually here: http://www.microsoft.com/downloads/details.aspx?familyid=0856eacb-4362-4b0d-8edd-aab15c5e04f5&displaylang=en
