@@ -2,8 +2,9 @@
 
 [Setup]
 AppName=Smile!
-AppVerName=Smile! v1.9
-AppVersion=1.9
+AppID={code:GetAppID}
+AppVerName=Smile! v{code:GetAppVer}
+AppVersion={code:GetAppVer}
 AppPublisher=Kudlacz
 AppPublisherURL=http://www.kudlacz.com
 AppSupportURL=http://www.kudlacz.com/?/section/contact
@@ -13,7 +14,7 @@ DefaultGroupName=Kudlacz\Smile!
 AllowNoIcons=yes
 InfoBeforeFile=install info.txt
 OutputDir=compiled
-OutputBaseFilename=Smile! v1.9 Installer
+OutputBaseFilename=Smile! v{code:GetAppVer} Installer
 Compression=lzma/ultra
 InternalCompressLevel=ultra
 SolidCompression=yes
@@ -48,14 +49,13 @@ Name: "{group}\Smile!"; Filename: "{app}\smiletray.exe"
 Name: "{group}\Visit Kudlacz.com"; Filename: "{app}\Kudlacz.url"
 Name: "{group}\View README"; Filename: "{app}\README.txt"
 Name: "{group}\View LICENSE"; Filename: "{app}\LICENSE.txt"
-;Name: "{group}\Uninstall Smile!"; Filename: {uninstallexe}
-Name: "{group}\Uninstall Smile!"; Filename: "{app}\UninsHs.exe"; Parameters: /u0=Smile!
+Name: "{group}\Uninstall Smile!"; Filename: "{app}\UninsHs.exe"; Parameters: /u0={code:GetAppID}
 Name: "{userdesktop}\Smile!"; Filename: "{app}\smiletray.exe"; Tasks: desktopicon
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Smile!"; Filename: "{app}\smiletray.exe"; Tasks: quicklaunchicon
 
 [Run]
 Filename: "{app}\smiletray.exe"; Description: "{cm:LaunchProgram,smile}"; Flags: nowait postinstall skipifsilent
-Filename: {app}\UninsHs.exe; Parameters: /r=Smile!,{language},{srcexe},{app}\setup.exe; Flags: runminimized runhidden nowait
+Filename: {app}\UninsHs.exe; Parameters: /r={code:GetAppID},{language},{srcexe},{app}\setup.exe; Flags: runminimized runhidden nowait
 Filename: {ini:{tmp}\dep.ini,install,sp6a}; Parameters: /U /X:{tmp}\sp6a; Description: NT4 SP6a Extract; StatusMsg: Extracting NT4 Service Pack 6a Files...; Flags: skipifdoesntexist
 Filename: {tmp}\sp6a\update\update.exe; Parameters: -u -z; Description: NT4 SP6a Install; StatusMsg: Installing NT4 Service Pack 6a...; Flags: skipifdoesntexist
 Filename: {ini:{tmp}\dep.ini,install,ie}; Description: IE 6; StatusMsg: Installing Internet Explorer 6... (This may take a few minutes); Flags: skipifdoesntexist; Parameters: "/Q /C:""ie5wzd /QU /R:N /S:#e"""
@@ -79,6 +79,8 @@ var
   memoDependenciesNeeded: string;
 
 const
+  appVer = '1.9';
+  appID = 'smiletray-{F1D19AEB-8EF6-41b9-AD38-3A84AE64AF53}';
   ieURL = 'http://download.microsoft.com/download/ie6sp1/finrel/6_sp1/W98NT42KMeXP/EN-US/ie6setup.exe';
   sp6aURL = 'http://download.microsoft.com/download/winntsp/SP/6.0a-128/NT4/EN-US/sp6i386.exe';
   mdacURL = 'http://download.microsoft.com/download/MDAC26/Refresh/2.0/W98NT42KMeXP/EN-US/MDAC_TYP.EXE';
@@ -89,7 +91,94 @@ const
   WM_LBUTTONDOWN = 513;
   WM_LBUTTONUP = 514;
   
-  
+function GetAppVer(Param: String): String;
+begin
+ Result := appVer;
+end;
+
+function GetAppID(Param: String): String;
+begin
+ Result := appID;
+end;
+
+function GetInstalledVersion(Ver: String): Boolean;
+begin
+  Ver := '';
+  Result := True;
+  if not RegQueryStringValue(HKLM,
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\'+{code:GetAppID}+'_is1',
+    'DisplayVersion', Ver) then
+    if not RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\'+{code:GetAppID}+'_is1' ,
+      'DisplayVersion', Ver) then
+        Result := False;
+end;
+
+function ChrCount(const substr: Char; const S: String): Integer;
+var
+  i: Integer;
+begin
+  i := 1;
+  Result := 0;
+  while i <= Length(S) do begin
+    if S[i] = substr then
+      Result := Result + 1;
+    i := i + CharLength(S, i);
+  end;
+end;
+
+// Return 1 - Left > Right
+// Return 0 - Left = Right
+// Return -1 - Left < Right
+function CompareVersions(const Left, Right: String): Integer;
+var
+   len,i,pl,pr,l,r,n: Integer;
+begin
+  Result := 0;
+  i := 1;
+  pl := 1;
+  pr := 1;
+
+  n := ChrCount ('.', Right);
+  len := ChrCount('.', Left);
+  if n > len then
+    len := n;
+  while i <= len do
+  begin
+    if i > Length(Left) then begin
+      l := 0;
+    end else begin
+      n := Pos('.', Copy(Left, pl, Length(Left)));
+      if n = 0 then
+        n := Length(Left)-pl;
+      l := StrToIntDef(Copy(Left, pl, n+1), 0);
+      pl := n+1;
+    end;
+    
+    if i > Length(Right) then begin
+      r := 0;
+    end else begin
+      n := Pos('.', Copy(Right, pr, Length(Right)));
+      if n = 0 then
+        n := Length(Right)-pr;
+      r := StrToIntDef(Copy(Right, pr, n+1), 0);
+      pr := n+1;
+    end;
+    
+    if l > r then begin
+      Result := 1;
+    end else if l < r then begin
+      Result := -1;
+    end else begin
+      Result := 0;
+    end;
+      
+    // Go to the next character. But do not simply increment I by 1.
+    // Increment by CharLength() in case Result[I] is a double-byte character.
+    i := i + 1;
+  end;
+
+end;
+
 procedure InitializeWizard();
 begin
   if (Pos('/SP-', UpperCase(GetCmdTail)) > 0) then
@@ -224,16 +313,15 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   hWnd, nRet: Integer;
-  HiVer, LoVer: Cardinal;
   path, dir, Ver: String;
 
 begin
   Result := true;
 
   if CurPageID = wpSelectDir then begin
-    path := ExpandConstant('{app}\smiletray.exe');
-    if FileExists(path) and GetVersionNumbers(path, HiVer, LoVer) and GetVersionNumbersString(path, Ver) then begin
-      if (HiVer < 1) or ((HiVer = 1) and (LoVer < 9)) then begin
+    if GetInstalledVersion(Ver) then begin
+      nRet := CompareVersions(Ver, ''+{code:GetAppVer}+'');
+      if nRet = -1 then begin
         // Do Update
         if MsgBox('A previous version of Smile! (' + Ver + ') is already installed. Would you like to Upgrade? Yes to continue, No to exit this setup application', mbConfirmation, MB_YESNO) = IDYES then begin
           dir := ExpandConstant('{app}');
@@ -242,28 +330,28 @@ begin
           if FileExists(path) and Exec(path, '', dir, SW_SHOWNORMAL, ewWaitUntilTerminated, nRet) then begin
             Exec(path, '/SILENT /SUPPRESSMSGBOXES', dir, SW_SHOWNORMAL, ewWaitUntilTerminated, nRet);
           end else begin
-            Result := false;
+            Result := False;
           end;
         end;
-      end else if (HiVer > 1) or ((HiVer = 1) and (LoVer > 9)) then begin
+      end else if nRet = 1 then begin
         // Do Downgrade
         if MsgBox('A previous version of Smile! (' + Ver + ') is already installed. This is newer than is available with this installer. Are you sure you want to install an older version? Yes to continue, No to exit this setup application', mbConfirmation, MB_YESNO) = IDYES then begin
-          dir := ExpandConstant('{app}');
-          path := ExpandConstant('{uninstallexe}');
-          MsgBox(path, mbInformation, MB_OK);
-          if FileExists(path) and Exec(path, '', dir, SW_SHOWNORMAL, ewWaitUntilTerminated, nRet) then begin
-            Exec(path, '/SILENT /SUPPRESSMSGBOXES', dir, SW_SHOWNORMAL, ewWaitUntilTerminated, nRet);
-          end else begin
-            Result := false;
-          end;
+        dir := ExpandConstant('{app}');
+        path := ExpandConstant('{uninstallexe}');
+        MsgBox(path, mbInformation, MB_OK);
+        if FileExists(path) and Exec(path, '', dir, SW_SHOWNORMAL, ewWaitUntilTerminated, nRet) then begin
+           Exec(path, '/SILENT /SUPPRESSMSGBOXES', dir, SW_SHOWNORMAL, ewWaitUntilTerminated, nRet);
+        end else begin
+           Result := False;
         end;
       end;
-    end else if CurPageID = wpReady then begin
-      hWnd := StrToInt(ExpandConstant('{wizardhwnd}'));
+    end;
+  end else if CurPageID = wpReady then begin
+    hWnd := StrToInt(ExpandConstant('{wizardhwnd}'));
 
-      // don't try to init isxdl if it's not needed because it will error on < ie 3
-      if downloadNeeded then
-        if isxdl_DownloadFiles(hWnd) = 0 then Result := false;
+    // don't try to init isxdl if it's not needed because it will error on < ie 3
+    if downloadNeeded then
+      if isxdl_DownloadFiles(hWnd) = 0 then Result := false;
     end;
   end;
 end;
