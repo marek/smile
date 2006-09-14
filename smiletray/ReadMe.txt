@@ -488,7 +488,7 @@ Changelog:
 -Better handling of corrupt configs
 -Old settings now backed up, if an error reading them occured. 
 -Fixed AutoDetect for Profile Paths
--LICENSE CHANGED. Smile! IS NO LONGER UNDER GPL. As I am the sole contributer and owner of Smile! I am granted this right. Hey Mozilla did it! 
+-LICENSE CHANGED. Smile! IS NO LONGER UNDER GPL. 
  My reason for this is to allow the future use of code and libraries that do not fall under specific open source requirements thus
  keeping the author's own agreements and needs intact. Smile! will remain freeware, (It's not like there is a glimpse for anything 
  else) but closed source.
