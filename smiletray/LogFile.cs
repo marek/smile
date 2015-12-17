@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Text;
 
@@ -7,7 +8,7 @@ namespace smiletray
     public class LogFile
     {
         private readonly object MsgLock = new object();
-        private TSArrayList MsgQueue;
+        private ArrayList MsgQueue;
         private StreamWriter log;
 
         public LogFile(string path)
@@ -18,7 +19,7 @@ namespace smiletray
             log.Flush();
 
             // Init MsgQueue
-            MsgQueue = new TSArrayList(10);
+            MsgQueue = new ArrayList(10);
         }
         ~LogFile()
         {
@@ -52,14 +53,17 @@ namespace smiletray
 
         public bool HasMessage()
         {
-            return MsgQueue.Count() > 0;
+            lock (MsgLock)
+            {
+                return MsgQueue.Count > 0;
+            }
         }
 
         public string Pop()
         {
             lock (MsgLock)
             {
-                String msg = (String)MsgQueue.ObjectAt(0);
+                String msg = (String)MsgQueue[0];
                 MsgQueue.RemoveAt(0);
                 return msg;
             }
@@ -69,7 +73,7 @@ namespace smiletray
         {
             lock (MsgLock)
             {
-                String msg = (String)MsgQueue.ObjectAt(0);
+                String msg = (String)MsgQueue[0];
                 return msg;
             }
         }

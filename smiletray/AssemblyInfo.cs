@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // Smile! -- Screenshot and Statistics Utility
-// Copyright (c) 2005-2006 Marek Kudlacz
+// Copyright (c) 2005-2015 Marek Kudlacz
 //
 // http://kudlacz.com
 //
@@ -23,7 +23,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("*")]
 [assembly: AssemblyCompany("Kudlacz.com")]
 [assembly: AssemblyProduct("Smile!")]
-[assembly: AssemblyCopyright("©2005-2006 Marek Kudlacz")]
+[assembly: AssemblyCopyright("©2005-2015 Marek Kudlacz")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
@@ -39,7 +39,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("1.9.0.*")]
+[assembly: AssemblyVersion("1.10.0.*")]
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 

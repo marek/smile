@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // Smile! -- Screenshot and Statistics Utility
-// Copyright (c) 2005-2006 Marek Kudlacz
+// Copyright (c) 2005-2015 Marek Kudlacz
 //
 // http://kudlacz.com
 //

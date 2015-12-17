@@ -2,7 +2,7 @@
 //
 // HotKeys.cs --  Global HotKey Hook with C# and .NET
 // v1.2
-// Copyright (c) 2005-2006 Marek Kudlacz
+// Copyright (c) 2005-2015 Marek Kudlacz
 //
 // http://kudlacz.com
 //
