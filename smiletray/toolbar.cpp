@@ -11,7 +11,7 @@
 // or NULL otherwise. 
 // hwndParent is the handle to the toolbar's parent window. 
 
-HWND CToolBar::CreateReBar(HWND hwndParent, DWORD style = defaultReBarStyle)
+HWND CToolBar::CreateReBar(HWND hwndParent, DWORD style)
 {
 	INITCOMMONCONTROLSEX icex;
 	REBARINFO rbi;

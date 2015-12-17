@@ -1,12 +1,12 @@
+#pragma once
+
 #include <windows.h>
 #include <string>
 
-#ifndef _TOOLBAR_H_
-#define _TOOLBAR_H_
 
 class CToolBar
 {
-	private
+	private:
 		HWND hwndParent;
 		std::string strName;
 	public:
@@ -14,10 +14,8 @@ class CToolBar
 			WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_NODIVIDER|CCS_NOPARENTALIGN|RBS_DBLCLKTOGGLE|
 			RBS_BANDBORDERS|RBS_REGISTERDROP;
 
-		CToolBar(HWND hwndParent, DWORD style);
+		CToolBar(HWND hwndParent, DWORD style = defaultStyle);
 		void SetName(std::string s);
 		std::string GetName();
 };
 
-
-#endif

@@ -219,7 +219,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	CToolBar::CreateToolBar(hWnd, CToolBar::CreateReBar(hwnd);
+	CToolBar::CreateToolBar(hWnd, CToolBar::CreateReBar(hwnd));
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 	

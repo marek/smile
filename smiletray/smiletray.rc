@@ -108,7 +108,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "Tray Application Framework Sample"
-            VALUE "CompanyName", "MinkiStudios.com"
+            VALUE "CompanyName", "Kudlacz.com"
             VALUE "FileDescription", "Tray Application Framework Sample"
             VALUE "FileVersion", "1, 0, 0, 1"
             VALUE "InternalName", "smile"
@@ -137,7 +137,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,95,108,46,14
     GROUPBOX        "Info",IDC_STATIC,7,7,214,98
-    LTEXT           "smile v1.00\nFramework for creating system tray applications\n©2004-2005 Marek Kudlacz\n[ MinkiStudios.com / MinkiCorp.com ]",IDC_STATIC,14,18,200,81,SS_SUNKEN,WS_EX_STATICEDGE
+    LTEXT           "smile v1.00\nFramework for creating system tray applications\n©2004-2005 Marek Kudlacz\nkudlacz.com",IDC_STATIC,14,18,200,81,SS_SUNKEN,WS_EX_STATICEDGE
 END
 
 

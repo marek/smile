@@ -1,8 +1,8 @@
+#pragma once
+
 #include <windows.h>
 #include "toolbar.h"
 
-#ifndef _REBAR_H_
-#define _REBAR_H_
 
 class CReBar
 {
@@ -13,9 +13,7 @@ class CReBar
 			WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_NODIVIDER|CCS_NOPARENTALIGN|RBS_DBLCLKTOGGLE|
 			RBS_BANDBORDERS|RBS_REGISTERDROP;
 
-		CReBar(HWND hwndParent, DWORD style);
+		CReBar(HWND hwndParent, DWORD style = defaultStyle);
 		LRESULT AddToolBar(CToolBar TB);
 };
 
-
-#endif
